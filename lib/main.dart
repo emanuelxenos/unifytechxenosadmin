@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -117,10 +118,43 @@ class UnifyTechAdminApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'UnifyTech Xenos - Admin',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const CustomScrollBehavior(),
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
       routerConfig: router,
     );
+  }
+}
+
+class CustomScrollBehavior extends MaterialScrollBehavior {
+  const CustomScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
+
+  @override
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    switch (axisDirectionToAxis(details.direction)) {
+      case Axis.horizontal:
+        return Scrollbar(
+          controller: details.controller,
+          thumbVisibility: true,
+          trackVisibility: false,
+          child: child,
+        );
+      case Axis.vertical:
+        return Scrollbar(
+          controller: details.controller,
+          thumbVisibility: true,
+          trackVisibility: false,
+          child: child,
+        );
+    }
   }
 }

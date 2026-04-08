@@ -6,11 +6,23 @@ import 'package:unifytechxenosadmin/presentation/providers/sale_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/sale.dart';
 
-class SalesScreen extends ConsumerWidget {
+class SalesScreen extends ConsumerStatefulWidget {
   const SalesScreen({super.key});
+  @override
+  ConsumerState<SalesScreen> createState() => _SalesScreenState();
+}
+
+class _SalesScreenState extends ConsumerState<SalesScreen> {
+  final _horizontalController = ScrollController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final salesAsync = ref.watch(salesTodayProvider);
 
@@ -92,45 +104,53 @@ class SalesScreen extends ConsumerWidget {
                     if (vendas.isEmpty) {
                       return const EmptyState(icon: Icons.receipt_long_outlined, title: 'Nenhuma venda hoje');
                     }
-                    return SingleChildScrollView(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: DataTable(
-                          showCheckboxColumn: false,
-                          columns: const [
-                            DataColumn(label: Text('Nº VENDA')),
-                            DataColumn(label: Text('HORA')),
-                            DataColumn(label: Text('OPERADOR')),
-                            DataColumn(label: Text('CAIXA')),
-                            DataColumn(label: Text('ITENS'), numeric: true),
-                            DataColumn(label: Text('VALOR'), numeric: true),
-                            DataColumn(label: Text('STATUS')),
-                            DataColumn(label: Text('AÇÕES')),
-                          ],
-                          rows: vendas.map((v) => DataRow(
-                            cells: [
-                              DataCell(Text(v.numeroVenda, style: theme.textTheme.bodyLarge)),
-                              DataCell(Text(Formatters.time(v.dataVenda))),
-                              DataCell(Text(v.operadorNome ?? '-')),
-                              DataCell(Text(v.caixaNome ?? '-')),
-                              DataCell(Text('${v.itens.length}')),
-                              DataCell(Text(
-                                Formatters.currency(v.valorTotal),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: v.isCancelada ? AppTheme.accentRed : null,
-                                ),
-                              )),
-                              DataCell(StatusChip.fromStatus(v.status)),
-                              DataCell(
-                                IconButton(
-                                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                                  onPressed: () => _showDetail(context, ref, v),
-                                  tooltip: 'Detalhes',
-                                ),
-                              ),
-                            ],
-                          )).toList(),
+                    return Scrollbar(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Scrollbar(
+                          controller: _horizontalController,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _horizontalController,
+                            scrollDirection: Axis.horizontal,
+                            child: DataTable(
+                              showCheckboxColumn: false,
+                              columns: const [
+                                DataColumn(label: Text('Nº VENDA')),
+                                DataColumn(label: Text('HORA')),
+                                DataColumn(label: Text('OPERADOR')),
+                                DataColumn(label: Text('CAIXA')),
+                                DataColumn(label: Text('ITENS'), numeric: true),
+                                DataColumn(label: Text('VALOR'), numeric: true),
+                                DataColumn(label: Text('STATUS')),
+                                DataColumn(label: Text('AÇÕES')),
+                              ],
+                              rows: vendas.map((v) => DataRow(
+                                cells: [
+                                  DataCell(Text(v.numeroVenda, style: theme.textTheme.bodyLarge)),
+                                  DataCell(Text(Formatters.time(v.dataVenda))),
+                                  DataCell(Text(v.operadorNome ?? '-')),
+                                  DataCell(Text(v.caixaNome ?? '-')),
+                                  DataCell(Text('${v.itens.length}')),
+                                  DataCell(Text(
+                                    Formatters.currency(v.valorTotal),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: v.isCancelada ? AppTheme.accentRed : null,
+                                    ),
+                                  )),
+                                  DataCell(StatusChip.fromStatus(v.status)),
+                                  DataCell(
+                                    IconButton(
+                                      icon: const Icon(Icons.visibility_outlined, size: 18),
+                                      onPressed: () => _showDetail(context, ref, v),
+                                      tooltip: 'Detalhes',
+                                    ),
+                                  ),
+                                ],
+                              )).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     );

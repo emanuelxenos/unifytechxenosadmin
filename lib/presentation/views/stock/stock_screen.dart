@@ -7,11 +7,23 @@ import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
 
-class StockScreen extends ConsumerWidget {
+class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
+  @override
+  ConsumerState<StockScreen> createState() => _StockScreenState();
+}
+
+class _StockScreenState extends ConsumerState<StockScreen> {
+  final _horizontalController = ScrollController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final productsAsync = ref.watch(productsProvider);
     final lowStockAsync = ref.watch(lowStockProvider);
@@ -82,33 +94,41 @@ class StockScreen extends ConsumerWidget {
                     if (stockProducts.isEmpty) {
                       return const EmptyState(icon: Icons.warehouse_outlined, title: 'Nenhum produto com controle de estoque');
                     }
-                    return SingleChildScrollView(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text('PRODUTO')),
-                            DataColumn(label: Text('UNIDADE')),
-                            DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
-                            DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
-                            DataColumn(label: Text('STATUS')),
-                          ],
-                          rows: stockProducts.map((p) {
-                            final baixo = p.estoqueBaixo;
-                            return DataRow(cells: [
-                              DataCell(Text(p.nome)),
-                              DataCell(Text(p.unidadeVenda)),
-                              DataCell(Text(
-                                Formatters.quantity(p.estoqueAtual),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: baixo ? AppTheme.accentRed : null,
-                                ),
-                              )),
-                              DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
-                              DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
-                            ]);
-                          }).toList(),
+                    return Scrollbar(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Scrollbar(
+                          controller: _horizontalController,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _horizontalController,
+                            scrollDirection: Axis.horizontal,
+                            child: DataTable(
+                              columns: const [
+                                DataColumn(label: Text('PRODUTO')),
+                                DataColumn(label: Text('UNIDADE')),
+                                DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
+                                DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
+                                DataColumn(label: Text('STATUS')),
+                              ],
+                              rows: stockProducts.map((p) {
+                                final baixo = p.estoqueBaixo;
+                                return DataRow(cells: [
+                                  DataCell(Text(p.nome)),
+                                  DataCell(Text(p.unidadeVenda)),
+                                  DataCell(Text(
+                                    Formatters.quantity(p.estoqueAtual),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: baixo ? AppTheme.accentRed : null,
+                                    ),
+                                  )),
+                                  DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
+                                  DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
+                                ]);
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     );

@@ -15,6 +15,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _userTableController = ScrollController();
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   @override
   void dispose() {
     _tabController.dispose();
+    _userTableController.dispose();
     super.dispose();
   }
 
@@ -68,7 +70,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                 controller: _tabController,
                 children: [
                   _ServerSettingsTab(),
-                  _UsersSettingsTab(),
+                  _UsersSettingsTab(controller: _userTableController),
                   _SystemSettingsTab(),
                 ],
               ),
@@ -127,6 +129,9 @@ class _ServerSettingsTab extends ConsumerWidget {
 }
 
 class _UsersSettingsTab extends ConsumerWidget {
+  final ScrollController controller;
+  const _UsersSettingsTab({required this.controller});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -163,22 +168,30 @@ class _UsersSettingsTab extends ConsumerWidget {
                 if (users.isEmpty) {
                   return const EmptyState(icon: Icons.people_outline, title: 'Nenhum usuário');
                 }
-                return SingleChildScrollView(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('NOME')),
-                        DataColumn(label: Text('LOGIN')),
-                        DataColumn(label: Text('PERFIL')),
-                        DataColumn(label: Text('STATUS')),
-                      ],
-                      rows: users.map((u) => DataRow(cells: [
-                        DataCell(Text(u.nome)),
-                        DataCell(Text(u.login)),
-                        DataCell(StatusChip(label: u.perfil.toUpperCase(), color: AppTheme.primaryColor)),
-                        DataCell(StatusChip.fromStatus(u.ativo ? 'ativo' : 'inativo')),
-                      ])).toList(),
+                return Scrollbar(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Scrollbar(
+                      controller: controller,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: controller,
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('NOME')),
+                            DataColumn(label: Text('LOGIN')),
+                            DataColumn(label: Text('PERFIL')),
+                            DataColumn(label: Text('STATUS')),
+                          ],
+                          rows: users.map((u) => DataRow(cells: [
+                            DataCell(Text(u.nome)),
+                            DataCell(Text(u.login)),
+                            DataCell(StatusChip(label: u.perfil.toUpperCase(), color: AppTheme.primaryColor)),
+                            DataCell(StatusChip.fromStatus(u.ativo ? 'ativo' : 'inativo')),
+                          ])).toList(),
+                        ),
+                      ),
                     ),
                   ),
                 );

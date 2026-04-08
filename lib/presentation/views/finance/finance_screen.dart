@@ -13,6 +13,9 @@ class FinanceScreen extends ConsumerStatefulWidget {
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _pagarController = ScrollController();
+  final _receberController = ScrollController();
+  final _fluxoController = ScrollController();
 
   @override
   void initState() {
@@ -23,6 +26,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> with SingleTicker
   @override
   void dispose() {
     _tabController.dispose();
+    _pagarController.dispose();
+    _receberController.dispose();
+    _fluxoController.dispose();
     super.dispose();
   }
 
@@ -37,6 +43,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ... (keep existing Text widgets)
             Text('Financeiro', style: theme.textTheme.headlineLarge),
             const SizedBox(height: 4),
             Text('Contas a pagar, receber e fluxo de caixa', style: theme.textTheme.bodyMedium),
@@ -68,9 +75,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> with SingleTicker
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _ContasPagarTab(),
-                  _ContasReceberTab(),
-                  _FluxoCaixaTab(),
+                  _ContasPagarTab(controller: _pagarController),
+                  _ContasReceberTab(controller: _receberController),
+                  _FluxoCaixaTab(controller: _fluxoController),
                 ],
               ),
             ),
@@ -82,6 +89,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> with SingleTicker
 }
 
 class _ContasPagarTab extends ConsumerWidget {
+  final ScrollController controller;
+  const _ContasPagarTab({required this.controller});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contasAsync = ref.watch(accountsPayableProvider);
@@ -96,27 +106,35 @@ class _ContasPagarTab extends ConsumerWidget {
           if (contas.isEmpty) {
             return const EmptyState(icon: Icons.check_circle_outline, title: 'Sem contas a pagar');
           }
-          return SingleChildScrollView(
-            child: SizedBox(
-              width: double.infinity,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('DESCRIÇÃO')),
-                  DataColumn(label: Text('FORNECEDOR')),
-                  DataColumn(label: Text('VENCIMENTO')),
-                  DataColumn(label: Text('VALOR'), numeric: true),
-                  DataColumn(label: Text('STATUS')),
-                ],
-                rows: contas.map((c) => DataRow(cells: [
-                  DataCell(Text(c.descricao)),
-                  DataCell(Text(c.fornecedorNome ?? '-')),
-                  DataCell(Text(
-                    Formatters.date(c.dataVencimento),
-                    style: TextStyle(color: c.isVencida ? AppTheme.accentRed : null),
-                  )),
-                  DataCell(Text(Formatters.currency(c.valorOriginal), style: const TextStyle(fontWeight: FontWeight.w600))),
-                  DataCell(StatusChip.fromStatus(c.status)),
-                ])).toList(),
+          return Scrollbar(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Scrollbar(
+                controller: controller,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: controller,
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('DESCRIÇÃO')),
+                      DataColumn(label: Text('FORNECEDOR')),
+                      DataColumn(label: Text('VENCIMENTO')),
+                      DataColumn(label: Text('VALOR'), numeric: true),
+                      DataColumn(label: Text('STATUS')),
+                    ],
+                    rows: contas.map((c) => DataRow(cells: [
+                      DataCell(Text(c.descricao)),
+                      DataCell(Text(c.fornecedorNome ?? '-')),
+                      DataCell(Text(
+                        Formatters.date(c.dataVencimento),
+                        style: TextStyle(color: c.isVencida ? AppTheme.accentRed : null),
+                      )),
+                      DataCell(Text(Formatters.currency(c.valorOriginal), style: const TextStyle(fontWeight: FontWeight.w600))),
+                      DataCell(StatusChip.fromStatus(c.status)),
+                    ])).toList(),
+                  ),
+                ),
               ),
             ),
           );
@@ -127,6 +145,9 @@ class _ContasPagarTab extends ConsumerWidget {
 }
 
 class _ContasReceberTab extends ConsumerWidget {
+  final ScrollController controller;
+  const _ContasReceberTab({required this.controller});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contasAsync = ref.watch(accountsReceivableProvider);
@@ -141,27 +162,35 @@ class _ContasReceberTab extends ConsumerWidget {
           if (contas.isEmpty) {
             return const EmptyState(icon: Icons.check_circle_outline, title: 'Sem contas a receber');
           }
-          return SingleChildScrollView(
-            child: SizedBox(
-              width: double.infinity,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('DESCRIÇÃO')),
-                  DataColumn(label: Text('CLIENTE')),
-                  DataColumn(label: Text('VENCIMENTO')),
-                  DataColumn(label: Text('VALOR'), numeric: true),
-                  DataColumn(label: Text('STATUS')),
-                ],
-                rows: contas.map((c) => DataRow(cells: [
-                  DataCell(Text(c.descricao)),
-                  DataCell(Text(c.clienteNome ?? '-')),
-                  DataCell(Text(
-                    Formatters.date(c.dataVencimento),
-                    style: TextStyle(color: c.isVencida ? AppTheme.accentRed : null),
-                  )),
-                  DataCell(Text(Formatters.currency(c.valorOriginal), style: const TextStyle(fontWeight: FontWeight.w600))),
-                  DataCell(StatusChip.fromStatus(c.status)),
-                ])).toList(),
+          return Scrollbar(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Scrollbar(
+                controller: controller,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: controller,
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('DESCRIÇÃO')),
+                      DataColumn(label: Text('CLIENTE')),
+                      DataColumn(label: Text('VENCIMENTO')),
+                      DataColumn(label: Text('VALOR'), numeric: true),
+                      DataColumn(label: Text('STATUS')),
+                    ],
+                    rows: contas.map((c) => DataRow(cells: [
+                      DataCell(Text(c.descricao)),
+                      DataCell(Text(c.clienteNome ?? '-')),
+                      DataCell(Text(
+                        Formatters.date(c.dataVencimento),
+                        style: TextStyle(color: c.isVencida ? AppTheme.accentRed : null),
+                      )),
+                      DataCell(Text(Formatters.currency(c.valorOriginal), style: const TextStyle(fontWeight: FontWeight.w600))),
+                      DataCell(StatusChip.fromStatus(c.status)),
+                    ])).toList(),
+                  ),
+                ),
               ),
             ),
           );
@@ -172,6 +201,9 @@ class _ContasReceberTab extends ConsumerWidget {
 }
 
 class _FluxoCaixaTab extends ConsumerWidget {
+  final ScrollController controller;
+  const _FluxoCaixaTab({required this.controller});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final fluxoAsync = ref.watch(cashFlowProvider);
@@ -186,29 +218,37 @@ class _FluxoCaixaTab extends ConsumerWidget {
           if (items.isEmpty) {
             return const EmptyState(icon: Icons.account_balance_wallet_outlined, title: 'Sem movimentações');
           }
-          return SingleChildScrollView(
-            child: SizedBox(
-              width: double.infinity,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('DATA')),
-                  DataColumn(label: Text('TIPO')),
-                  DataColumn(label: Text('VALOR'), numeric: true),
-                ],
-                rows: items.map((item) => DataRow(cells: [
-                  DataCell(Text(Formatters.date(item.data))),
-                  DataCell(StatusChip(
-                    label: item.tipo,
-                    color: item.valor >= 0 ? AppTheme.accentGreen : AppTheme.accentRed,
-                  )),
-                  DataCell(Text(
-                    Formatters.currency(item.valor),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: item.valor >= 0 ? AppTheme.accentGreen : AppTheme.accentRed,
-                    ),
-                  )),
-                ])).toList(),
+          return Scrollbar(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Scrollbar(
+                controller: controller,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: controller,
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('DATA')),
+                      DataColumn(label: Text('TIPO')),
+                      DataColumn(label: Text('VALOR'), numeric: true),
+                    ],
+                    rows: items.map((item) => DataRow(cells: [
+                      DataCell(Text(Formatters.date(item.data))),
+                      DataCell(StatusChip(
+                        label: item.tipo,
+                        color: item.valor >= 0 ? AppTheme.accentGreen : AppTheme.accentRed,
+                      )),
+                      DataCell(Text(
+                        Formatters.currency(item.valor),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: item.valor >= 0 ? AppTheme.accentGreen : AppTheme.accentRed,
+                        ),
+                      )),
+                    ])).toList(),
+                  ),
+                ),
               ),
             ),
           );

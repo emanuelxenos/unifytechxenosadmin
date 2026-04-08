@@ -37,208 +37,213 @@ class _AppShellState extends ConsumerState<AppShell> {
                 ),
               ),
             ),
-            child: Column(
-              children: [
-                // Logo
-                Container(
-                  height: 70,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: _isExpanded ? 20 : 12,
-                    vertical: 16,
-                  ),
-                  child: Row(
-                    children: [
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
+                  children: [
+                    // Logo
+                    Container(
+                      height: 70,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: _isExpanded ? 20 : 12,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              gradient: AppTheme.primaryGradient,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.store_rounded,
+                                color: Colors.white, size: 22),
+                          ),
+                          if (_isExpanded) ...[
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'UnifyTech',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Admin',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    // Nav Items
+                    Expanded(
+                      child: Scrollbar(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            children: [
+                              _NavItem(
+                                icon: Icons.dashboard_rounded,
+                                label: 'Dashboard',
+                                isActive: currentPath == '/',
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/'),
+                              ),
+                              _NavItem(
+                                icon: Icons.inventory_2_rounded,
+                                label: 'Produtos',
+                                isActive: currentPath.startsWith('/produtos'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/produtos'),
+                              ),
+                              _NavItem(
+                                icon: Icons.warehouse_rounded,
+                                label: 'Estoque',
+                                isActive: currentPath.startsWith('/estoque'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/estoque'),
+                              ),
+                              _NavItem(
+                                icon: Icons.point_of_sale_rounded,
+                                label: 'Vendas',
+                                isActive: currentPath.startsWith('/vendas'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/vendas'),
+                              ),
+                              _NavItem(
+                                icon: Icons.local_shipping_rounded,
+                                label: 'Compras',
+                                isActive: currentPath.startsWith('/compras'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/compras'),
+                              ),
+                              _NavItem(
+                                icon: Icons.account_balance_wallet_rounded,
+                                label: 'Financeiro',
+                                isActive: currentPath.startsWith('/financeiro'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/financeiro'),
+                              ),
+                              _NavItem(
+                                icon: Icons.bar_chart_rounded,
+                                label: 'Relatórios',
+                                isActive: currentPath.startsWith('/relatorios'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/relatorios'),
+                              ),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: _isExpanded ? 16 : 8),
+                                child: const Divider(height: 1),
+                              ),
+                              const SizedBox(height: 8),
+                              _NavItem(
+                                icon: Icons.settings_rounded,
+                                label: 'Configurações',
+                                isActive: currentPath.startsWith('/configuracoes'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/configuracoes'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // User area & Toggle (Only show fixed part if enough height)
+                    if (constraints.maxHeight > 200) ...[
+                      const Divider(height: 1),
                       Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.primaryGradient,
-                          borderRadius: BorderRadius.circular(10),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: _isExpanded ? 16 : 12,
+                          vertical: 12,
                         ),
-                        child: const Icon(Icons.store_rounded, color: Colors.white, size: 22),
-                      ),
-                      if (_isExpanded) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'UnifyTech',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              Text(
-                                'Admin',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.primaryLight,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                // Nav Items
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      children: [
-                        _NavItem(
-                          icon: Icons.dashboard_rounded,
-                          label: 'Dashboard',
-                          isActive: currentPath == '/',
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/'),
-                        ),
-                        _NavItem(
-                          icon: Icons.inventory_2_rounded,
-                          label: 'Produtos',
-                          isActive: currentPath.startsWith('/produtos'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/produtos'),
-                        ),
-                        _NavItem(
-                          icon: Icons.warehouse_rounded,
-                          label: 'Estoque',
-                          isActive: currentPath.startsWith('/estoque'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/estoque'),
-                        ),
-                        _NavItem(
-                          icon: Icons.point_of_sale_rounded,
-                          label: 'Vendas',
-                          isActive: currentPath.startsWith('/vendas'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/vendas'),
-                        ),
-                        _NavItem(
-                          icon: Icons.local_shipping_rounded,
-                          label: 'Compras',
-                          isActive: currentPath.startsWith('/compras'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/compras'),
-                        ),
-                        _NavItem(
-                          icon: Icons.account_balance_wallet_rounded,
-                          label: 'Financeiro',
-                          isActive: currentPath.startsWith('/financeiro'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/financeiro'),
-                        ),
-                        _NavItem(
-                          icon: Icons.bar_chart_rounded,
-                          label: 'Relatórios',
-                          isActive: currentPath.startsWith('/relatorios'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/relatorios'),
-                        ),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: _isExpanded ? 16 : 8),
-                          child: const Divider(height: 1),
-                        ),
-                        const SizedBox(height: 8),
-                        _NavItem(
-                          icon: Icons.settings_rounded,
-                          label: 'Configurações',
-                          isActive: currentPath.startsWith('/configuracoes'),
-                          isExpanded: _isExpanded,
-                          onTap: () => context.go('/configuracoes'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // User area
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: _isExpanded ? 16 : 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                        child: Text(
-                          (authState.user?.nome ?? 'U')[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      if (_isExpanded) ...[
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                authState.user?.nome ?? 'Usuário',
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor:
+                                  AppTheme.primaryColor.withValues(alpha: 0.2),
+                              child: Text(
+                                (authState.user?.nome ?? 'U')[0].toUpperCase(),
                                 style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                              Text(
-                                authState.user?.perfil.toUpperCase() ?? '',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
+                            ),
+                            if (_isExpanded) ...[
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      authState.user?.nome ?? 'Usuário',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      authState.user?.perfil.toUpperCase() ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white60,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    ref.read(authProvider.notifier).logout(),
+                                icon: const Icon(Icons.logout_rounded, size: 18),
+                                tooltip: 'Sair',
+                                color: Colors.white70,
                               ),
                             ],
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => setState(() => _isExpanded = !_isExpanded),
+                        child: Container(
+                          height: 48,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            _isExpanded ? Icons.chevron_left : Icons.chevron_right,
+                            color: Colors.white54,
+                            size: 20,
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => ref.read(authProvider.notifier).logout(),
-                          icon: const Icon(Icons.logout_rounded, size: 18),
-                          tooltip: 'Sair',
-                          style: IconButton.styleFrom(
-                            foregroundColor: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
-                  ),
-                ),
-                // Collapse toggle
-                InkWell(
-                  onTap: () => setState(() => _isExpanded = !_isExpanded),
-                  child: Container(
-                    height: 40,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      _isExpanded ? Icons.chevron_left : Icons.chevron_right,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
           // Content

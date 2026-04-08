@@ -15,10 +15,12 @@ class ProductsScreen extends ConsumerStatefulWidget {
 
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _searchController = TextEditingController();
+  final _horizontalController = ScrollController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _horizontalController.dispose();
     super.dispose();
   }
 
@@ -152,28 +154,33 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                             'Cadastre produtos ou ajuste o filtro de busca',
                       );
                     }
-                    return SingleChildScrollView(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: DataTable(
-                          showCheckboxColumn: false,
-                          columns: const [
-                            DataColumn(label: Text('CÓDIGO')),
-                            DataColumn(label: Text('NOME')),
-                            DataColumn(label: Text('CATEGORIA')),
-                            DataColumn(label: Text('UNIDADE')),
-                            DataColumn(
-                                label: Text('ESTOQUE'), numeric: true),
-                            DataColumn(
-                                label: Text('PREÇO CUSTO'), numeric: true),
-                            DataColumn(
-                                label: Text('PREÇO VENDA'), numeric: true),
-                            DataColumn(label: Text('STATUS')),
-                            DataColumn(label: Text('AÇÕES')),
-                          ],
-                          rows: filtered
-                              .map((p) => _buildProductRow(p, theme))
-                              .toList(),
+                    return Scrollbar(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Scrollbar(
+                          controller: _horizontalController,
+                          thumbVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _horizontalController,
+                            scrollDirection: Axis.horizontal,
+                            child: DataTable(
+                              showCheckboxColumn: false,
+                              columns: const [
+                                DataColumn(label: Text('CÓDIGO')),
+                                DataColumn(label: Text('NOME')),
+                                DataColumn(label: Text('CATEGORIA')),
+                                DataColumn(label: Text('UNIDADE')),
+                                DataColumn(label: Text('ESTOQUE'), numeric: true),
+                                DataColumn(label: Text('PREÇO CUSTO'), numeric: true),
+                                DataColumn(label: Text('PREÇO VENDA'), numeric: true),
+                                DataColumn(label: Text('STATUS')),
+                                DataColumn(label: Text('AÇÕES')),
+                              ],
+                              rows: filtered
+                                  .map((p) => _buildProductRow(p, theme))
+                                  .toList(),
+                            ),
+                          ),
                         ),
                       ),
                     );
