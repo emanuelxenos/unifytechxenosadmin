@@ -1,0 +1,379 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
+import 'package:unifytechxenosadmin/core/utils/formatters.dart';
+import 'package:unifytechxenosadmin/presentation/providers/sale_provider.dart';
+import 'package:unifytechxenosadmin/presentation/providers/stock_provider.dart';
+import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
+import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
+import 'package:fl_chart/fl_chart.dart';
+
+class DashboardScreen extends ConsumerWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final salesAsync = ref.watch(salesTodayProvider);
+    final lowStockAsync = ref.watch(lowStockProvider);
+    final reportAsync = ref.watch(salesReportDayProvider);
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(salesTodayProvider);
+          ref.invalidate(lowStockProvider);
+          ref.invalidate(salesReportDayProvider);
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Dashboard', style: theme.textTheme.headlineLarge),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Visão geral do seu negócio',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.invalidate(salesTodayProvider);
+                      ref.invalidate(lowStockProvider);
+                      ref.invalidate(salesReportDayProvider);
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Atualizar'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // KPI Cards
+              _buildKpiRow(context, ref, salesAsync, lowStockAsync, reportAsync),
+              const SizedBox(height: 24),
+
+              // Charts & Tables Row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Sales chart
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      height: 340,
+                      decoration: AppTheme.glassCard(),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Vendas do Dia', style: theme.textTheme.titleLarge),
+                          const SizedBox(height: 4),
+                          Text('Resumo por hora', style: theme.textTheme.bodySmall),
+                          const SizedBox(height: 20),
+                          Expanded(child: _buildSalesChart(salesAsync)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Low stock alerts
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      height: 340,
+                      decoration: AppTheme.glassCardHighlight(accentColor: AppTheme.accentOrange),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.warning_amber_rounded, color: AppTheme.accentOrange, size: 20),
+                              const SizedBox(width: 8),
+                              Text('Estoque Baixo', style: theme.textTheme.titleLarge),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Expanded(child: _buildLowStockList(lowStockAsync, theme)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Recent sales table
+              Container(
+                decoration: AppTheme.glassCard(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Últimas Vendas', style: theme.textTheme.titleLarge),
+                        TextButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                          label: const Text('Ver todas'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRecentSalesTable(salesAsync, theme),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKpiRow(BuildContext context, WidgetRef ref, AsyncValue salesAsync, AsyncValue lowStockAsync, AsyncValue reportAsync) {
+    final vendas = salesAsync.valueOrNull ?? [];
+    final lowStock = lowStockAsync.valueOrNull ?? [];
+    final totalVendas = vendas.where((v) => v.status != 'cancelada').fold(0.0, (sum, v) => sum + v.valorTotal);
+    final qtdVendas = vendas.where((v) => v.status != 'cancelada').length;
+    final ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = (constraints.maxWidth - 48) / 4;
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Vendas Hoje',
+                value: Formatters.currency(totalVendas),
+                icon: Icons.trending_up_rounded,
+                color: AppTheme.accentGreen,
+                subtitle: '$qtdVendas vendas realizadas',
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Ticket Médio',
+                value: Formatters.currency(ticketMedio),
+                icon: Icons.receipt_long_rounded,
+                color: AppTheme.accentBlue,
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Estoque Baixo',
+                value: '${lowStock.length}',
+                icon: Icons.warning_amber_rounded,
+                color: lowStock.isNotEmpty ? AppTheme.accentOrange : AppTheme.accentGreen,
+                subtitle: lowStock.isNotEmpty ? 'Produtos abaixo do mínimo' : 'Tudo em ordem',
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Total Vendas',
+                value: '$qtdVendas',
+                icon: Icons.shopping_bag_rounded,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSalesChart(AsyncValue salesAsync) {
+    return salesAsync.when(
+      loading: () => const LoadingOverlay(message: 'Carregando...'),
+      error: (e, _) => Center(child: Text('Erro: $e')),
+      data: (vendas) {
+        // Group by hour
+        final Map<int, double> byHour = {};
+        for (final v in vendas) {
+          if (v.status != 'cancelada') {
+            final hora = v.dataVenda.hour;
+            byHour[hora] = (byHour[hora] ?? 0) + v.valorTotal;
+          }
+        }
+
+        if (byHour.isEmpty) {
+          return const EmptyState(
+            icon: Icons.bar_chart_rounded,
+            title: 'Sem vendas hoje',
+            subtitle: 'Os dados aparecerão aqui quando houver vendas',
+          );
+        }
+
+        final spots = byHour.entries
+            .map((e) => FlSpot(e.key.toDouble(), e.value))
+            .toList()
+          ..sort((a, b) => a.x.compareTo(b.x));
+
+        return LineChart(
+          LineChartData(
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              horizontalInterval: 100,
+              getDrawingHorizontalLine: (value) => FlLine(
+                color: const Color(0xFF2A2E4A),
+                strokeWidth: 0.5,
+              ),
+            ),
+            titlesData: FlTitlesData(
+              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  interval: 2,
+                  getTitlesWidget: (value, meta) => Text(
+                    '${value.toInt()}h',
+                    style: const TextStyle(fontSize: 10, color: Color(0xFF8E92BC)),
+                  ),
+                ),
+              ),
+            ),
+            borderData: FlBorderData(show: false),
+            lineBarsData: [
+              LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                color: AppTheme.primaryColor,
+                barWidth: 3,
+                dotData: const FlDotData(show: false),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor.withValues(alpha: 0.3),
+                      AppTheme.primaryColor.withValues(alpha: 0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLowStockList(AsyncValue lowStockAsync, ThemeData theme) {
+    return lowStockAsync.when(
+      loading: () => const LoadingOverlay(),
+      error: (e, _) => Center(child: Text('Erro: $e')),
+      data: (items) {
+        if (items.isEmpty) {
+          return const EmptyState(
+            icon: Icons.check_circle_outline,
+            title: 'Estoque OK',
+            subtitle: 'Nenhum produto abaixo do mínimo',
+          );
+        }
+        return ListView.separated(
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final pct = item.estoqueMinimo > 0
+                ? (item.estoqueAtual / item.estoqueMinimo * 100).clamp(0, 100)
+                : 0.0;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.nome, style: theme.textTheme.bodyLarge, overflow: TextOverflow.ellipsis),
+                        Text(
+                          'Atual: ${Formatters.quantity(item.estoqueAtual)} | Mín: ${Formatters.quantity(item.estoqueMinimo)}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: LinearProgressIndicator(
+                      value: pct / 100,
+                      backgroundColor: const Color(0xFF2A2E4A),
+                      valueColor: AlwaysStoppedAnimation(
+                        pct < 30 ? AppTheme.accentRed : AppTheme.accentOrange,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRecentSalesTable(AsyncValue salesAsync, ThemeData theme) {
+    return salesAsync.when(
+      loading: () => const LoadingOverlay(),
+      error: (e, _) => Center(child: Text('Erro: $e')),
+      data: (vendas) {
+        final recent = vendas.take(8).toList();
+        if (recent.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: EmptyState(icon: Icons.receipt_long, title: 'Nenhuma venda hoje'),
+          );
+        }
+        return DataTable(
+          columns: const [
+            DataColumn(label: Text('Nº Venda')),
+            DataColumn(label: Text('Hora')),
+            DataColumn(label: Text('Operador')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Valor'), numeric: true),
+          ],
+          rows: recent.map((v) {
+            return DataRow(cells: [
+              DataCell(Text(v.numeroVenda, style: theme.textTheme.bodyLarge)),
+              DataCell(Text(Formatters.time(v.dataVenda))),
+              DataCell(Text(v.operadorNome ?? '-')),
+              DataCell(StatusChip.fromStatus(v.status)),
+              DataCell(Text(
+                Formatters.currency(v.valorTotal),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: v.isCancelada ? AppTheme.accentRed : null,
+                ),
+              )),
+            ]);
+          }).toList(),
+        );
+      },
+    );
+  }
+}
