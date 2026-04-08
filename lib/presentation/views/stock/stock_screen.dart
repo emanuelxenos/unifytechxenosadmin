@@ -14,10 +14,13 @@ class StockScreen extends ConsumerStatefulWidget {
 }
 
 class _StockScreenState extends ConsumerState<StockScreen> {
+  final _searchController = TextEditingController();
   final _horizontalController = ScrollController();
+  String _searchQuery = '';
 
   @override
   void dispose() {
+    _searchController.dispose();
     _horizontalController.dispose();
     super.dispose();
   }
@@ -82,6 +85,24 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     )
                   : const SizedBox.shrink(),
             ),
+            const SizedBox(height: 20),
+            // Search Bar
+            Container(
+              decoration: AppTheme.glassCard(),
+              padding: const EdgeInsets.all(16),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar por nome, código de barras ou categoria...',
+                  prefixIcon: Icon(Icons.search_rounded),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Expanded(
               child: Container(
                 decoration: AppTheme.glassCard(),
@@ -90,9 +111,25 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   loading: () => const LoadingOverlay(message: 'Carregando estoque...'),
                   error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
                   data: (products) {
-                    final stockProducts = products.where((p) => p.controlarEstoque).toList();
+                    final stockProducts = products.where((p) {
+                      final matchesControlled = p.controlarEstoque;
+                      if (!matchesControlled) return false;
+                      
+                      if (_searchQuery.isEmpty) return true;
+                      
+                      final matchesName = p.nome.toLowerCase().contains(_searchQuery);
+                      final matchesBarcode = (p.codigoBarras ?? '').toLowerCase().contains(_searchQuery);
+                      final matchesCategory = (p.categoriaNome ?? '').toLowerCase().contains(_searchQuery);
+                      
+                      return matchesName || matchesBarcode || matchesCategory;
+                    }).toList();
+
                     if (stockProducts.isEmpty) {
-                      return const EmptyState(icon: Icons.warehouse_outlined, title: 'Nenhum produto com controle de estoque');
+                      return EmptyState(
+                        icon: Icons.warehouse_outlined,
+                        title: _searchQuery.isEmpty ? 'Nenhum produto com controle de estoque' : 'Nenhum resultado encontrado',
+                        subtitle: _searchQuery.isEmpty ? null : 'Tente buscar com termos diferentes',
+                      );
                     }
                     return Scrollbar(
                       child: SingleChildScrollView(
@@ -110,6 +147,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                 DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
                                 DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
                                 DataColumn(label: Text('STATUS')),
+                                DataColumn(label: Text('AÇÕES')),
                               ],
                               rows: stockProducts.map((p) {
                                 final baixo = p.estoqueBaixo;
@@ -125,6 +163,13 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                   )),
                                   DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
                                   DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
+                                  DataCell(
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_note_rounded, size: 20, color: AppTheme.primaryColor),
+                                      onPressed: () => _showAjusteDialog(context, ref, p),
+                                      tooltip: 'Ajustar Estoque',
+                                    ),
+                                  ),
                                 ]);
                               }).toList(),
                             ),
@@ -142,8 +187,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
-  void _showAjusteDialog(BuildContext context, WidgetRef ref) {
-    final produtoIdCtrl = TextEditingController();
+  void _showAjusteDialog(BuildContext context, WidgetRef ref, [dynamic initialProduct]) {
+    final produtoIdCtrl = TextEditingController(text: initialProduct?.idProduto.toString() ?? '');
     final quantidadeCtrl = TextEditingController();
     final motivoCtrl = TextEditingController();
     String tipo = 'entrada';
@@ -153,7 +198,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Ajustar Estoque'),
+          title: Text(initialProduct != null ? 'Ajustar: ${initialProduct.nome}' : 'Ajustar Estoque'),
           content: SizedBox(
             width: 400,
             child: Form(
@@ -161,10 +206,19 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (initialProduct != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'Código: ${initialProduct.codigoBarras ?? initialProduct.idProduto}',
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   TextFormField(
                     controller: produtoIdCtrl,
                     decoration: const InputDecoration(labelText: 'ID do Produto *'),
                     keyboardType: TextInputType.number,
+                    enabled: initialProduct == null,
                     validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
                   ),
                   const SizedBox(height: 12),
