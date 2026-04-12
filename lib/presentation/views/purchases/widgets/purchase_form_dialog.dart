@@ -1,0 +1,230 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
+import 'package:unifytechxenosadmin/core/utils/formatters.dart';
+import 'package:unifytechxenosadmin/domain/models/product.dart';
+import 'package:unifytechxenosadmin/domain/models/purchase.dart';
+import 'package:unifytechxenosadmin/domain/models/supplier.dart';
+import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
+import 'package:unifytechxenosadmin/presentation/providers/purchase_provider.dart';
+import 'package:unifytechxenosadmin/presentation/providers/supplier_provider.dart';
+
+class PurchaseFormDialog extends ConsumerStatefulWidget {
+  const PurchaseFormDialog({super.key});
+
+  @override
+  ConsumerState<PurchaseFormDialog> createState() => _PurchaseFormDialogState();
+}
+
+class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
+  Fornecedor? _selectedSupplier;
+  final List<_CartItem> _items = [];
+  final _invoiceCtrl = TextEditingController();
+  final _searchCtrl = TextEditingController();
+  bool _saving = false;
+
+  double get _total => _items.fold(0, (sum, item) => sum + (item.quantity * item.costPrice));
+
+  @override
+  void dispose() {
+    _invoiceCtrl.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _addProduct(Produto product) {
+    setState(() {
+      final index = _items.indexWhere((i) => i.product.idProduto == product.idProduto);
+      if (index >= 0) {
+        _items[index].quantity += 1;
+      } else {
+        _items.add(_CartItem(product: product, quantity: 1, costPrice: product.precoCusto));
+      }
+    });
+  }
+
+  Future<void> _save() async {
+    if (_selectedSupplier == null || _items.isEmpty) return;
+    
+    setState(() => _saving = true);
+    
+    final request = CriarCompraRequest(
+      fornecedorId: _selectedSupplier!.idFornecedor,
+      numeroNotaFiscal: _invoiceCtrl.text.isEmpty ? 'SIMPLES' : _invoiceCtrl.text,
+      dataEmissao: DateTime.now().toIso8601String().split('T')[0],
+      itens: _items.map((i) => CriarItemCompraRequest(
+        produtoId: i.product.idProduto,
+        quantidade: i.quantity,
+        precoUnitario: i.costPrice,
+      )).toList(),
+    );
+
+    final (success, message) = await ref.read(purchaseActionsProvider.notifier).criar(request);
+
+    if (mounted) {
+      if (success) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: AppTheme.accentGreen),
+        );
+      } else {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: AppTheme.accentRed),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final suppliers = ref.watch(suppliersProvider).maybeWhen(data: (d) => d, orElse: () => <Fornecedor>[]);
+    final products = ref.watch(filteredProductsProvider);
+
+    return AlertDialog(
+      title: const Text('Nova Compra'),
+      content: SizedBox(
+        width: 900,
+        height: 600,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Side: Cart & Details
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<Fornecedor>(
+                          value: _selectedSupplier,
+                          decoration: const InputDecoration(labelText: 'Fornecedor *'),
+                          items: suppliers.map((s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(s.razaoSocial),
+                          )).toList(),
+                          onChanged: (v) => setState(() => _selectedSupplier = v),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _invoiceCtrl,
+                          decoration: const InputDecoration(labelText: 'Nº Nota Fiscal'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Itens da Compra', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Divider(),
+                  Expanded(
+                    child: _items.isEmpty 
+                      ? const Center(child: Text('Nenhum item adicionado'))
+                      : ListView.separated(
+                          itemCount: _items.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final item = _items[index];
+                            return ListTile(
+                              title: Text(item.product.nome),
+                              subtitle: Text('ID: ${item.product.idProduto}'),
+                              trailing: SizedBox(
+                                width: 300,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        initialValue: item.quantity.toString(),
+                                        decoration: const InputDecoration(labelText: 'Qtd'),
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (v) => setState(() => item.quantity = double.tryParse(v) ?? 0),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextFormField(
+                                        initialValue: item.costPrice.toString(),
+                                        decoration: const InputDecoration(labelText: 'Custo Un.', prefixText: 'R\$'),
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (v) => setState(() => item.costPrice = double.tryParse(v) ?? 0),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: AppTheme.accentRed),
+                                      onPressed: () => setState(() => _items.removeAt(index)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('TOTAL DA COMPRA:', style: theme.textTheme.titleLarge),
+                      Text(Formatters.currency(_total), style: theme.textTheme.headlineSmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const VerticalDivider(width: 32),
+            // Right Side: Product Search
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => ref.read(productSearchProvider.notifier).setQuery(v),
+                    decoration: const InputDecoration(
+                      hintText: 'Pesquisar produto...',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final p = products[index];
+                        return ListTile(
+                          title: Text(p.nome),
+                          subtitle: Text('Estoque: ${p.estoqueAtual}'),
+                          trailing: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                          onTap: () => _addProduct(p),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        ElevatedButton(
+          onPressed: _saving ? null : _save, 
+          child: _saving ? const CircularProgressIndicator() : const Text('Finalizar Compra'),
+        ),
+      ],
+    );
+  }
+}
+
+class _CartItem {
+  final Produto product;
+  double quantity;
+  double costPrice;
+
+  _CartItem({required this.product, required this.quantity, required this.costPrice});
+}

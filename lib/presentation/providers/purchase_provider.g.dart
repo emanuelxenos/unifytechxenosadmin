@@ -6,7 +6,23 @@ part of 'purchase_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$purchaseActionsHash() => r'f3e1b70f0edd375233a188d7ad0c2e59db10c91b';
+String _$purchasesHash() => r'352df412d9855800aad66e38d05d26165e742ca3';
+
+/// See also [Purchases].
+@ProviderFor(Purchases)
+final purchasesProvider =
+    AutoDisposeAsyncNotifierProvider<Purchases, List<Compra>>.internal(
+      Purchases.new,
+      name: r'purchasesProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$purchasesHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$Purchases = AutoDisposeAsyncNotifier<List<Compra>>;
+String _$purchaseActionsHash() => r'7bef7094363f051a8740a357d6ba34298f1940ad';
 
 /// See also [PurchaseActions].
 @ProviderFor(PurchaseActions)

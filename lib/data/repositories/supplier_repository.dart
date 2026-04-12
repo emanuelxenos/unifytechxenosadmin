@@ -14,21 +14,34 @@ class SupplierRepository {
   final ApiService _api;
 
   SupplierRepository(this._api);
+  
+  dynamic _extractData(dynamic responseData) {
+    if (responseData is Map && responseData.containsKey('data')) {
+      return responseData['data'];
+    }
+    return responseData;
+  }
 
   Future<List<Fornecedor>> listar() async {
     final response = await _api.get(ApiEndpoints.fornecedores);
-    final data = response.data;
+    final data = _extractData(response.data);
     if (data is List) {
       return data.map((e) => Fornecedor.fromJson(e as Map<String, dynamic>)).toList();
-    }
-    if (data is Map && data['data'] is List) {
-      return (data['data'] as List).map((e) => Fornecedor.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
   }
 
   Future<Fornecedor> criar(CriarFornecedorRequest request) async {
     final response = await _api.post(ApiEndpoints.fornecedores, data: request.toJson());
-    return Fornecedor.fromJson(response.data as Map<String, dynamic>);
+    final data = _extractData(response.data);
+    return Fornecedor.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<void> atualizar(int id, CriarFornecedorRequest request) async {
+    await _api.put(ApiEndpoints.fornecedorPorId(id), data: request.toJson());
+  }
+
+  Future<void> inativar(int id) async {
+    await _api.delete(ApiEndpoints.fornecedorPorId(id));
   }
 }

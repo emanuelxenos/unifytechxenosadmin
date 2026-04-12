@@ -14,14 +14,18 @@ class StockRepository {
   final ApiService _api;
   StockRepository(this._api);
 
+  dynamic _extractData(dynamic responseData) {
+    if (responseData is Map && responseData.containsKey('data')) {
+      return responseData['data'];
+    }
+    return responseData;
+  }
+
   Future<List<EstoqueBaixoResponse>> estoqueBaixo() async {
     final response = await _api.get(ApiEndpoints.estoqueBaixo);
-    final data = response.data;
+    final data = _extractData(response.data);
     if (data is List) {
       return data.map((e) => EstoqueBaixoResponse.fromJson(e as Map<String, dynamic>)).toList();
-    }
-    if (data is Map && data['data'] is List) {
-      return (data['data'] as List).map((e) => EstoqueBaixoResponse.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
   }

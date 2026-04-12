@@ -30,6 +30,7 @@ class ApiEndpoints {
 
   // Fornecedores
   static const String fornecedores = '/api/fornecedores';
+  static String fornecedorPorId(int id) => '/api/fornecedores/$id';
 
   // Estoque
   static const String estoqueBaixo = '/api/estoque/baixo';
