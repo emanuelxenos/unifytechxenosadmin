@@ -22,8 +22,11 @@ class SupplierRepository {
     return responseData;
   }
 
-  Future<List<Fornecedor>> listar() async {
-    final response = await _api.get(ApiEndpoints.fornecedores);
+  Future<List<Fornecedor>> listar({bool incluirInativos = false}) async {
+    final response = await _api.get(
+      ApiEndpoints.fornecedores,
+      queryParameters: {'incluir_inativos': incluirInativos},
+    );
     final data = _extractData(response.data);
     if (data is List) {
       return data.map((e) => Fornecedor.fromJson(e as Map<String, dynamic>)).toList();

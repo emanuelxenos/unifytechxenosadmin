@@ -41,6 +41,14 @@ class SuppliersTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 16),
+              FilterChip(
+                label: const Text('Mostrar Inativos'),
+                selected: ref.watch(supplierInactivesProvider),
+                onSelected: (v) => ref.read(supplierInactivesProvider.notifier).set(v),
+                selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                checkmarkColor: AppTheme.primaryColor,
+              ),
+              const SizedBox(width: 16),
               ElevatedButton.icon(
                 onPressed: () => _showSupplierForm(context),
                 icon: const Icon(Icons.add_rounded),

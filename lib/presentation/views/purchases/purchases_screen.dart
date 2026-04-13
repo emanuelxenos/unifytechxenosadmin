@@ -5,6 +5,7 @@ import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/presentation/providers/purchase_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/suppliers_tab.dart';
+import 'package:unifytechxenosadmin/presentation/views/purchases/supplier_analytics_tab.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_form_dialog.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 
@@ -17,7 +18,7 @@ class PurchasesScreen extends ConsumerWidget {
     final purchasesAsync = ref.watch(purchasesProvider);
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Padding(
@@ -55,6 +56,7 @@ class PurchasesScreen extends ConsumerWidget {
                 tabs: const [
                   Tab(text: 'HISTÓRICO DE COMPRAS'),
                   Tab(text: 'FORNECEDORES'),
+                  Tab(text: 'CONSULTAS POR FORNECEDOR'),
                 ],
               ),
               const SizedBox(height: 16),
@@ -66,6 +68,8 @@ class PurchasesScreen extends ConsumerWidget {
                     _buildPurchasesList(context, ref, purchasesAsync),
                     // Suppliers Tab
                     const SuppliersTab(),
+                    // Analytics Tab
+                    const SupplierAnalyticsTab(),
                   ],
                 ),
               ),

@@ -8,16 +8,18 @@ part 'supplier_provider.g.dart';
 class Suppliers extends _$Suppliers {
   @override
   FutureOr<List<Fornecedor>> build() async {
-    return _fetch();
+    final incluirInativos = ref.watch(supplierInactivesProvider);
+    return _fetch(incluirInativos);
   }
 
-  Future<List<Fornecedor>> _fetch() async {
-    return ref.read(supplierRepositoryProvider).listar();
+  Future<List<Fornecedor>> _fetch(bool incluirInativos) async {
+    return ref.read(supplierRepositoryProvider).listar(incluirInativos: incluirInativos);
   }
 
   Future<void> refresh() async {
+    final incluirInativos = ref.read(supplierInactivesProvider);
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetch());
+    state = await AsyncValue.guard(() => _fetch(incluirInativos));
   }
 
   Future<(bool, String)> criar(CriarFornecedorRequest request) async {
@@ -75,4 +77,13 @@ class SupplierSearch extends _$SupplierSearch {
   String build() => '';
 
   void setQuery(String query) => state = query;
+}
+
+@riverpod
+class SupplierInactives extends _$SupplierInactives {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+  void set(bool value) => state = value;
 }

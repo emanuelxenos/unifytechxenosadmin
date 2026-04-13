@@ -50,3 +50,9 @@ class PurchaseActions extends _$PurchaseActions {
     }
   }
 }
+
+@riverpod
+Future<List<Compra>> supplierHistory(SupplierHistoryRef ref, int supplierId) {
+  if (supplierId == 0) return Future.value([]);
+  return ref.read(purchaseRepositoryProvider).listar(fornecedorId: supplierId);
+}

@@ -24,7 +24,7 @@ final filteredSuppliersProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FilteredSuppliersRef = AutoDisposeProviderRef<List<Fornecedor>>;
-String _$suppliersHash() => r'0d8fcfb9aa4eddc09d92a2ea8d276fdeeb1d5d90';
+String _$suppliersHash() => r'6f5a043d3271594fefbc3d27a122184d2d74c917';
 
 /// See also [Suppliers].
 @ProviderFor(Suppliers)
@@ -56,5 +56,21 @@ final supplierSearchProvider =
     );
 
 typedef _$SupplierSearch = AutoDisposeNotifier<String>;
+String _$supplierInactivesHash() => r'9e09fb0b0e76cd97dbd1796cee44d49d27b46c72';
+
+/// See also [SupplierInactives].
+@ProviderFor(SupplierInactives)
+final supplierInactivesProvider =
+    AutoDisposeNotifierProvider<SupplierInactives, bool>.internal(
+      SupplierInactives.new,
+      name: r'supplierInactivesProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$supplierInactivesHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$SupplierInactives = AutoDisposeNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

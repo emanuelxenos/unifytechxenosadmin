@@ -25,8 +25,16 @@ class PurchaseRepository {
     await _api.post(ApiEndpoints.compras, data: request.toJson());
   }
 
-  Future<List<Compra>> listar() async {
-    final response = await _api.get(ApiEndpoints.compras);
+  Future<List<Compra>> listar({int? fornecedorId}) async {
+    final queryParams = <String, dynamic>{};
+    if (fornecedorId != null && fornecedorId > 0) {
+      queryParams['fornecedor_id'] = fornecedorId;
+    }
+
+    final response = await _api.get(
+      ApiEndpoints.compras,
+      queryParameters: queryParams,
+    );
     final data = _extractData(response.data);
     if (data is List) {
       return data.map((e) => Compra.fromJson(e as Map<String, dynamic>)).toList();
