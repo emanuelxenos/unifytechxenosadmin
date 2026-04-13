@@ -44,17 +44,46 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                       ),
                       const SizedBox(height: 8),
                       suppliersAsync.when(
-                        data: (suppliers) => DropdownButtonFormField<int>(
-                          value: _selectedSupplierId,
-                          hint: const Text('Escolha um fornecedor para analisar'),
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          items: suppliers.map((s) => DropdownMenuItem(
-                            value: s.idFornecedor,
-                            child: Text(s.razaoSocial),
-                          )).toList(),
-                          onChanged: (val) => setState(() => _selectedSupplierId = val),
+                        data: (suppliers) => SearchAnchor(
+                          builder: (context, controller) {
+                            final selectedSupplier = suppliers.any((s) => s.idFornecedor == _selectedSupplierId)
+                                ? suppliers.firstWhere((s) => s.idFornecedor == _selectedSupplierId)
+                                : null;
+
+                            return SearchBar(
+                              controller: controller,
+                              hintText: selectedSupplier?.razaoSocial ?? 'Pesquisar fornecedor...',
+                              padding: const WidgetStatePropertyAll<EdgeInsets>(
+                                EdgeInsets.symmetric(horizontal: 16.0),
+                              ),
+                              onTap: () => controller.openView(),
+                              onChanged: (_) => controller.openView(),
+                              leading: const Icon(Icons.search),
+                              trailing: selectedSupplier != null ? [
+                                IconButton(
+                                  onPressed: () => setState(() => _selectedSupplierId = null),
+                                  icon: const Icon(Icons.clear),
+                                ),
+                              ] : null,
+                            );
+                          },
+                          suggestionsBuilder: (context, controller) {
+                            final query = controller.text.toLowerCase();
+                            final filtered = suppliers.where((s) =>
+                                s.razaoSocial.toLowerCase().contains(query) ||
+                                (s.cnpj?.contains(query) ?? false)).toList();
+
+                            return filtered.map((s) => ListTile(
+                                  title: Text(s.razaoSocial),
+                                  subtitle: Text(s.cnpj ?? 'Sem CNPJ'),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedSupplierId = s.idFornecedor;
+                                      controller.closeView(s.razaoSocial);
+                                    });
+                                  },
+                                ));
+                          },
                         ),
                         loading: () => const LinearProgressIndicator(),
                         error: (e, _) => Text('Erro ao carregar fornecedores: $e'),
@@ -62,14 +91,7 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                     ],
                   ),
                 ),
-                if (_selectedSupplierId != null) ...[
-                  const SizedBox(width: 24),
-                  IconButton.filledTonal(
-                    onPressed: () => setState(() => _selectedSupplierId = null),
-                    icon: const Icon(Icons.close_rounded),
-                    tooltip: 'Limpar seleção',
-                  ),
-                ],
+                // REMOVED: redundant close button since search bar has it
               ],
             ),
           ),
