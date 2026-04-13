@@ -40,6 +40,7 @@ class ApiEndpoints {
 
   // Compras
   static const String compras = '/api/compras';
+  static String compraPorId(int id) => '/api/compras/$id';
   static String compraReceber(int id) => '/api/compras/$id/receber';
 
   // Financeiro

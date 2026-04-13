@@ -147,7 +147,127 @@ class _SupplierHistoryProviderElement
   int get supplierId => (origin as SupplierHistoryProvider).supplierId;
 }
 
-String _$purchasesHash() => r'352df412d9855800aad66e38d05d26165e742ca3';
+String _$purchaseDetailHash() => r'26506bc00214ccc1a18a8b335566c343ccab384a';
+
+/// See also [purchaseDetail].
+@ProviderFor(purchaseDetail)
+const purchaseDetailProvider = PurchaseDetailFamily();
+
+/// See also [purchaseDetail].
+class PurchaseDetailFamily extends Family<AsyncValue<Compra>> {
+  /// See also [purchaseDetail].
+  const PurchaseDetailFamily();
+
+  /// See also [purchaseDetail].
+  PurchaseDetailProvider call(int id) {
+    return PurchaseDetailProvider(id);
+  }
+
+  @override
+  PurchaseDetailProvider getProviderOverride(
+    covariant PurchaseDetailProvider provider,
+  ) {
+    return call(provider.id);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'purchaseDetailProvider';
+}
+
+/// See also [purchaseDetail].
+class PurchaseDetailProvider extends AutoDisposeFutureProvider<Compra> {
+  /// See also [purchaseDetail].
+  PurchaseDetailProvider(int id)
+    : this._internal(
+        (ref) => purchaseDetail(ref as PurchaseDetailRef, id),
+        from: purchaseDetailProvider,
+        name: r'purchaseDetailProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$purchaseDetailHash,
+        dependencies: PurchaseDetailFamily._dependencies,
+        allTransitiveDependencies:
+            PurchaseDetailFamily._allTransitiveDependencies,
+        id: id,
+      );
+
+  PurchaseDetailProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final int id;
+
+  @override
+  Override overrideWith(
+    FutureOr<Compra> Function(PurchaseDetailRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: PurchaseDetailProvider._internal(
+        (ref) => create(ref as PurchaseDetailRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Compra> createElement() {
+    return _PurchaseDetailProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PurchaseDetailProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin PurchaseDetailRef on AutoDisposeFutureProviderRef<Compra> {
+  /// The parameter `id` of this provider.
+  int get id;
+}
+
+class _PurchaseDetailProviderElement
+    extends AutoDisposeFutureProviderElement<Compra>
+    with PurchaseDetailRef {
+  _PurchaseDetailProviderElement(super.provider);
+
+  @override
+  int get id => (origin as PurchaseDetailProvider).id;
+}
+
+String _$purchasesHash() => r'993c95ba8c177d4d5824fc5af81649d8975f7919';
 
 /// See also [Purchases].
 @ProviderFor(Purchases)
@@ -179,5 +299,22 @@ final purchaseActionsProvider =
     );
 
 typedef _$PurchaseActions = AutoDisposeNotifier<bool>;
+String _$purchaseFilterStateHash() =>
+    r'515c192d7108e8360cd6e042875921285937d4b9';
+
+/// See also [PurchaseFilterState].
+@ProviderFor(PurchaseFilterState)
+final purchaseFilterStateProvider =
+    AutoDisposeNotifierProvider<PurchaseFilterState, PurchaseFilters>.internal(
+      PurchaseFilterState.new,
+      name: r'purchaseFilterStateProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$purchaseFilterStateHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$PurchaseFilterState = AutoDisposeNotifier<PurchaseFilters>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -25,10 +25,28 @@ class PurchaseRepository {
     await _api.post(ApiEndpoints.compras, data: request.toJson());
   }
 
-  Future<List<Compra>> listar({int? fornecedorId}) async {
+  Future<List<Compra>> listar({
+    int? fornecedorId,
+    String? status,
+    String? notaFiscal,
+    DateTime? dataInicio,
+    DateTime? dataFim,
+  }) async {
     final queryParams = <String, dynamic>{};
     if (fornecedorId != null && fornecedorId > 0) {
       queryParams['fornecedor_id'] = fornecedorId;
+    }
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
+    }
+    if (notaFiscal != null && notaFiscal.isNotEmpty) {
+      queryParams['nota_fiscal'] = notaFiscal;
+    }
+    if (dataInicio != null) {
+      queryParams['data_inicio'] = dataInicio.toIso8601String().split('T')[0];
+    }
+    if (dataFim != null) {
+      queryParams['data_fim'] = dataFim.toIso8601String().split('T')[0];
     }
 
     final response = await _api.get(
@@ -40,6 +58,12 @@ class PurchaseRepository {
       return data.map((e) => Compra.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
+  }
+
+  Future<Compra> buscarPorID(int id) async {
+    final response = await _api.get(ApiEndpoints.compraPorId(id));
+    final data = _extractData(response.data);
+    return Compra.fromJson(data as Map<String, dynamic>);
   }
 
   Future<void> receber(int id, ReceberCompraRequest request) async {
