@@ -58,7 +58,7 @@ class FinanceRepository {
     await _api.post(ApiEndpoints.contaReceberReceber(id), data: request.toJson());
   }
 
-  Future<List<FluxoCaixaItem>> fluxoCaixa({String? dataInicio, String? dataFim}) async {
+  Future<FluxoCaixaResponse> fluxoCaixa({String? dataInicio, String? dataFim}) async {
     final response = await _api.get(
       ApiEndpoints.fluxoCaixa,
       queryParameters: {
@@ -67,12 +67,12 @@ class FinanceRepository {
       },
     );
     final data = response.data;
-    if (data is List) {
-      return data.map((e) => FluxoCaixaItem.fromJson(e as Map<String, dynamic>)).toList();
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      return FluxoCaixaResponse.fromJson(data['data'] as Map<String, dynamic>);
     }
-    if (data is Map && data['data'] is List) {
-      return (data['data'] as List).map((e) => FluxoCaixaItem.fromJson(e as Map<String, dynamic>)).toList();
+    if (data is Map<String, dynamic>) {
+      return FluxoCaixaResponse.fromJson(data);
     }
-    return [];
+    return FluxoCaixaResponse(items: [], totalEntrada: 0, totalSaida: 0, saldo: 0);
   }
 }

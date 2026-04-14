@@ -65,7 +65,7 @@ class AccountsReceivable extends _$AccountsReceivable {
 @riverpod
 class CashFlow extends _$CashFlow {
   @override
-  Future<List<FluxoCaixaItem>> build() async {
+  Future<FluxoCaixaResponse> build() async {
     return ref.read(financeRepositoryProvider).fluxoCaixa();
   }
 

@@ -17,6 +17,31 @@ class FluxoCaixaItem {
       );
 }
 
+class FluxoCaixaResponse {
+  final List<FluxoCaixaItem> items;
+  final double totalEntrada;
+  final double totalSaida;
+  final double saldo;
+
+  FluxoCaixaResponse({
+    required this.items,
+    required this.totalEntrada,
+    required this.totalSaida,
+    required this.saldo,
+  });
+
+  factory FluxoCaixaResponse.fromJson(Map<String, dynamic> json) =>
+      FluxoCaixaResponse(
+        items: (json['items'] as List?)
+                ?.map((e) => FluxoCaixaItem.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
+        totalEntrada: (json['total_entrada'] as num? ?? 0).toDouble(),
+        totalSaida: (json['total_saida'] as num? ?? 0).toDouble(),
+        saldo: (json['saldo'] as num? ?? 0).toDouble(),
+      );
+}
+
 class Configuracao {
   final int idConfig;
   final int empresaId;

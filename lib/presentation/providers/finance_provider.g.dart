@@ -45,12 +45,12 @@ final accountsReceivableProvider =
     );
 
 typedef _$AccountsReceivable = AutoDisposeAsyncNotifier<List<ContaReceber>>;
-String _$cashFlowHash() => r'54fdd4e3d6cd56ddf8ff1b15611adeb38737cfb8';
+String _$cashFlowHash() => r'272e20dc6cecb40a95147183b6909cf8e6083323';
 
 /// See also [CashFlow].
 @ProviderFor(CashFlow)
 final cashFlowProvider =
-    AutoDisposeAsyncNotifierProvider<CashFlow, List<FluxoCaixaItem>>.internal(
+    AutoDisposeAsyncNotifierProvider<CashFlow, FluxoCaixaResponse>.internal(
       CashFlow.new,
       name: r'cashFlowProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -60,6 +60,6 @@ final cashFlowProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$CashFlow = AutoDisposeAsyncNotifier<List<FluxoCaixaItem>>;
+typedef _$CashFlow = AutoDisposeAsyncNotifier<FluxoCaixaResponse>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
