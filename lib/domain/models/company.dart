@@ -19,6 +19,11 @@ class Empresa {
   final String regimeTributario;
   final String moeda;
   final int casasDecimais;
+  final String fusoHorario;
+  final String? logotipoUrl;
+  final String corPrimaria;
+  final String corSecundaria;
+  final String? observacoes;
   final bool ativo;
   final DateTime dataCadastro;
   final DateTime? dataAtualizacao;
@@ -44,6 +49,11 @@ class Empresa {
     this.regimeTributario = 'SIMPLES',
     this.moeda = 'R\$',
     this.casasDecimais = 2,
+    this.fusoHorario = 'America/Sao_Paulo',
+    this.logotipoUrl,
+    this.corPrimaria = '#1976D2',
+    this.corSecundaria = '#43A047',
+    this.observacoes,
     this.ativo = true,
     required this.dataCadastro,
     this.dataAtualizacao,
@@ -70,6 +80,11 @@ class Empresa {
         regimeTributario: json['regime_tributario'] as String? ?? 'SIMPLES',
         moeda: json['moeda'] as String? ?? 'R\$',
         casasDecimais: json['casas_decimais'] as int? ?? 2,
+        fusoHorario: json['fuso_horario'] as String? ?? 'America/Sao_Paulo',
+        logotipoUrl: json['logotipo_url'] as String?,
+        corPrimaria: json['cor_primaria'] as String? ?? '#1976D2',
+        corSecundaria: json['cor_secundaria'] as String? ?? '#43A047',
+        observacoes: json['observacoes'] as String?,
         ativo: json['ativo'] as bool? ?? true,
         dataCadastro: DateTime.parse(json['data_cadastro'] as String),
         dataAtualizacao: json['data_atualizacao'] != null
@@ -98,6 +113,11 @@ class Empresa {
         'regime_tributario': regimeTributario,
         'moeda': moeda,
         'casas_decimais': casasDecimais,
+        'fuso_horario': fusoHorario,
+        'logotipo_url': logotipoUrl,
+        'cor_primaria': corPrimaria,
+        'cor_secundaria': corSecundaria,
+        'observacoes': observacoes,
         'ativo': ativo,
       };
 }

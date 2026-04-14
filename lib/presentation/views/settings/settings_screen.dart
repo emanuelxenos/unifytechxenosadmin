@@ -6,6 +6,7 @@ import 'package:unifytechxenosadmin/presentation/providers/auth_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/user.dart';
 import 'package:unifytechxenosadmin/data/repositories/user_repository.dart';
+import 'package:unifytechxenosadmin/presentation/views/settings/company_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -20,7 +21,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -59,6 +60,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                 unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
                 tabs: const [
                   Tab(text: 'Servidor'),
+                  Tab(text: 'Empresa'),
                   Tab(text: 'Usuários'),
                   Tab(text: 'Sistema'),
                 ],
@@ -70,6 +72,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                 controller: _tabController,
                 children: [
                   _ServerSettingsTab(),
+                  const CompanySettingsScreen(),
                   _UsersSettingsTab(controller: _userTableController),
                   _SystemSettingsTab(),
                 ],

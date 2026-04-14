@@ -60,6 +60,7 @@ class ApiEndpoints {
 
   // Config (Admin)
   static const String config = '/api/config';
+  static const String empresa = '/api/empresa';
 
   // Usuários (Admin)
   static const String usuarios = '/api/usuarios';
