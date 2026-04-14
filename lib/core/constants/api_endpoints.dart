@@ -64,6 +64,7 @@ class ApiEndpoints {
 
   // Usuários (Admin)
   static const String usuarios = '/api/usuarios';
+  static String usuarioPorId(int id) => '/api/usuarios/$id';
 
   // Backup (Admin)
   static const String backup = '/api/backup';

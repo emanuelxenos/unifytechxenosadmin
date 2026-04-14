@@ -31,6 +31,14 @@ class UserRepository {
     await _api.post(ApiEndpoints.usuarios, data: request.toJson());
   }
 
+  Future<void> atualizar(int id, CriarUsuarioRequest request) async {
+    await _api.put(ApiEndpoints.usuarioPorId(id), data: request.toJson());
+  }
+
+  Future<void> inativar(int id) async {
+    await _api.delete(ApiEndpoints.usuarioPorId(id));
+  }
+
   Future<List<Configuracao>> listarConfigs() async {
     final response = await _api.get(ApiEndpoints.config);
     final data = response.data;
