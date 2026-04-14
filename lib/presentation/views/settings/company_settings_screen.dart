@@ -13,7 +13,10 @@ class CompanySettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<CompanySettingsScreen> createState() => _CompanySettingsScreenState();
 }
 
-class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> {
+class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final _formKey = GlobalKey<FormState>();
   
   // Controllers
@@ -44,7 +47,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> {
   String _regimeTributario = 'SIMPLES';
 
   // Formatters
-  final _cnpjFormatter = MaskTextInputFormatter(mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9]')});
+  final _cnpjFormatter = MaskTextInputFormatter(mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9A-Za-z]')});
   final _cepFormatter = MaskTextInputFormatter(mask: '#####-###', filter: {"#": RegExp(r'[0-9]')});
   final _phoneFormatter = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
 
@@ -55,7 +58,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> {
     
     _razaoSocialCtrl.text = empresa.razaoSocial;
     _nomeFantasiaCtrl.text = empresa.nomeFantasia;
-    _cnpjCtrl.text = _cnpjFormatter.maskText(empresa.cnpj);
+    _cnpjCtrl.text = _cnpjFormatter.maskText(empresa.cnpj.replaceAll(RegExp(r'[^0-9A-Za-z]'), ''));
     _ieCtrl.text = empresa.inscricaoEstadual ?? '';
     _imCtrl.text = empresa.inscricaoMunicipal ?? '';
     _logradouroCtrl.text = empresa.logradouro;
@@ -64,9 +67,9 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> {
     _bairroCtrl.text = empresa.bairro;
     _cidadeCtrl.text = empresa.cidade;
     _estadoCtrl.text = empresa.estado;
-    _cepCtrl.text = _cepFormatter.maskText(empresa.cep);
-    _telefoneCtrl.text = _phoneFormatter.maskText(empresa.telefone);
-    _telefone2Ctrl.text = empresa.telefone2 != null ? _phoneFormatter.maskText(empresa.telefone2!) : '';
+    _cepCtrl.text = _cepFormatter.maskText(empresa.cep.replaceAll(RegExp(r'[^0-9]'), ''));
+    _telefoneCtrl.text = _phoneFormatter.maskText(empresa.telefone.replaceAll(RegExp(r'[^0-9]'), ''));
+    _telefone2Ctrl.text = empresa.telefone2 != null ? _phoneFormatter.maskText(empresa.telefone2!.replaceAll(RegExp(r'[^0-9]'), '')) : '';
     _emailCtrl.text = empresa.email;
     _siteCtrl.text = empresa.site ?? '';
     _moedaCtrl.text = empresa.moeda;
@@ -157,6 +160,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final empresaAsync = ref.watch(empresaStateProvider);
     final theme = Theme.of(context);
 

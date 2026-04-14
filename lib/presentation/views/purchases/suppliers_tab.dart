@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/presentation/providers/supplier_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
@@ -177,6 +178,8 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
   final _cnpjCtrl = TextEditingController();
   final _telefoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _cnpjFormatter = MaskTextInputFormatter(mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9A-Za-z]')});
+  final _phoneFormatter = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
   bool _saving = false;
 
   @override
@@ -184,8 +187,8 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
     super.initState();
     if (widget.supplier != null) {
       _razaoSocialCtrl.text = widget.supplier!.razaoSocial;
-      _cnpjCtrl.text = widget.supplier!.cnpj ?? '';
-      _telefoneCtrl.text = widget.supplier!.telefone ?? '';
+      _cnpjCtrl.text = _cnpjFormatter.maskText(widget.supplier!.cnpj?.replaceAll(RegExp(r'[^0-9A-Za-z]'), '') ?? '');
+      _telefoneCtrl.text = _phoneFormatter.maskText(widget.supplier!.telefone?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
       _emailCtrl.text = widget.supplier!.email ?? '';
     }
   }
@@ -219,7 +222,8 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _cnpjCtrl,
-                decoration: const InputDecoration(labelText: 'CNPJ'),
+                decoration: const InputDecoration(labelText: 'CNPJ', hintText: '00.000.000/0000-00'),
+                inputFormatters: [_cnpjFormatter],
               ),
               const SizedBox(height: 12),
               Row(
@@ -227,7 +231,8 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
                   Expanded(
                     child: TextFormField(
                       controller: _telefoneCtrl,
-                      decoration: const InputDecoration(labelText: 'Telefone'),
+                      decoration: const InputDecoration(labelText: 'Telefone', hintText: '(00) 00000-0000'),
+                      inputFormatters: [_phoneFormatter],
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -262,8 +267,8 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
 
     final req = CriarFornecedorRequest(
       razaoSocial: _razaoSocialCtrl.text.trim(),
-      cnpj: _cnpjCtrl.text.trim(),
-      telefone: _telefoneCtrl.text.trim(),
+      cnpj: _cnpjFormatter.getUnmaskedText(),
+      telefone: _phoneFormatter.getUnmaskedText(),
       email: _emailCtrl.text.trim(),
     );
 
