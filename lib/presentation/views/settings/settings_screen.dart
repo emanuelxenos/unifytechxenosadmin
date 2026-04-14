@@ -232,7 +232,7 @@ class _UsersSettingsTab extends ConsumerWidget {
                 if (context.mounted) Navigator.pop(context);
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                  AppNotifications.showError(context, 'Erro: $e');
                 }
               }
             },
@@ -315,10 +315,13 @@ class _UsersSettingsTab extends ConsumerWidget {
                     await ref.read(userManagementProvider.notifier).criarUsuario(req);
                   }
                   
-                  if (context.mounted) Navigator.pop(context);
+                  if (context.mounted) {
+                    AppNotifications.showSuccess(context, 'Usuário ${isEditing ? 'atualizado' : 'criado'} com sucesso!');
+                    Navigator.pop(context);
+                  }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                    AppNotifications.showError(context, 'Erro: $e');
                   }
                 }
               },
@@ -371,9 +374,7 @@ class _SystemSettingsTab extends ConsumerWidget {
             subtitle: const Text('Criar backup do banco de dados'),
             trailing: OutlinedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Funcionalidade de backup será disponibilizada em breve')),
-                );
+                AppNotifications.showSuccess(context, 'Funcionalidade de backup será disponibilizada em breve');
               },
               child: const Text('Executar'),
             ),

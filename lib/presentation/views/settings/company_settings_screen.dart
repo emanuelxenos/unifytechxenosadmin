@@ -146,15 +146,11 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> {
     try {
       await ref.read(empresaStateProvider.notifier).atualizarEmpresa(updated);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Configurações da empresa atualizadas!')),
-        );
+        AppNotifications.showSuccess(context, 'Configurações da empresa atualizadas!');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: AppTheme.accentRed),
-        );
+        AppNotifications.showError(context, 'Erro ao salvar: $e');
       }
     }
   }
