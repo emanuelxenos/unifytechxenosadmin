@@ -107,10 +107,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               child: Container(
                 decoration: AppTheme.glassCard(),
                 clipBehavior: Clip.antiAlias,
-                child: productsAsync.when(
+                child: productsAsync.response.when(
                   loading: () => const LoadingOverlay(message: 'Carregando estoque...'),
                   error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
-                  data: (products) {
+                  data: (paginated) {
+                    final products = paginated.data;
                     final stockProducts = products.where((p) {
                       final matchesControlled = p.controlarEstoque;
                       if (!matchesControlled) return false;

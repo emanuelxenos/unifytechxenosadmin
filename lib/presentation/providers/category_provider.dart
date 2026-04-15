@@ -1,20 +1,72 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/data/repositories/category_repository.dart';
 import 'package:unifytechxenosadmin/domain/models/category.dart';
+import 'package:unifytechxenosadmin/domain/models/pagination.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 
 part 'category_provider.g.dart';
 
+class CategoryState {
+  final int page;
+  final int limit;
+  final String search;
+  final AsyncValue<PaginatedResponse<Categoria>> response;
+
+  CategoryState({
+    this.page = 1,
+    this.limit = 50,
+    this.search = '',
+    this.response = const AsyncLoading(),
+  });
+
+  CategoryState copyWith({
+    int? page,
+    int? limit,
+    String? search,
+    AsyncValue<PaginatedResponse<Categoria>>? response,
+  }) {
+    return CategoryState(
+      page: page ?? this.page,
+      limit: limit ?? this.limit,
+      search: search ?? this.search,
+      response: response ?? this.response,
+    );
+  }
+}
+
 @riverpod
 class Categories extends _$Categories {
   @override
-  Future<List<Categoria>> build() async {
-    return ref.read(categoryRepositoryProvider).listarCategorias();
+  CategoryState build() {
+    // Schdedule initial load outside of build cycle
+    Future.microtask(() => _load());
+    return CategoryState();
   }
 
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(categoryRepositoryProvider).listarCategorias());
+  Future<void> _load() async {
+    final repo = ref.read(categoryRepositoryProvider);
+    state = state.copyWith(response: const AsyncLoading());
+    
+    final result = await AsyncValue.guard(() => repo.listarCategorias(
+      page: state.page,
+      limit: state.limit,
+      search: state.search,
+    ));
+    
+    state = state.copyWith(response: result);
+  }
+
+  Future<void> refresh() => _load();
+
+  void setPage(int page) {
+    if (page < 1) return;
+    state = state.copyWith(page: page);
+    _load();
+  }
+
+  void setSearch(String search) {
+    state = state.copyWith(search: search, page: 1);
+    _load();
   }
 
   Future<(bool, String)> criar(CriarCategoriaRequest request) async {

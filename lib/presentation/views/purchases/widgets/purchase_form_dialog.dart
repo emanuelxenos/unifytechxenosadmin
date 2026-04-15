@@ -191,17 +191,21 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
                   ),
                   const SizedBox(height: 8),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final p = products[index];
-                        return ListTile(
-                          title: Text(p.nome),
-                          subtitle: Text('Estoque: ${p.estoqueAtual}'),
-                          trailing: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
-                          onTap: () => _addProduct(p),
-                        );
-                      },
+                    child: products.when(
+                      data: (items) => ListView.builder(
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final p = items[index];
+                          return ListTile(
+                            title: Text(p.nome),
+                            subtitle: Text('Estoque: ${p.estoqueAtual}'),
+                            trailing: const Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                            onTap: () => _addProduct(p),
+                          );
+                        },
+                      ),
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('Erro: $e')),
                     ),
                   ),
                 ],

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/domain/models/category.dart';
+import 'package:unifytechxenosadmin/domain/models/pagination.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 
 part 'category_repository.g.dart';
@@ -22,15 +23,23 @@ class CategoryRepository {
     return responseData;
   }
 
-  Future<List<Categoria>> listarCategorias() async {
-    final response = await _api.get(ApiEndpoints.categorias);
-    final data = _extractData(response.data);
-    if (data is List) {
-      return data
-          .map((e) => Categoria.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }
-    return [];
+  Future<PaginatedResponse<Categoria>> listarCategorias({
+    int page = 1,
+    int limit = 50,
+    String? search,
+  }) async {
+    final response = await _api.get(
+      ApiEndpoints.categorias,
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    return PaginatedResponse.fromJson(
+      response.data as Map<String, dynamic>,
+      (json) => Categoria.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   Future<Categoria> criarCategoria(CriarCategoriaRequest request) async {

@@ -6,29 +6,30 @@ part of 'product_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$filteredProductsHash() => r'6a8abd82e33d7758d6e9e2da58effa66a5dfba6e';
+String _$filteredProductsHash() => r'0289c5ff7a155f595f46601afa0e0d54e449f694';
 
 /// See also [filteredProducts].
 @ProviderFor(filteredProducts)
-final filteredProductsProvider = AutoDisposeProvider<List<Produto>>.internal(
-  filteredProducts,
-  name: r'filteredProductsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$filteredProductsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final filteredProductsProvider =
+    AutoDisposeProvider<AsyncValue<List<Produto>>>.internal(
+      filteredProducts,
+      name: r'filteredProductsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$filteredProductsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef FilteredProductsRef = AutoDisposeProviderRef<List<Produto>>;
-String _$productsHash() => r'f1fb2c7c4a9a6e5f81b6e9f1348eafb6116cfa0e';
+typedef FilteredProductsRef = AutoDisposeProviderRef<AsyncValue<List<Produto>>>;
+String _$productsHash() => r'd1957c34807e05189e12ae6173cb49faa81c772e';
 
 /// See also [Products].
 @ProviderFor(Products)
 final productsProvider =
-    AutoDisposeAsyncNotifierProvider<Products, List<Produto>>.internal(
+    AutoDisposeNotifierProvider<Products, ProductState>.internal(
       Products.new,
       name: r'productsProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -38,7 +39,7 @@ final productsProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$Products = AutoDisposeAsyncNotifier<List<Produto>>;
+typedef _$Products = AutoDisposeNotifier<ProductState>;
 String _$productSearchHash() => r'880d76621144a8c52e5e734f8615fb532e8d12f8';
 
 /// See also [ProductSearch].

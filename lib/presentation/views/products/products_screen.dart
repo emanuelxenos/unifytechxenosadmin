@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
+import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/confirmation_dialog.dart';
 import 'package:unifytechxenosadmin/domain/models/product.dart';
@@ -18,11 +19,13 @@ class ProductsScreen extends ConsumerStatefulWidget {
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _searchController = TextEditingController();
   final _horizontalController = ScrollController();
+  final _debouncer = Debouncer(milliseconds: 500);
 
   @override
   void dispose() {
     _searchController.dispose();
     _horizontalController.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -94,8 +97,9 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   Expanded(
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (v) =>
-                          ref.read(productSearchProvider.notifier).setQuery(v),
+                      onChanged: (v) {
+                        _debouncer.run(() => ref.read(productsProvider.notifier).setSearch(v));
+                      },
                       decoration: InputDecoration(
                         hintText:
                             'Buscar por nome, código de barras ou categoria...',
@@ -106,9 +110,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                 icon: const Icon(Icons.clear, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
-                                  ref
-                                      .read(productSearchProvider.notifier)
-                                      .setQuery('');
+                                  ref.read(productsProvider.notifier).setSearch('');
                                 },
                               )
                             : null,
@@ -134,7 +136,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               child: Container(
                 decoration: AppTheme.glassCard(),
                 clipBehavior: Clip.antiAlias,
-                child: productsAsync.when(
+                child: productsAsync.response.when(
                   loading: () => const LoadingOverlay(
                       message: 'Carregando produtos...'),
                   error: (e, _) => EmptyState(
@@ -147,8 +149,9 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                       child: const Text('Tentar novamente'),
                     ),
                   ),
-                  data: (_) {
-                    if (filtered.isEmpty) {
+                  data: (paginated) {
+                    final products = paginated.data;
+                    if (products.isEmpty) {
                       return const EmptyState(
                         icon: Icons.inventory_2_outlined,
                         title: 'Nenhum produto encontrado',
@@ -156,35 +159,80 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                             'Cadastre produtos ou ajuste o filtro de busca',
                       );
                     }
-                    return Scrollbar(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: Scrollbar(
-                          controller: _horizontalController,
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            controller: _horizontalController,
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              showCheckboxColumn: false,
-                              columns: const [
-                                DataColumn(label: Text('CÓDIGO')),
-                                DataColumn(label: Text('NOME')),
-                                DataColumn(label: Text('CATEGORIA')),
-                                DataColumn(label: Text('UNIDADE')),
-                                DataColumn(label: Text('ESTOQUE'), numeric: true),
-                                DataColumn(label: Text('PREÇO CUSTO'), numeric: true),
-                                DataColumn(label: Text('PREÇO VENDA'), numeric: true),
-                                DataColumn(label: Text('STATUS')),
-                                DataColumn(label: Text('AÇÕES')),
-                              ],
-                              rows: filtered
-                                  .map((p) => _buildProductRow(p, theme))
-                                  .toList(),
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: Scrollbar(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: Scrollbar(
+                                controller: _horizontalController,
+                                thumbVisibility: true,
+                                child: SingleChildScrollView(
+                                  controller: _horizontalController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    showCheckboxColumn: false,
+                                    columns: const [
+                                      DataColumn(label: Text('CÓDIGO')),
+                                      DataColumn(label: Text('NOME')),
+                                      DataColumn(label: Text('CATEGORIA')),
+                                      DataColumn(label: Text('UNIDADE')),
+                                      DataColumn(label: Text('ESTOQUE'), numeric: true),
+                                      DataColumn(label: Text('PREÇO CUSTO'), numeric: true),
+                                      DataColumn(label: Text('PREÇO VENDA'), numeric: true),
+                                      DataColumn(label: Text('STATUS')),
+                                      DataColumn(label: Text('AÇÕES')),
+                                    ],
+                                    rows: products
+                                        .map((p) => _buildProductRow(p, theme))
+                                        .toList(),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        const Divider(color: Colors.white10, height: 1),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total: ${paginated.total} produtos',
+                                style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Página ${paginated.page} de ${(paginated.total / paginated.limit).ceil() == 0 ? 1 : (paginated.total / paginated.limit).ceil()}',
+                                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    onPressed: paginated.hasPreviousPage
+                                        ? () => ref.read(productsProvider.notifier).setPage(paginated.page - 1)
+                                        : null,
+                                    icon: const Icon(Icons.chevron_left, size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    onPressed: paginated.hasNextPage
+                                        ? () => ref.read(productsProvider.notifier).setPage(paginated.page + 1)
+                                        : null,
+                                    icon: const Icon(Icons.chevron_right, size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -486,7 +534,7 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: categoriasAsync.when(
+                      child: categoriasAsync.response.when(
                         loading: () => const LinearProgressIndicator(),
                         error: (_, _) => DropdownButtonFormField<int>(
                           value: _selectedCategoriaId,
@@ -511,7 +559,7 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
                                 value: null,
                                 child: Text('Sem categoria'),
                               ),
-                              ...categorias.map((c) => DropdownMenuItem<int?>(
+                              ...categorias.data.map((c) => DropdownMenuItem<int?>(
                                     value: c.idCategoria,
                                     child: Text(c.nome),
                                   )),
