@@ -50,6 +50,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
   final _cnpjFormatter = MaskTextInputFormatter(mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9A-Za-z]')});
   final _cepFormatter = MaskTextInputFormatter(mask: '#####-###', filter: {"#": RegExp(r'[0-9]')});
   final _phoneFormatter = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
+  final _phone2Formatter = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
 
   bool _initialized = false;
 
@@ -69,7 +70,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
     _estadoCtrl.text = empresa.estado;
     _cepCtrl.text = _cepFormatter.maskText(empresa.cep.replaceAll(RegExp(r'[^0-9]'), ''));
     _telefoneCtrl.text = _phoneFormatter.maskText(empresa.telefone.replaceAll(RegExp(r'[^0-9]'), ''));
-    _telefone2Ctrl.text = empresa.telefone2 != null ? _phoneFormatter.maskText(empresa.telefone2!.replaceAll(RegExp(r'[^0-9]'), '')) : '';
+    _telefone2Ctrl.text = empresa.telefone2 != null ? _phone2Formatter.maskText(empresa.telefone2!.replaceAll(RegExp(r'[^0-9]'), '')) : '';
     _emailCtrl.text = empresa.email;
     _siteCtrl.text = empresa.site ?? '';
     _moedaCtrl.text = empresa.moeda;
@@ -119,7 +120,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
       idEmpresa: current.idEmpresa,
       razaoSocial: _razaoSocialCtrl.text,
       nomeFantasia: _nomeFantasiaCtrl.text,
-      cnpj: _cnpjFormatter.getUnmaskedText(),
+      cnpj: _cnpjCtrl.text.replaceAll(RegExp(r'[^0-9A-Za-z]'), ''),
       inscricaoEstadual: _ieCtrl.text.isEmpty ? null : _ieCtrl.text,
       inscricaoMunicipal: _imCtrl.text.isEmpty ? null : _imCtrl.text,
       logradouro: _logradouroCtrl.text,
@@ -128,9 +129,9 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
       bairro: _bairroCtrl.text,
       cidade: _cidadeCtrl.text,
       estado: _estadoCtrl.text,
-      cep: _cepFormatter.getUnmaskedText(),
-      telefone: _phoneFormatter.getUnmaskedText(),
-      telefone2: _telefone2Ctrl.text.isEmpty ? null : _phoneFormatter.getUnmaskedText(),
+      cep: _cepCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      telefone: _telefoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      telefone2: _telefone2Ctrl.text.isEmpty ? null : _telefone2Ctrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
       email: _emailCtrl.text,
       site: _siteCtrl.text.isEmpty ? null : _siteCtrl.text,
       regimeTributario: _regimeTributario,
