@@ -75,15 +75,3 @@ List<Produto> filteredProducts(FilteredProductsRef ref) {
   );
 }
 
-@riverpod
-class Categories extends _$Categories {
-  @override
-  Future<List<Categoria>> build() async {
-    return ref.read(productRepositoryProvider).listarCategorias();
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(productRepositoryProvider).listarCategorias());
-  }
-}

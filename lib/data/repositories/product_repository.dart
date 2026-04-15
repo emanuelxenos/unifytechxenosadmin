@@ -80,32 +80,4 @@ class ProductRepository {
     await _api.delete(ApiEndpoints.produtoPorId(id));
   }
 
-  /// Extrai categorias únicas dos produtos listados.
-  /// O backend não tem endpoint exclusivo para categorias,
-  /// então obtemos a partir da listagem de produtos.
-  Future<List<Categoria>> listarCategorias() async {
-    final response = await _api.get(ApiEndpoints.produtos);
-    final data = _extractData(response.data);
-    final categorias = <int, Categoria>{};
-    List<dynamic> products = [];
-    if (data is List) {
-      products = data;
-    }
-    for (final p in products) {
-      final product = p as Map<String, dynamic>;
-      if (product['categoria_id'] != null &&
-          product['categoria_nome'] != null) {
-        final catId = product['categoria_id'] as int;
-        if (!categorias.containsKey(catId)) {
-          categorias[catId] = Categoria(
-            idCategoria: catId,
-            empresaId: product['empresa_id'] as int? ?? 1,
-            nome: product['categoria_nome'] as String,
-            dataCadastro: DateTime.now(),
-          );
-        }
-      }
-    }
-    return categorias.values.toList();
-  }
 }

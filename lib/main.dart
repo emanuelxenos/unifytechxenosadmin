@@ -11,6 +11,7 @@ import 'package:unifytechxenosadmin/presentation/views/login/login_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/server_config/server_config_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/dashboard/dashboard_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/products_screen.dart';
+import 'package:unifytechxenosadmin/presentation/views/categories/categories_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/stock_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/sales/sales_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/purchases_screen.dart';
@@ -85,6 +86,10 @@ class UnifyTechAdminApp extends ConsumerWidget {
             GoRoute(
               path: '/produtos',
               builder: (context, state) => const ProductsScreen(),
+            ),
+            GoRoute(
+              path: '/categorias',
+              builder: (context, state) => const CategoriesScreen(),
             ),
             GoRoute(
               path: '/estoque',

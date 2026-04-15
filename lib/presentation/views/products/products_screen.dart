@@ -6,6 +6,8 @@ import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/confirmation_dialog.dart';
 import 'package:unifytechxenosadmin/domain/models/product.dart';
+import 'package:unifytechxenosadmin/domain/models/category.dart';
+import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});

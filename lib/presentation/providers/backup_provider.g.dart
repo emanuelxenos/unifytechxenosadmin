@@ -22,7 +22,7 @@ final backupHistoryProvider =
     );
 
 typedef _$BackupHistory = AutoDisposeAsyncNotifier<List<Backup>>;
-String _$backupExecutorHash() => r'36f190be43ed0a72a5ab6b55b2d01552f3bc31ab';
+String _$backupExecutorHash() => r'4875b0cb49db35f5e7f3d6c2cad61b625d255231';
 
 /// See also [BackupExecutor].
 @ProviderFor(BackupExecutor)
