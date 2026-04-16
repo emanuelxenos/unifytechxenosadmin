@@ -13,14 +13,24 @@ class ReportRepository {
   final ApiService _api;
   ReportRepository(this._api);
 
+  Map<String, dynamic> _extractMapData(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) {
+      if (responseData.containsKey('data') && responseData['data'] is Map<String, dynamic>) {
+        return responseData['data'] as Map<String, dynamic>;
+      }
+      return responseData;
+    }
+    return {};
+  }
+
   Future<Map<String, dynamic>> vendasDia() async {
     final response = await _api.get(ApiEndpoints.relatorioVendasDia);
-    return response.data as Map<String, dynamic>;
+    return _extractMapData(response.data);
   }
 
   Future<Map<String, dynamic>> vendasMes() async {
     final response = await _api.get(ApiEndpoints.relatorioVendasMes);
-    return response.data as Map<String, dynamic>;
+    return _extractMapData(response.data);
   }
 
   Future<Map<String, dynamic>> vendasPeriodo(String dataInicio, String dataFim) async {
@@ -28,7 +38,7 @@ class ReportRepository {
       ApiEndpoints.relatorioVendasPeriodo,
       queryParameters: {'data_inicio': dataInicio, 'data_fim': dataFim},
     );
-    return response.data as Map<String, dynamic>;
+    return _extractMapData(response.data);
   }
 
   Future<List<Map<String, dynamic>>> maisVendidos({String periodo = '30d'}) async {
@@ -44,5 +54,23 @@ class ReportRepository {
       return (data['data'] as List).cast<Map<String, dynamic>>();
     }
     return [];
+  }
+
+  Future<Map<String, dynamic>> estoqueResumo() async {
+    final response = await _api.get(ApiEndpoints.relatorioEstoqueResumo);
+    return _extractMapData(response.data);
+  }
+
+  Future<Map<String, dynamic>> financeiroResumo() async {
+    final response = await _api.get(ApiEndpoints.relatorioFinanceiroResumo);
+    return _extractMapData(response.data);
+  }
+
+  Future<void> exportarRelatorio(String formato, String savePath, String tipo) async {
+    final endpoint = formato == 'pdf' 
+        ? ApiEndpoints.relatorioExportPdf 
+        : ApiEndpoints.relatorioExportExcel;
+    
+    await _api.download(endpoint, savePath, queryParameters: {'tipo': tipo});
   }
 }

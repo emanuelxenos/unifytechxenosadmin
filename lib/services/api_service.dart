@@ -108,6 +108,14 @@ class ApiService {
     );
   }
 
+  Future<Response> download(String path, String savePath, {Map<String, dynamic>? queryParameters}) async {
+    return _dio.download(
+      '$baseUrl$path',
+      savePath,
+      queryParameters: queryParameters,
+    );
+  }
+
   /// Test connection to the server
   Future<bool> testConnection() async {
     try {

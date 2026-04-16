@@ -59,6 +59,8 @@ class ApiEndpoints {
   static const String relatorioVendasMes = '/api/relatorios/vendas/mes';
   static const String relatorioVendasPeriodo = '/api/relatorios/vendas/periodo';
   static const String relatorioMaisVendidos = '/api/relatorios/produtos/mais-vendidos';
+  static const String relatorioEstoqueResumo = '/api/relatorios/estoque/resumo';
+  static const String relatorioFinanceiroResumo = '/api/relatorios/financeiro/resumo';
   static const String relatorioExportPdf = '/api/relatorios/exportar/pdf';
   static const String relatorioExportExcel = '/api/relatorios/exportar/excel';
 
