@@ -14,35 +14,25 @@ class ReportsScreen extends ConsumerStatefulWidget {
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  int _selectedReportIndex = 0;
   bool _isExporting = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 9, vsync: this);
-  }
+  final List<_ReportItem> _reports = [
+    _ReportItem(title: 'Vendas Hoje', icon: Icons.today_rounded, type: 'vendas_dia', category: 'Operacional'),
+    _ReportItem(title: 'Vendas do Mês', icon: Icons.calendar_month_rounded, type: 'vendas_mes', category: 'Operacional'),
+    _ReportItem(title: 'Mais Vendidos', icon: Icons.star_rounded, type: 'mais_vendidos', category: 'Operacional'),
+    _ReportItem(title: 'Visão de Estoque', icon: Icons.inventory_2_rounded, type: 'estoque', category: 'Estoque'),
+    _ReportItem(title: 'Curva ABC', icon: Icons.auto_graph_rounded, type: 'abc', category: 'Estoque'),
+    _ReportItem(title: 'Resumo Financeiro', icon: Icons.account_balance_rounded, type: 'financeiro', category: 'Financeiro'),
+    _ReportItem(title: 'Inadimplência', icon: Icons.person_off_rounded, type: 'inadimplencia', category: 'Financeiro'),
+    _ReportItem(title: 'DRE Gerencial', icon: Icons.assessment_rounded, type: 'dre', category: 'Estratégico'),
+    _ReportItem(title: 'Comissões', icon: Icons.badge_rounded, type: 'comissoes', category: 'Estratégico'),
+  ];
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
 
   String _getTipoRelatorioAtivo() {
-    switch (_tabController.index) {
-      case 0: return 'vendas_dia';
-      case 1: return 'vendas_mes';
-      case 2: return 'mais_vendidos';
-      case 3: return 'estoque';
-      case 4: return 'financeiro';
-      case 5: return 'dre';
-      case 6: return 'inadimplencia';
-      case 7: return 'abc';
-      case 8: return 'comissoes';
-      default: return 'vendas_mes';
-    }
+    return _reports[_selectedReportIndex].type;
   }
 
   Future<void> _exportar(String formato) async {
@@ -86,83 +76,179 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Relatórios & Análises', style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text('Visão completa do negócio e indicadores chave', style: theme.textTheme.bodyMedium),
-                  ],
-                ),
-                Row(
-                  children: [
-                    if (_isExporting) const CircularProgressIndicator() else ...[
-                      ElevatedButton.icon(
-                        onPressed: () => _exportar('pdf'),
-                        icon: const Icon(Icons.picture_as_pdf),
-                        label: const Text('PDF'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        onPressed: () => _exportar('xlsx'),
-                        icon: const Icon(Icons.table_chart),
-                        label: const Text('Excel'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                      ),
-                    ]
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                indicator: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(12)),
-                labelColor: Colors.white,
-                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                tabs: const [
-                  Tab(text: 'Vendas do Dia'),
-                  Tab(text: 'Vendas do Mês'),
-                  Tab(text: 'Mais Vendidos'),
-                  Tab(text: 'Visão de Estoque'),
-                  Tab(text: 'Resumo Financeiro'),
-                  Tab(text: 'DRE'),
-                  Tab(text: 'Inadimplência'),
-                  Tab(text: 'Curva ABC'),
-                  Tab(text: 'Comissões'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            _buildHeader(theme),
+            const SizedBox(height: 32),
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ReportSalesView(provider: salesReportDayProvider, title: 'Vendas Hoje'),
-                  _ReportSalesView(provider: salesReportMonthProvider, title: 'Análise do Mês'),
-                  _BestSellersView(),
-                  _ReportStockView(),
-                  _ReportFinanceView(),
-                  _ReportDREView(),
-                  _ReportInadimplenciaView(),
-                  _ReportCurvaABCView(),
-                  _ReportComissoesView(),
+                  _ReportSidebar(
+                    reports: _reports,
+                    selectedIndex: _selectedReportIndex,
+                    onSelected: (index) => setState(() => _selectedReportIndex = index),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: KeyedSubtree(
+                        key: ValueKey(_selectedReportIndex),
+                        child: _buildActiveReport(),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 20,
+      runSpacing: 10,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Relatórios & Análises', style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('Visão completa do negócio e indicadores chave', style: theme.textTheme.bodyMedium),
+            ],
+          ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isExporting) const CircularProgressIndicator() else ...[
+              ElevatedButton.icon(
+                onPressed: () => _exportar('pdf'),
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('PDF'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () => _exportar('xlsx'),
+                icon: const Icon(Icons.table_chart),
+                label: const Text('Excel'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              ),
+            ]
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActiveReport() {
+    switch (_reports[_selectedReportIndex].type) {
+      case 'vendas_dia': return _ReportSalesView(provider: salesReportDayProvider, title: 'Vendas Hoje');
+      case 'vendas_mes': return _ReportSalesView(provider: salesReportMonthProvider, title: 'Análise do Mês');
+      case 'mais_vendidos': return _BestSellersView();
+      case 'estoque': return _ReportStockView();
+      case 'financeiro': return _ReportFinanceView();
+      case 'dre': return _ReportDREView();
+      case 'inadimplencia': return _ReportInadimplenciaView();
+      case 'abc': return _ReportCurvaABCView();
+      case 'comissoes': return _ReportComissoesView();
+      default: return const Center(child: Text('Selecione um relatório'));
+    }
+  }
+}
+
+class _ReportItem {
+  final String title;
+  final IconData icon;
+  final String type;
+  final String category;
+
+  _ReportItem({required this.title, required this.icon, required this.type, required this.category});
+}
+
+class _ReportSidebar extends StatelessWidget {
+  final List<_ReportItem> reports;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  const _ReportSidebar({
+    required this.reports,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    // Agrupar por categoria
+    final Map<String, List<int>> categories = {};
+    for (int i = 0; i < reports.length; i++) {
+      final cat = reports[i].category;
+      if (!categories.containsKey(cat)) categories[cat] = [];
+      categories[cat]!.add(i);
+    }
+
+    return Container(
+      width: 240,
+      decoration: AppTheme.glassCard(),
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        children: categories.entries.map((entry) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 16, 8),
+                child: Text(
+                  entry.key.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              ...entry.value.map((index) {
+                final report = reports[index];
+                final isSelected = selectedIndex == index;
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  child: ListTile(
+                    onTap: () => onSelected(index),
+                    dense: true,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    selected: isSelected,
+                    selectedTileColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    leading: Icon(
+                      report.icon, 
+                      size: 20, 
+                      color: isSelected ? AppTheme.primaryColor : theme.colorScheme.onSurfaceVariant
+                    ),
+                    title: Text(
+                      report.title,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? AppTheme.primaryColor : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              const Divider(indent: 20, endIndent: 20, height: 1),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -197,8 +283,10 @@ class _ReportSalesView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  alignment: WrapAlignment.start,
                   children: [
                     _KPICard(title: 'Transações', value: totalVendas.toInt().toString(), icon: Icons.receipt),
                     _KPICard(title: 'Faturamento', value: Formatters.currency(valorTotal), icon: Icons.monetization_on, color: Colors.green),
@@ -274,7 +362,7 @@ class _KPICard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 250,
+      constraints: const BoxConstraints(maxWidth: 260, minWidth: 200),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -820,8 +908,9 @@ class _ReportComissoesView extends ConsumerWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              Wrap(
+                spacing: 20,
+                runSpacing: 20,
                 children: [
                   _KPICard(title: 'Faturamento Total', value: Formatters.currency(totalGeral), icon: Icons.payments, color: AppTheme.primaryColor),
                   _KPICard(title: 'Comissões Presumidas (1%)', value: Formatters.currency(totalComissao), icon: Icons.card_giftcard, color: Colors.orange),
