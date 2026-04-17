@@ -14,7 +14,8 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final salesAsync = ref.watch(salesTodayProvider);
+    final today = DateTime.now().toString().split(' ')[0];
+    final salesAsync = ref.watch(salesHistoryProvider(inicio: today, fim: today));
     final lowStockAsync = ref.watch(lowStockProvider);
     final reportAsync = ref.watch(salesReportDayProvider);
 
@@ -22,7 +23,8 @@ class DashboardScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(salesTodayProvider);
+          final today = DateTime.now().toString().split(' ')[0];
+          ref.invalidate(salesHistoryProvider(inicio: today, fim: today));
           ref.invalidate(lowStockProvider);
           ref.invalidate(salesReportDayProvider);
         },
@@ -48,7 +50,8 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
-                      ref.invalidate(salesTodayProvider);
+                      final today = DateTime.now().toString().split(' ')[0];
+                      ref.invalidate(salesHistoryProvider(inicio: today, fim: today));
                       ref.invalidate(lowStockProvider);
                       ref.invalidate(salesReportDayProvider);
                     },

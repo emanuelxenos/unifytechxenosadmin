@@ -14,8 +14,15 @@ class SaleRepository {
   final ApiService _api;
   SaleRepository(this._api);
 
-  Future<List<Venda>> vendasDia() async {
-    final response = await _api.get(ApiEndpoints.vendasDia);
+  Future<List<Venda>> vendasDia({String? inicio, String? fim}) async {
+    final Map<String, dynamic> queryParameters = {};
+    if (inicio != null) queryParameters['data_inicio'] = inicio;
+    if (fim != null) queryParameters['data_fim'] = fim;
+
+    final response = await _api.get(
+      ApiEndpoints.vendasDia,
+      queryParameters: queryParameters,
+    );
     final data = response.data;
     if (data is List) {
       return data.map((e) => Venda.fromJson(e as Map<String, dynamic>)).toList();

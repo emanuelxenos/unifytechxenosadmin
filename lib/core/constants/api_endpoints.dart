@@ -12,6 +12,8 @@ class ApiEndpoints {
   static const String caixaFechar = '/api/caixa/fechar';
   static const String caixaSangria = '/api/caixa/sangria';
   static const String caixaSuprimento = '/api/caixa/suprimento';
+  static const String caixaSessoes = '/api/caixa/sessoes';
+  static const String caixaMovimentacoes = '/api/caixa/movimentacoes';
 
   // Vendas
   static const String vendas = '/api/vendas';

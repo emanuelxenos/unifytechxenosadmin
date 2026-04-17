@@ -167,3 +167,43 @@ class OperadorInfo {
         nome: json['nome'] as String,
       );
 }
+
+class CaixaMovimentacao {
+  final int idCaixaMovimentacao;
+  final int empresaId;
+  final int sessaoCaixaId;
+  final String tipo;
+  final double valor;
+  final String? motivo;
+  final String? observacao;
+  final DateTime dataMovimentacao;
+  final int usuarioId;
+
+  CaixaMovimentacao({
+    required this.idCaixaMovimentacao,
+    required this.empresaId,
+    required this.sessaoCaixaId,
+    required this.tipo,
+    required this.valor,
+    this.motivo,
+    this.observacao,
+    required this.dataMovimentacao,
+    required this.usuarioId,
+  });
+
+  bool get isSangria => tipo == 'sangria';
+  bool get isSuprimento => tipo == 'suprimento';
+
+  factory CaixaMovimentacao.fromJson(Map<String, dynamic> json) =>
+      CaixaMovimentacao(
+        idCaixaMovimentacao: json['id_caixa_movimentacao'] as int,
+        empresaId: json['empresa_id'] as int,
+        sessaoCaixaId: json['sessao_caixa_id'] as int,
+        tipo: json['tipo'] as String,
+        valor: (json['valor'] as num).toDouble(),
+        motivo: json['motivo'] as String?,
+        observacao: json['observacao'] as String?,
+        dataMovimentacao: DateTime.parse(json['data_movimentacao'] as String),
+        usuarioId: json['usuario_id'] as int,
+      );
+}

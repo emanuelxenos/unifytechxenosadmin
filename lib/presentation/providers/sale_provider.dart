@@ -6,15 +6,15 @@ import 'package:unifytechxenosadmin/services/api_service.dart';
 part 'sale_provider.g.dart';
 
 @riverpod
-class SalesToday extends _$SalesToday {
+class SalesHistory extends _$SalesHistory {
   @override
-  Future<List<Venda>> build() async {
-    return ref.read(saleRepositoryProvider).vendasDia();
+  Future<List<Venda>> build({String? inicio, String? fim}) async {
+    return ref.read(saleRepositoryProvider).vendasDia(inicio: inicio, fim: fim);
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(saleRepositoryProvider).vendasDia());
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => build(inicio: inicio, fim: fim));
   }
 }
 
@@ -34,7 +34,7 @@ class SaleActions extends _$SaleActions {
   Future<(bool, String)> cancelar(int id, CancelarVendaRequest request) async {
     try {
       await ref.read(saleRepositoryProvider).cancelar(id, request);
-      ref.invalidate(salesTodayProvider);
+      ref.invalidate(salesHistoryProvider);
       return (true, 'Venda cancelada com sucesso!');
     } catch (e) {
       return (false, ApiService.extractError(e));
