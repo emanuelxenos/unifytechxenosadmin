@@ -21,7 +21,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 9, vsync: this);
   }
 
   @override
@@ -37,6 +37,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
       case 2: return 'mais_vendidos';
       case 3: return 'estoque';
       case 4: return 'financeiro';
+      case 5: return 'dre';
+      case 6: return 'inadimplencia';
+      case 7: return 'abc';
+      case 8: return 'comissoes';
       default: return 'vendas_mes';
     }
   }
@@ -133,6 +137,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                   Tab(text: 'Mais Vendidos'),
                   Tab(text: 'Visão de Estoque'),
                   Tab(text: 'Resumo Financeiro'),
+                  Tab(text: 'DRE'),
+                  Tab(text: 'Inadimplência'),
+                  Tab(text: 'Curva ABC'),
+                  Tab(text: 'Comissões'),
                 ],
               ),
             ),
@@ -146,6 +154,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> with SingleTicker
                   _BestSellersView(),
                   _ReportStockView(),
                   _ReportFinanceView(),
+                  _ReportDREView(),
+                  _ReportInadimplenciaView(),
+                  _ReportCurvaABCView(),
+                  _ReportComissoesView(),
                 ],
               ),
             ),
@@ -474,6 +486,376 @@ class _ReportFinanceView extends ConsumerWidget {
                   ),
                ],
             ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportDREView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(dreReportProvider());
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Calculando DRE...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          final double bruto = (data['receita_bruta'] ?? 0).toDouble();
+          final double descontos = (data['descontos'] ?? 0).toDouble();
+          final double liquida = (data['receita_liquida'] ?? 0).toDouble();
+          final double cmv = (data['cmv'] ?? 0).toDouble();
+          final double lucroBruto = (data['lucro_bruto'] ?? 0).toDouble();
+          final double despesas = (data['despesas'] ?? 0).toDouble();
+          final double lucroLiquido = (data['lucro_liquido'] ?? 0).toDouble();
+          final double margem = (data['margem_percentual'] ?? 0).toDouble();
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                Text('DRE Gerencial do Mês', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 32),
+                _DRELing(label: '(+) RECEITA BRUTA', value: bruto, color: Colors.green),
+                _DRELing(label: '(-) Devoluções/Descontos', value: descontos, color: Colors.redAccent),
+                _DRELing(label: '(=) RECEITA LÍQUIDA', value: liquida, isBold: true),
+                const Divider(height: 32),
+                _DRELing(label: '(-) CMV (Custo de Venda)', value: cmv, color: Colors.orange),
+                _DRELing(label: '(=) LUCRO BRUTO', value: lucroBruto, isBold: true, color: Colors.green),
+                const Divider(height: 32),
+                _DRELing(label: '(-) Despesas Operacionais', value: despesas, color: Colors.red),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.only(top: 20),
+                  decoration: BoxDecoration(
+                    color: (lucroLiquido >= 0 ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: (lucroLiquido >= 0 ? Colors.green : Colors.red).withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      _DRELing(label: '(=) LUCRO LÍQUIDO FINAL', value: lucroLiquido, isBold: true, color: lucroLiquido >= 0 ? Colors.green : Colors.red),
+                      const SizedBox(height: 8),
+                      Text('Margem Líquida: ${margem.toStringAsFixed(2)}%', style: TextStyle(fontWeight: FontWeight.bold, color: lucroLiquido >= 0 ? Colors.green : Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DRELing extends StatelessWidget {
+  final String label;
+  final double value;
+  final bool isBold;
+  final Color? color;
+
+  const _DRELing({required this.label, required this.value, this.isBold = false, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 16, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(Formatters.currency(value), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportInadimplenciaView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(inadimplenciaReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Listando Inadimplência...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          final List itens = data['itens'] ?? [];
+          final double total = (data['total_vencido'] ?? 0).toDouble();
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Títulos em Atraso', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Total em Aberto', style: TextStyle(fontSize: 12)),
+                        Text(Formatters.currency(total), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: itens.isEmpty 
+                  ? const EmptyState(icon: Icons.check_circle_outline, title: 'Nenhum título vencido!')
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: itens.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) {
+                        final item = itens[i];
+                        final int dias = item['dias_atraso'] ?? 0;
+                        Color statusColor = Colors.orange;
+                        if (dias > 30) statusColor = Colors.red;
+                        if (dias > 60) statusColor = const Color(0xff800000); // Bordô
+
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: statusColor.withValues(alpha: 0.2))),
+                          child: Row(
+                            children: [
+                              CircleAvatar(backgroundColor: statusColor.withValues(alpha: 0.1), child: Icon(Icons.person, color: statusColor)),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item['cliente'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    Text('Vencido em: ${Formatters.date(item['data_vencimento'])}', style: const TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(Formatters.currency((item['valor'] ?? 0).toDouble()), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(4)),
+                                    child: Text('$dias dias em atraso', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportCurvaABCView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(curvaABCReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Gerando Curva ABC...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          final List itens = data['itens'] ?? [];
+          final double total = (data['total_faturamento'] ?? 0).toDouble();
+
+          // Agrupar por classificação para o gráfico
+          double faturamentoA = 0;
+          double faturamentoB = 0;
+          double faturamentoC = 0;
+
+          for (var item in itens) {
+            final f = (item['faturamento'] ?? 0).toDouble();
+            if (item['classificacao'] == 'A') faturamentoA += f;
+            else if (item['classificacao'] == 'B') faturamentoB += f;
+            else faturamentoC += f;
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                   children: [
+                      const Icon(Icons.auto_graph, color: AppTheme.primaryColor, size: 30),
+                      const SizedBox(width: 12),
+                      Text('Análise Curva ABC (90 dias)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                   ],
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 300,
+                      height: 300,
+                      child: PieChart(
+                        PieChartData(
+                          sections: [
+                             PieChartSectionData(value: faturamentoA, title: 'A (${((faturamentoA/total)*100).toStringAsFixed(1)}%)', color: Colors.green, radius: 50, titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                             PieChartSectionData(value: faturamentoB, title: 'B (${((faturamentoB/total)*100).toStringAsFixed(1)}%)', color: Colors.blue, radius: 45, titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                             PieChartSectionData(value: faturamentoC, title: 'C (${((faturamentoC/total)*100).toStringAsFixed(1)}%)', color: Colors.orange, radius: 40, titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                          sectionsSpace: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                    Expanded(
+                      child: Column(
+                        children: [
+                           _ABCLegend(color: Colors.green, title: 'Classe A (Essenciais)', description: 'Representam ~80% do faturamento.'),
+                           const SizedBox(height: 12),
+                           _ABCLegend(color: Colors.blue, title: 'Classe B (Intermediários)', description: 'Representam ~15% do faturamento.'),
+                           const SizedBox(height: 12),
+                           _ABCLegend(color: Colors.orange, title: 'Classe C (Baixo Giro)', description: 'Representam os últimos ~5%.'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 48),
+                Text('Top Itens por Classificação', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('PRODUTO')),
+                      DataColumn(label: Text('CLASSE')),
+                      DataColumn(label: Text('FATURAMENTO')),
+                      DataColumn(label: Text('ACUMULADO')),
+                    ],
+                    rows: itens.take(20).map((item) {
+                       final String classe = item['classificacao'] ?? '-';
+                       Color c = Colors.grey;
+                       if (classe == 'A') c = Colors.green;
+                       else if (classe == 'B') c = Colors.blue;
+                       else if (classe == 'C') c = Colors.orange;
+
+                       return DataRow(cells: [
+                         DataCell(Text(item['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold))),
+                         DataCell(Chip(label: Text(classe, style: const TextStyle(color: Colors.white, fontSize: 10)), backgroundColor: c, padding: EdgeInsets.zero)),
+                         DataCell(Text(Formatters.currency((item['faturamento'] ?? 0).toDouble()))),
+                         DataCell(Text('${(item['percentual_acumulado'] as num?)?.toStringAsFixed(1)}%')),
+                       ]);
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ABCLegend extends StatelessWidget {
+  final Color color;
+  final String title;
+  final String description;
+
+  const _ABCLegend({required this.color, required this.title, required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(description, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReportComissoesView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(comissoesReportProvider());
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Calculando Comissões...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          final List operadores = data['operadores'] ?? [];
+          final double totalGeral = (data['total_geral'] ?? 0).toDouble();
+          final double totalComissao = (data['total_comissao'] ?? 0).toDouble();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _KPICard(title: 'Faturamento Total', value: Formatters.currency(totalGeral), icon: Icons.payments, color: AppTheme.primaryColor),
+                  _KPICard(title: 'Comissões Presumidas (1%)', value: Formatters.currency(totalComissao), icon: Icons.card_giftcard, color: Colors.orange),
+                ],
+              ),
+              const SizedBox(height: 48),
+              Text('Performance por Operador', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: operadores.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, i) {
+                    final op = operadores[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                         backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                         child: Text(op['nome']?[0] ?? '?', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                      ),
+                      title: Text(op['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${op['total_vendas']} vendas | Ticket Médio: ${Formatters.currency((op['ticket_medio'] ?? 0).toDouble())}'),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(Formatters.currency((op['comissao'] ?? 0).toDouble()), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green)),
+                          const Text('Comissão', style: TextStyle(fontSize: 10)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

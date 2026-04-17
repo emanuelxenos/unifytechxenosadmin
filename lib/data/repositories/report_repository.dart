@@ -66,6 +66,32 @@ class ReportRepository {
     return _extractMapData(response.data);
   }
 
+  Future<Map<String, dynamic>> dre({int? mes, int? ano}) async {
+    final response = await _api.get(ApiEndpoints.relatorioDRE, queryParameters: {
+      if (mes != null) 'mes': mes,
+      if (ano != null) 'ano': ano,
+    });
+    return _extractMapData(response.data);
+  }
+
+  Future<Map<String, dynamic>> inadimplencia() async {
+    final response = await _api.get(ApiEndpoints.relatorioInadimplencia);
+    return _extractMapData(response.data);
+  }
+
+  Future<Map<String, dynamic>> curvaABC() async {
+    final response = await _api.get(ApiEndpoints.relatorioCurvaABC);
+    return _extractMapData(response.data);
+  }
+
+  Future<Map<String, dynamic>> comissoes({int? mes, int? ano}) async {
+    final response = await _api.get(ApiEndpoints.relatorioComissoes, queryParameters: {
+      if (mes != null) 'mes': mes,
+      if (ano != null) 'ano': ano,
+    });
+    return _extractMapData(response.data);
+  }
+
   Future<void> exportarRelatorio(String formato, String savePath, String tipo) async {
     final endpoint = formato == 'pdf' 
         ? ApiEndpoints.relatorioExportPdf 

@@ -285,5 +285,353 @@ final financeReportProvider =
     );
 
 typedef _$FinanceReport = AutoDisposeAsyncNotifier<Map<String, dynamic>>;
+String _$dreReportHash() => r'7f930c99ba78ae399de70bdbed2d6839cda74481';
+
+abstract class _$DreReport
+    extends BuildlessAutoDisposeAsyncNotifier<Map<String, dynamic>> {
+  late final int? mes;
+  late final int? ano;
+
+  FutureOr<Map<String, dynamic>> build({int? mes, int? ano});
+}
+
+/// See also [DreReport].
+@ProviderFor(DreReport)
+const dreReportProvider = DreReportFamily();
+
+/// See also [DreReport].
+class DreReportFamily extends Family<AsyncValue<Map<String, dynamic>>> {
+  /// See also [DreReport].
+  const DreReportFamily();
+
+  /// See also [DreReport].
+  DreReportProvider call({int? mes, int? ano}) {
+    return DreReportProvider(mes: mes, ano: ano);
+  }
+
+  @override
+  DreReportProvider getProviderOverride(covariant DreReportProvider provider) {
+    return call(mes: provider.mes, ano: provider.ano);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'dreReportProvider';
+}
+
+/// See also [DreReport].
+class DreReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<DreReport, Map<String, dynamic>> {
+  /// See also [DreReport].
+  DreReportProvider({int? mes, int? ano})
+    : this._internal(
+        () => DreReport()
+          ..mes = mes
+          ..ano = ano,
+        from: dreReportProvider,
+        name: r'dreReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$dreReportHash,
+        dependencies: DreReportFamily._dependencies,
+        allTransitiveDependencies: DreReportFamily._allTransitiveDependencies,
+        mes: mes,
+        ano: ano,
+      );
+
+  DreReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.mes,
+    required this.ano,
+  }) : super.internal();
+
+  final int? mes;
+  final int? ano;
+
+  @override
+  FutureOr<Map<String, dynamic>> runNotifierBuild(
+    covariant DreReport notifier,
+  ) {
+    return notifier.build(mes: mes, ano: ano);
+  }
+
+  @override
+  Override overrideWith(DreReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: DreReportProvider._internal(
+        () => create()
+          ..mes = mes
+          ..ano = ano,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        mes: mes,
+        ano: ano,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<DreReport, Map<String, dynamic>>
+  createElement() {
+    return _DreReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DreReportProvider && other.mes == mes && other.ano == ano;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, mes.hashCode);
+    hash = _SystemHash.combine(hash, ano.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin DreReportRef
+    on AutoDisposeAsyncNotifierProviderRef<Map<String, dynamic>> {
+  /// The parameter `mes` of this provider.
+  int? get mes;
+
+  /// The parameter `ano` of this provider.
+  int? get ano;
+}
+
+class _DreReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<DreReport, Map<String, dynamic>>
+    with DreReportRef {
+  _DreReportProviderElement(super.provider);
+
+  @override
+  int? get mes => (origin as DreReportProvider).mes;
+  @override
+  int? get ano => (origin as DreReportProvider).ano;
+}
+
+String _$inadimplenciaReportHash() =>
+    r'4830471950a7eab51c5ba454bfc469da5339aac9';
+
+/// See also [InadimplenciaReport].
+@ProviderFor(InadimplenciaReport)
+final inadimplenciaReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      InadimplenciaReport,
+      Map<String, dynamic>
+    >.internal(
+      InadimplenciaReport.new,
+      name: r'inadimplenciaReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$inadimplenciaReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$InadimplenciaReport = AutoDisposeAsyncNotifier<Map<String, dynamic>>;
+String _$curvaABCReportHash() => r'04fb3f1a1d7bc1773babb43867e3b31f78f99d08';
+
+/// See also [CurvaABCReport].
+@ProviderFor(CurvaABCReport)
+final curvaABCReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      CurvaABCReport,
+      Map<String, dynamic>
+    >.internal(
+      CurvaABCReport.new,
+      name: r'curvaABCReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$curvaABCReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$CurvaABCReport = AutoDisposeAsyncNotifier<Map<String, dynamic>>;
+String _$comissoesReportHash() => r'1df892c939b29b49f081bec4e77377ffd7201f74';
+
+abstract class _$ComissoesReport
+    extends BuildlessAutoDisposeAsyncNotifier<Map<String, dynamic>> {
+  late final int? mes;
+  late final int? ano;
+
+  FutureOr<Map<String, dynamic>> build({int? mes, int? ano});
+}
+
+/// See also [ComissoesReport].
+@ProviderFor(ComissoesReport)
+const comissoesReportProvider = ComissoesReportFamily();
+
+/// See also [ComissoesReport].
+class ComissoesReportFamily extends Family<AsyncValue<Map<String, dynamic>>> {
+  /// See also [ComissoesReport].
+  const ComissoesReportFamily();
+
+  /// See also [ComissoesReport].
+  ComissoesReportProvider call({int? mes, int? ano}) {
+    return ComissoesReportProvider(mes: mes, ano: ano);
+  }
+
+  @override
+  ComissoesReportProvider getProviderOverride(
+    covariant ComissoesReportProvider provider,
+  ) {
+    return call(mes: provider.mes, ano: provider.ano);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'comissoesReportProvider';
+}
+
+/// See also [ComissoesReport].
+class ComissoesReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          ComissoesReport,
+          Map<String, dynamic>
+        > {
+  /// See also [ComissoesReport].
+  ComissoesReportProvider({int? mes, int? ano})
+    : this._internal(
+        () => ComissoesReport()
+          ..mes = mes
+          ..ano = ano,
+        from: comissoesReportProvider,
+        name: r'comissoesReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$comissoesReportHash,
+        dependencies: ComissoesReportFamily._dependencies,
+        allTransitiveDependencies:
+            ComissoesReportFamily._allTransitiveDependencies,
+        mes: mes,
+        ano: ano,
+      );
+
+  ComissoesReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.mes,
+    required this.ano,
+  }) : super.internal();
+
+  final int? mes;
+  final int? ano;
+
+  @override
+  FutureOr<Map<String, dynamic>> runNotifierBuild(
+    covariant ComissoesReport notifier,
+  ) {
+    return notifier.build(mes: mes, ano: ano);
+  }
+
+  @override
+  Override overrideWith(ComissoesReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ComissoesReportProvider._internal(
+        () => create()
+          ..mes = mes
+          ..ano = ano,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        mes: mes,
+        ano: ano,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<ComissoesReport, Map<String, dynamic>>
+  createElement() {
+    return _ComissoesReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ComissoesReportProvider &&
+        other.mes == mes &&
+        other.ano == ano;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, mes.hashCode);
+    hash = _SystemHash.combine(hash, ano.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ComissoesReportRef
+    on AutoDisposeAsyncNotifierProviderRef<Map<String, dynamic>> {
+  /// The parameter `mes` of this provider.
+  int? get mes;
+
+  /// The parameter `ano` of this provider.
+  int? get ano;
+}
+
+class _ComissoesReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          ComissoesReport,
+          Map<String, dynamic>
+        >
+    with ComissoesReportRef {
+  _ComissoesReportProviderElement(super.provider);
+
+  @override
+  int? get mes => (origin as ComissoesReportProvider).mes;
+  @override
+  int? get ano => (origin as ComissoesReportProvider).ano;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
