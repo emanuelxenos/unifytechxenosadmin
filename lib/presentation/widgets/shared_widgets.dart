@@ -218,8 +218,12 @@ class AppNotifications {
   AppNotifications._();
 
   static void showSuccess(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    showSuccessWithMessenger(ScaffoldMessenger.of(context), message);
+  }
+
+  static void showSuccessWithMessenger(ScaffoldMessengerState messenger, String message) {
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Row(
           children: [
@@ -247,8 +251,12 @@ class AppNotifications {
   }
 
   static void showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    showErrorWithMessenger(ScaffoldMessenger.of(context), message);
+  }
+
+  static void showErrorWithMessenger(ScaffoldMessengerState messenger, String message) {
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Row(
           children: [

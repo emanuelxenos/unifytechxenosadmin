@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
-import 'package:unifytechxenosadmin/data/local/local_config.dart';
 import 'package:unifytechxenosadmin/presentation/providers/auth_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/user.dart';
@@ -11,9 +10,9 @@ import 'package:unifytechxenosadmin/presentation/views/settings/company_settings
 import 'package:unifytechxenosadmin/presentation/providers/user_management_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/backup_provider.dart';
 import 'dart:io';
-import 'package:unifytechxenosadmin/domain/models/backup.dart';
 import 'package:unifytechxenosadmin/domain/models/report.dart';
 import 'package:unifytechxenosadmin/data/repositories/user_repository.dart';
+import 'package:unifytechxenosadmin/presentation/views/settings/server_settings_tab.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -79,7 +78,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _ServerSettingsTab(),
+                  const ServerSettingsTab(),
                   const CompanySettingsScreen(),
                   _UsersSettingsTab(controller: _userTableController),
                   const _BackupSettingsTab(),
@@ -94,51 +93,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   }
 }
 
-class _ServerSettingsTab extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final config = ref.watch(localConfigProvider);
-
-    return Container(
-      decoration: AppTheme.glassCard(),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Configuração do Servidor', style: theme.textTheme.titleLarge),
-          const SizedBox(height: 20),
-          _settingRow('Host', config.serverHost, theme),
-          _settingRow('Porta', '${config.serverPort}', theme),
-          _settingRow('URL Base', 'http://${config.serverHost}:${config.serverPort}', theme),
-          const SizedBox(height: 20),
-          OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Para alterar o servidor, faça logout e reconfigure.')),
-              );
-            },
-            icon: const Icon(Icons.edit_rounded, size: 18),
-            label: const Text('Alterar Servidor'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _settingRow(String label, String value, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          SizedBox(width: 120, child: Text(label, style: theme.textTheme.bodyMedium)),
-          Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-}
 
 class _UsersSettingsTab extends ConsumerWidget {
   final ScrollController controller;
