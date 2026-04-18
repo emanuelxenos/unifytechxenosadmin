@@ -18,6 +18,7 @@ import 'package:unifytechxenosadmin/presentation/views/purchases/purchases_scree
 import 'package:unifytechxenosadmin/presentation/views/finance/finance_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/reports/reports_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/settings_screen.dart';
+import 'package:unifytechxenosadmin/presentation/views/customers/customers_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,6 +91,10 @@ class UnifyTechAdminApp extends ConsumerWidget {
             GoRoute(
               path: '/categorias',
               builder: (context, state) => const CategoriesScreen(),
+            ),
+            GoRoute(
+              path: '/clientes',
+              builder: (context, state) => const CustomersScreen(),
             ),
             GoRoute(
               path: '/estoque',
