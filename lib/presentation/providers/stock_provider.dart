@@ -42,3 +42,37 @@ class StockActions extends _$StockActions {
     }
   }
 }
+
+@riverpod
+class StockMovements extends _$StockMovements {
+  @override
+  Future<List<EstoqueMovimentacao>> build({int? produtoId, DateTime? inicio, DateTime? fim}) async {
+    return ref.read(stockRepositoryProvider).listarMovimentacoes(
+      produtoId: produtoId,
+      inicio: inicio,
+      fim: fim,
+    );
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarMovimentacoes(
+      produtoId: produtoId,
+      inicio: inicio,
+      fim: fim,
+    ));
+  }
+}
+
+@riverpod
+class Inventories extends _$Inventories {
+  @override
+  Future<List<Inventario>> build() async {
+    return ref.read(stockRepositoryProvider).listarInventarios();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarInventarios());
+  }
+}

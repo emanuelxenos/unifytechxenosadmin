@@ -6,6 +6,7 @@ import 'package:unifytechxenosadmin/presentation/providers/stock_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
+import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -17,6 +18,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   final _searchController = TextEditingController();
   final _horizontalController = ScrollController();
   String _searchQuery = '';
+  bool _onlyLowStock = false;
 
   @override
   void dispose() {
@@ -28,163 +30,350 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final productsAsync = ref.watch(productsProvider);
-    final lowStockAsync = ref.watch(lowStockProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Estoque', style: theme.textTheme.headlineLarge),
-                      const SizedBox(height: 4),
-                      Text('Controle de estoque e inventário', style: theme.textTheme.bodyMedium),
-                    ],
-                  ),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(theme),
+              const SizedBox(height: 20),
+              _buildTabBar(),
+              const SizedBox(height: 20),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildPosicaoTab(theme),
+                    _buildHistoricoTab(theme),
+                    _buildInventariosTab(theme),
+                  ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _showAjusteDialog(context, ref),
-                  icon: const Icon(Icons.swap_vert_rounded, size: 18),
-                  label: const Text('Ajustar Estoque'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Estoque', style: theme.textTheme.headlineLarge),
+              const SizedBox(height: 4),
+              Text('Controle de estoque e inventário', style: theme.textTheme.bodyMedium),
+            ],
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: () => _showAjusteDialog(context, ref),
+          icon: const Icon(Icons.swap_vert_rounded, size: 18),
+          label: const Text('Ajustar Estoque'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabBar() {
+    return TabBar(
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      labelColor: AppTheme.primaryColor,
+      unselectedLabelColor: Colors.white70,
+      indicatorColor: AppTheme.primaryColor,
+      tabs: const [
+        Tab(text: 'POSIÇÃO ATUAL'),
+        Tab(text: 'HISTÓRICO'),
+        Tab(text: 'INVENTÁRIOS'),
+      ],
+    );
+  }
+
+  Widget _buildPosicaoTab(ThemeData theme) {
+    final productsAsync = ref.watch(productsProvider);
+    final reportAsync = ref.watch(stockReportProvider);
+
+    return Column(
+      children: [
+        // KPI Cards
+        reportAsync.when(
+          data: (data) => Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                _StockKpiCard(
+                  title: 'Total de Itens',
+                  value: data['total_produtos']?.toString() ?? '0',
+                  icon: Icons.inventory_2_outlined,
+                  color: Colors.blue,
+                ),
+                _StockKpiCard(
+                  title: 'Estoque Baixo',
+                  value: data['produtos_baixo_estoque']?.toString() ?? '0',
+                  icon: Icons.warning_amber_rounded,
+                  color: AppTheme.accentOrange,
+                ),
+                _StockKpiCard(
+                  title: 'Valor (Custo)',
+                  value: Formatters.currency(data['valor_total_custo']?.toDouble() ?? 0),
+                  icon: Icons.attach_money_rounded,
+                  color: AppTheme.accentGreen,
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            // Low stock summary
-            lowStockAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (items) => items.isNotEmpty
-                  ? Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.accentOrange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.accentOrange.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning_amber, color: AppTheme.accentOrange, size: 20),
-                          const SizedBox(width: 10),
-                          Text(
-                            '${items.length} produto(s) abaixo do estoque mínimo',
-                            style: TextStyle(color: AppTheme.accentOrange, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 20),
-            // Search Bar
-            Container(
-              decoration: AppTheme.glassCard(),
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                decoration: const InputDecoration(
-                  hintText: 'Buscar por nome, código de barras ou categoria...',
-                  prefixIcon: Icon(Icons.search_rounded),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+          ),
+          loading: () => const SizedBox(height: 100, child: LoadingOverlay()),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+
+        // Search & Filters
+        Row(
+          children: [
             Expanded(
               child: Container(
                 decoration: AppTheme.glassCard(),
-                clipBehavior: Clip.antiAlias,
-                child: productsAsync.response.when(
-                  loading: () => const LoadingOverlay(message: 'Carregando estoque...'),
-                  error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
-                  data: (paginated) {
-                    final products = paginated.data;
-                    final stockProducts = products.where((p) {
-                      final matchesControlled = p.controlarEstoque;
-                      if (!matchesControlled) return false;
-                      
-                      if (_searchQuery.isEmpty) return true;
-                      
-                      final matchesName = p.nome.toLowerCase().contains(_searchQuery);
-                      final matchesBarcode = (p.codigoBarras ?? '').toLowerCase().contains(_searchQuery);
-                      final matchesCategory = (p.categoriaNome ?? '').toLowerCase().contains(_searchQuery);
-                      
-                      return matchesName || matchesBarcode || matchesCategory;
-                    }).toList();
-
-                    if (stockProducts.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.warehouse_outlined,
-                        title: _searchQuery.isEmpty ? 'Nenhum produto com controle de estoque' : 'Nenhum resultado encontrado',
-                        subtitle: _searchQuery.isEmpty ? null : 'Tente buscar com termos diferentes',
-                      );
-                    }
-                    return Scrollbar(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: Scrollbar(
-                          controller: _horizontalController,
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            controller: _horizontalController,
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columns: const [
-                                DataColumn(label: Text('PRODUTO')),
-                                DataColumn(label: Text('UNIDADE')),
-                                DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
-                                DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
-                                DataColumn(label: Text('STATUS')),
-                                DataColumn(label: Text('AÇÕES')),
-                              ],
-                              rows: stockProducts.map((p) {
-                                final baixo = p.estoqueBaixo;
-                                return DataRow(cells: [
-                                  DataCell(Text(p.nome)),
-                                  DataCell(Text(p.unidadeVenda)),
-                                  DataCell(Text(
-                                    Formatters.quantity(p.estoqueAtual),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: baixo ? AppTheme.accentRed : null,
-                                    ),
-                                  )),
-                                  DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
-                                  DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
-                                  DataCell(
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_note_rounded, size: 20, color: AppTheme.primaryColor),
-                                      onPressed: () => _showAjusteDialog(context, ref, p),
-                                      tooltip: 'Ajustar Estoque',
-                                    ),
-                                  ),
-                                ]);
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar produto...',
+                    prefixIcon: Icon(Icons.search_rounded),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
                 ),
               ),
             ),
+            const SizedBox(width: 16),
+            FilterChip(
+              label: const Text('Apenas estoque baixo'),
+              selected: _onlyLowStock,
+              onSelected: (v) => setState(() => _onlyLowStock = v),
+              selectedColor: AppTheme.accentOrange.withValues(alpha: 0.2),
+              checkmarkColor: AppTheme.accentOrange,
+            ),
           ],
         ),
+        const SizedBox(height: 16),
+
+        // Table
+        Expanded(
+          child: Container(
+            decoration: AppTheme.glassCard(),
+            clipBehavior: Clip.antiAlias,
+            child: productsAsync.response.when(
+              loading: () => const LoadingOverlay(message: 'Carregando estoque...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (paginated) {
+                final products = paginated.data;
+                final filtered = products.where((p) {
+                  if (!p.controlarEstoque) return false;
+                  if (_onlyLowStock && !p.estoqueBaixo) return false;
+                  
+                  if (_searchQuery.isEmpty) return true;
+                  return p.nome.toLowerCase().contains(_searchQuery) ||
+                         (p.codigoBarras ?? '').toLowerCase().contains(_searchQuery);
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.warehouse_outlined,
+                    title: 'Nenhum item encontrado',
+                  );
+                }
+
+                return Scrollbar(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Scrollbar(
+                      controller: _horizontalController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: _horizontalController,
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('PRODUTO')),
+                            DataColumn(label: Text('UNIDADE')),
+                            DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
+                            DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
+                            DataColumn(label: Text('STATUS')),
+                            DataColumn(label: Text('AÇÕES')),
+                          ],
+                          rows: filtered.map((p) {
+                            final baixo = p.estoqueBaixo;
+                            return DataRow(cells: [
+                              DataCell(Text(p.nome, style: const TextStyle(fontWeight: FontWeight.w500))),
+                              DataCell(Text(p.unidadeVenda)),
+                              DataCell(Text(
+                                Formatters.quantity(p.estoqueAtual),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: baixo ? AppTheme.accentRed : null,
+                                ),
+                              )),
+                              DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
+                              DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
+                              DataCell(
+                                IconButton(
+                                  icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryColor),
+                                  onPressed: () => _showAjusteDialog(context, ref, p),
+                                  tooltip: 'Ajustar',
+                                ),
+                              ),
+                            ]);
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistoricoTab(ThemeData theme) {
+    final movementsAsync = ref.watch(stockMovementsProvider(produtoId: null, inicio: null, fim: null));
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      clipBehavior: Clip.antiAlias,
+      child: movementsAsync.when(
+        loading: () => const LoadingOverlay(message: 'Carregando histórico...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (movs) {
+          if (movs.isEmpty) {
+            return const EmptyState(
+              icon: Icons.history_rounded,
+              title: 'Nenhuma movimentação registrada',
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: movs.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, i) {
+              final m = movs[i];
+              final isPositive = m.tipoMovimentacao == 'entrada' || (m.tipoMovimentacao == 'ajuste' && m.quantidade > 0);
+              
+              return ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (isPositive ? AppTheme.accentGreen : AppTheme.accentRed).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                    color: isPositive ? AppTheme.accentGreen : AppTheme.accentRed,
+                    size: 20,
+                  ),
+                ),
+                title: Text(m.produtoNome ?? 'Produto [${m.produtoId}]', style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text('${m.tipoMovimentacao.toUpperCase()} - ${m.observacao ?? 'Sem observação'}'),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${isPositive ? '+' : ''}${Formatters.quantity(m.quantidade)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isPositive ? AppTheme.accentGreen : AppTheme.accentRed,
+                      ),
+                    ),
+                    Text(Formatters.dateTime(m.dataMovimentacao), style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildInventariosTab(ThemeData theme) {
+    final inventoriesAsync = ref.watch(inventoriesProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // Placeholder para criação de inventário
+              AppNotifications.showError(context, 'Funcionalidade em desenvolvimento');
+            },
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Novo Inventário'),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            decoration: AppTheme.glassCard(),
+            clipBehavior: Clip.antiAlias,
+            child: inventoriesAsync.when(
+              loading: () => const LoadingOverlay(message: 'Carregando inventários...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (invs) {
+                if (invs.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.fact_check_outlined,
+                    title: 'Nenhum inventário planejado',
+                    subtitle: 'Crie um novo inventário para iniciar a contagem física.',
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: invs.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final inv = invs[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        child: Text(inv.status[0].toUpperCase(), style: const TextStyle(color: AppTheme.primaryColor)),
+                      ),
+                      title: Text('Inventário: ${inv.codigo}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(inv.descricao ?? 'Sem descrição'),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          StatusChip.fromStatus(inv.status),
+                          const SizedBox(height: 4),
+                          Text(Formatters.date(inv.dataInicio), style: const TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -224,7 +413,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: tipo,
+                    value: tipo,
                     decoration: const InputDecoration(labelText: 'Tipo'),
                     items: const [
                       DropdownMenuItem(value: 'entrada', child: Text('Entrada')),
@@ -238,7 +427,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   TextFormField(
                     controller: quantidadeCtrl,
                     decoration: const InputDecoration(labelText: 'Quantidade *'),
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
                   ),
                   const SizedBox(height: 12),
@@ -267,19 +456,82 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                 if (context.mounted) {
                   Navigator.pop(context);
                   ref.invalidate(productsProvider);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(msg),
-                      backgroundColor: success ? AppTheme.accentGreen : AppTheme.accentRed,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  ref.invalidate(stockReportProvider);
+                  ref.invalidate(stockMovementsProvider(produtoId: null, inicio: null, fim: null));
+                  
+                  if (success) {
+                    AppNotifications.showSuccess(context, msg);
+                  } else {
+                    AppNotifications.showError(context, msg);
+                  }
                 }
               },
               child: const Text('Confirmar'),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StockKpiCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StockKpiCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

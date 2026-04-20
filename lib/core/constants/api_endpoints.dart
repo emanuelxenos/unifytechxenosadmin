@@ -43,6 +43,8 @@ class ApiEndpoints {
   static const String estoqueAjuste = '/api/estoque/ajuste';
   static const String estoqueInventario = '/api/estoque/inventario';
   static String estoqueInventarioFinalizar(int id) => '/api/estoque/inventario/$id';
+  static const String estoqueMovimentacoes = '/api/estoque/movimentacoes';
+  static const String estoqueInventarios = '/api/estoque/inventarios';
 
   // Compras
   static const String compras = '/api/compras';

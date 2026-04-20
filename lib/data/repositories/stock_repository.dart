@@ -37,4 +37,27 @@ class StockRepository {
   Future<void> criarInventario(CriarInventarioRequest request) async {
     await _api.post(ApiEndpoints.estoqueInventario, data: request.toJson());
   }
+
+  Future<List<EstoqueMovimentacao>> listarMovimentacoes({int? produtoId, DateTime? inicio, DateTime? fim}) async {
+    final Map<String, dynamic> params = {};
+    if (produtoId != null) params['produto_id'] = produtoId;
+    if (inicio != null) params['data_inicio'] = inicio.toIso8601String().split('T')[0];
+    if (fim != null) params['data_fim'] = fim.toIso8601String().split('T')[0];
+
+    final response = await _api.get(ApiEndpoints.estoqueMovimentacoes, queryParameters: params);
+    final data = _extractData(response.data);
+    if (data is List) {
+      return data.map((e) => EstoqueMovimentacao.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
+
+  Future<List<Inventario>> listarInventarios() async {
+    final response = await _api.get(ApiEndpoints.estoqueInventarios);
+    final data = _extractData(response.data);
+    if (data is List) {
+      return data.map((e) => Inventario.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
 }
