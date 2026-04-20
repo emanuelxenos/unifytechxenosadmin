@@ -6,42 +6,7 @@ part of 'stock_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$lowStockHash() => r'0eab20714c0c96a20a4d3e1e331f697025fc0896';
-
-/// See also [LowStock].
-@ProviderFor(LowStock)
-final lowStockProvider =
-    AutoDisposeAsyncNotifierProvider<
-      LowStock,
-      List<EstoqueBaixoResponse>
-    >.internal(
-      LowStock.new,
-      name: r'lowStockProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$lowStockHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$LowStock = AutoDisposeAsyncNotifier<List<EstoqueBaixoResponse>>;
-String _$stockActionsHash() => r'2f2ff73efc49540b4a913f15fbb55e1740e3f115';
-
-/// See also [StockActions].
-@ProviderFor(StockActions)
-final stockActionsProvider =
-    AutoDisposeNotifierProvider<StockActions, bool>.internal(
-      StockActions.new,
-      name: r'stockActionsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$stockActionsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$StockActions = AutoDisposeNotifier<bool>;
-String _$stockMovementsHash() => r'3c78466535a6f272f91783c5f4639cd8c5664fd4';
+String _$inventoryDetailsHash() => r'438f15ae263942e537f95aa62f2dd9b731545766';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -63,6 +28,145 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+/// See also [inventoryDetails].
+@ProviderFor(inventoryDetails)
+const inventoryDetailsProvider = InventoryDetailsFamily();
+
+/// See also [inventoryDetails].
+class InventoryDetailsFamily extends Family<AsyncValue<Inventario>> {
+  /// See also [inventoryDetails].
+  const InventoryDetailsFamily();
+
+  /// See also [inventoryDetails].
+  InventoryDetailsProvider call(int id) {
+    return InventoryDetailsProvider(id);
+  }
+
+  @override
+  InventoryDetailsProvider getProviderOverride(
+    covariant InventoryDetailsProvider provider,
+  ) {
+    return call(provider.id);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'inventoryDetailsProvider';
+}
+
+/// See also [inventoryDetails].
+class InventoryDetailsProvider extends AutoDisposeFutureProvider<Inventario> {
+  /// See also [inventoryDetails].
+  InventoryDetailsProvider(int id)
+    : this._internal(
+        (ref) => inventoryDetails(ref as InventoryDetailsRef, id),
+        from: inventoryDetailsProvider,
+        name: r'inventoryDetailsProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$inventoryDetailsHash,
+        dependencies: InventoryDetailsFamily._dependencies,
+        allTransitiveDependencies:
+            InventoryDetailsFamily._allTransitiveDependencies,
+        id: id,
+      );
+
+  InventoryDetailsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final int id;
+
+  @override
+  Override overrideWith(
+    FutureOr<Inventario> Function(InventoryDetailsRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: InventoryDetailsProvider._internal(
+        (ref) => create(ref as InventoryDetailsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Inventario> createElement() {
+    return _InventoryDetailsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is InventoryDetailsProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin InventoryDetailsRef on AutoDisposeFutureProviderRef<Inventario> {
+  /// The parameter `id` of this provider.
+  int get id;
+}
+
+class _InventoryDetailsProviderElement
+    extends AutoDisposeFutureProviderElement<Inventario>
+    with InventoryDetailsRef {
+  _InventoryDetailsProviderElement(super.provider);
+
+  @override
+  int get id => (origin as InventoryDetailsProvider).id;
+}
+
+String _$lowStockHash() => r'0eab20714c0c96a20a4d3e1e331f697025fc0896';
+
+/// See also [LowStock].
+@ProviderFor(LowStock)
+final lowStockProvider =
+    AutoDisposeAsyncNotifierProvider<
+      LowStock,
+      List<EstoqueBaixoResponse>
+    >.internal(
+      LowStock.new,
+      name: r'lowStockProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$lowStockHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$LowStock = AutoDisposeAsyncNotifier<List<EstoqueBaixoResponse>>;
+String _$stockMovementsHash() => r'ed76a58bf2efe912c574234465f9bf7a28b051ea';
 
 abstract class _$StockMovements
     extends BuildlessAutoDisposeAsyncNotifier<List<EstoqueMovimentacao>> {
@@ -272,5 +376,21 @@ final inventoriesProvider =
     );
 
 typedef _$Inventories = AutoDisposeAsyncNotifier<List<Inventario>>;
+String _$stockActionsHash() => r'307c3f830b0172f006229e4debc4fcefae017d79';
+
+/// See also [StockActions].
+@ProviderFor(StockActions)
+final stockActionsProvider =
+    AutoDisposeNotifierProvider<StockActions, bool>.internal(
+      StockActions.new,
+      name: r'stockActionsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$stockActionsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$StockActions = AutoDisposeNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

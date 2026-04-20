@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/core/utils/formatters.dart';
@@ -7,6 +8,8 @@ import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
 import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
+import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -271,7 +274,9 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final m = movs[i];
-              final isPositive = m.tipoMovimentacao == 'entrada' || (m.tipoMovimentacao == 'ajuste' && m.quantidade > 0);
+              final isPositive = m.tipoMovimentacao == 'entrada' || 
+                                 m.tipoMovimentacao == 'compra' || 
+                                 ((m.tipoMovimentacao == 'ajuste' || m.tipoMovimentacao == 'inventario') && m.quantidade > 0);
               
               return ListTile(
                 leading: Container(
@@ -320,10 +325,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: ElevatedButton.icon(
-            onPressed: () {
-              // Placeholder para criação de inventário
-              AppNotifications.showError(context, 'Funcionalidade em desenvolvimento');
-            },
+            onPressed: () => _showNovoInventarioDialog(context),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Novo Inventário'),
           ),
@@ -351,6 +353,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   itemBuilder: (context, i) {
                     final inv = invs[i];
                     return ListTile(
+                      onTap: () => context.push('/estoque/contagem/${inv.idInventario}'),
                       leading: CircleAvatar(
                         backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                         child: Text(inv.status[0].toUpperCase(), style: const TextStyle(color: AppTheme.primaryColor)),
@@ -467,6 +470,87 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                 }
               },
               child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNovoInventarioDialog(BuildContext context) {
+    final codigoCtrl = TextEditingController(text: 'INV-${DateTime.now().millisecondsSinceEpoch ~/ 10000}');
+    final descCtrl = TextEditingController();
+    int? selectedCategoria;
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Novo Inventário'),
+          content: SizedBox(
+            width: 400,
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: codigoCtrl,
+                    decoration: const InputDecoration(labelText: 'Código / Identificação *'),
+                    validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: descCtrl,
+                    decoration: const InputDecoration(labelText: 'Descrição (Opcional)'),
+                  ),
+                  const SizedBox(height: 12),
+                  categoriesAsync.response.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => const Text('Erro ao carregar categorias'),
+                    data: (paginated) {
+                      final cats = paginated.data;
+                      return DropdownButtonFormField<int?>(
+                        value: selectedCategoria,
+                        decoration: const InputDecoration(labelText: 'Filtrar por Categoria (Opcional)'),
+                        hint: const Text('Todas as Categorias'),
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('Todas as Categorias')),
+                          ...cats.map((c) => DropdownMenuItem(value: c.idCategoria, child: Text(c.nome))),
+                        ],
+                        onChanged: (v) => setDialogState(() => selectedCategoria = v),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                final (success, msg) = await ref.read(stockActionsProvider.notifier).criarInventario(
+                  CriarInventarioRequest(
+                    codigo: codigoCtrl.text,
+                    descricao: descCtrl.text,
+                    dataInicio: DateTime.now().toIso8601String(),
+                    categoriaId: selectedCategoria,
+                  ),
+                );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (success) {
+                    AppNotifications.showSuccess(context, msg);
+                  } else {
+                    AppNotifications.showError(context, msg);
+                  }
+                }
+              },
+              child: const Text('Iniciar Contagem'),
             ),
           ],
         ),

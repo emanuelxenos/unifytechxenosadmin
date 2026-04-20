@@ -168,17 +168,20 @@ class CriarInventarioRequest {
   final String codigo;
   final String descricao;
   final String dataInicio;
+  final int? categoriaId;
 
   CriarInventarioRequest({
     required this.codigo,
     required this.descricao,
     required this.dataInicio,
+    this.categoriaId,
   });
 
   Map<String, dynamic> toJson() => {
         'codigo': codigo,
         'descricao': descricao,
         'data_inicio': dataInicio,
+        'categoria_id': categoriaId,
       };
 }
 

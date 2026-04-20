@@ -19,6 +19,36 @@ class LowStock extends _$LowStock {
 }
 
 @riverpod
+class StockMovements extends _$StockMovements {
+  @override
+  Future<List<EstoqueMovimentacao>> build({int? produtoId, DateTime? inicio, DateTime? fim}) async {
+    return ref.read(stockRepositoryProvider).listarMovimentacoes(
+      produtoId: produtoId,
+      inicio: inicio,
+      fim: fim,
+    );
+  }
+}
+
+@riverpod
+class Inventories extends _$Inventories {
+  @override
+  Future<List<Inventario>> build() async {
+    return ref.read(stockRepositoryProvider).listarInventarios();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarInventarios());
+  }
+}
+
+@riverpod
+Future<Inventario> inventoryDetails(InventoryDetailsRef ref, int id) async {
+  return ref.watch(stockRepositoryProvider).buscarInventarioPorId(id);
+}
+
+@riverpod
 class StockActions extends _$StockActions {
   @override
   bool build() => false;
@@ -36,43 +66,37 @@ class StockActions extends _$StockActions {
   Future<(bool, String)> criarInventario(CriarInventarioRequest request) async {
     try {
       await ref.read(stockRepositoryProvider).criarInventario(request);
+      ref.invalidate(inventoriesProvider);
       return (true, 'Inventário criado com sucesso!');
     } catch (e) {
       return (false, ApiService.extractError(e));
     }
   }
-}
 
-@riverpod
-class StockMovements extends _$StockMovements {
-  @override
-  Future<List<EstoqueMovimentacao>> build({int? produtoId, DateTime? inicio, DateTime? fim}) async {
-    return ref.read(stockRepositoryProvider).listarMovimentacoes(
-      produtoId: produtoId,
-      inicio: inicio,
-      fim: fim,
-    );
+  Future<(bool, String)> atualizarItemInventario(int invId, int prodId, double quantity) async {
+    try {
+      final success = await ref.read(stockRepositoryProvider).atualizarItemInventario(invId, prodId, quantity);
+      if (success) {
+        ref.invalidate(inventoryDetailsProvider(invId));
+        return (true, 'Item atualizado!');
+      }
+      return (false, 'Erro ao atualizar item');
+    } catch (e) {
+      return (false, ApiService.extractError(e));
+    }
   }
 
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarMovimentacoes(
-      produtoId: produtoId,
-      inicio: inicio,
-      fim: fim,
-    ));
-  }
-}
-
-@riverpod
-class Inventories extends _$Inventories {
-  @override
-  Future<List<Inventario>> build() async {
-    return ref.read(stockRepositoryProvider).listarInventarios();
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarInventarios());
+  Future<(bool, String)> finalizarInventario(int id, String observacoes) async {
+    try {
+      final success = await ref.read(stockRepositoryProvider).finalizarInventario(id, observacoes);
+      if (success) {
+        ref.invalidate(inventoriesProvider);
+        ref.invalidate(inventoryDetailsProvider(id));
+        return (true, 'Inventário finalizado e estoque atualizado!');
+      }
+      return (false, 'Erro ao finalizar inventário');
+    } catch (e) {
+      return (false, ApiService.extractError(e));
+    }
   }
 }

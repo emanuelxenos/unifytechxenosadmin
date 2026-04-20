@@ -19,6 +19,7 @@ import 'package:unifytechxenosadmin/presentation/views/finance/finance_screen.da
 import 'package:unifytechxenosadmin/presentation/views/reports/reports_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/settings_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/customers/customers_screen.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,6 +100,15 @@ class UnifyTechAdminApp extends ConsumerWidget {
             GoRoute(
               path: '/estoque',
               builder: (context, state) => const StockScreen(),
+              routes: [
+                GoRoute(
+                  path: 'contagem/:id',
+                  builder: (context, state) {
+                    final id = int.parse(state.pathParameters['id']!);
+                    return InventoryCountingScreen(inventoryId: id);
+                  },
+                ),
+              ],
             ),
             GoRoute(
               path: '/vendas',

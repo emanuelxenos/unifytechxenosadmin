@@ -60,4 +60,31 @@ class StockRepository {
     }
     return [];
   }
+
+  Future<Inventario> buscarInventarioPorId(int id) async {
+    final response = await _api.get('${ApiEndpoints.estoqueInventario}/$id');
+    return Inventario.fromJson(_extractData(response.data) as Map<String, dynamic>);
+  }
+
+  Future<bool> atualizarItemInventario(int inventarioId, int produtoId, double quantidade) async {
+    try {
+      await _api.put(
+        '${ApiEndpoints.estoqueInventario}/$inventarioId/item/$produtoId',
+        data: {'quantidade': quantidade},
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> finalizarInventario(int id, String observacoes) async {
+    try {
+      await _api.put('${ApiEndpoints.estoqueInventario}/$id',
+          data: {'observacoes': observacoes});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
