@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:file_picker/file_picker.dart' as fp;
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/domain/models/company.dart';
 import 'package:unifytechxenosadmin/presentation/providers/empresa_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
+import 'package:unifytechxenosadmin/services/api_service.dart';
+import 'package:unifytechxenosadmin/data/repositories/empresa_repository.dart';
 
 class CompanySettingsScreen extends ConsumerStatefulWidget {
   const CompanySettingsScreen({super.key});
@@ -53,6 +56,7 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
   final _phone2Formatter = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
 
   bool _initialized = false;
+  bool _isUploading = false;
 
   void _initFields(Empresa empresa) {
     if (_initialized) return;
@@ -159,15 +163,62 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
     }
   }
 
+  Future<void> _pickAndUploadLogo() async {
+    try {
+      final result = await fp.FilePicker.pickFiles(
+        type: fp.FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.single.path == null) return;
+
+      setState(() => _isUploading = true);
+
+      final path = result.files.single.path!;
+      final url = await ref.read(empresaRepositoryProvider).uploadLogo(path);
+
+      setState(() {
+        _logoUrlCtrl.text = url;
+        _isUploading = false;
+      });
+
+      if (mounted) {
+        // Força o recarregamento dos dados do banco para garantir sincronia total
+        ref.invalidate(empresaStateProvider);
+        AppNotifications.showSuccess(context, 'Logotipo enviado e salvo com sucesso!');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        final message = ApiService.extractError(e);
+        AppNotifications.showError(context, 'Erro no upload: $message');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final empresaAsync = ref.watch(empresaStateProvider);
     final theme = Theme.of(context);
 
+    // Sincroniza campos quando os dados chegam pela primeira vez
+    ref.listen(empresaStateProvider, (prev, next) {
+      if (next is AsyncData<Empresa> && !_initialized) {
+        // Usa microtask para evitar atualizar controladores durante o build
+        Future.microtask(() => _initFields(next.value));
+      }
+    });
+
+    final baseUrl = ref.watch(apiServiceProvider).baseUrl;
+
     return empresaAsync.when(
       data: (empresa) {
-        _initFields(empresa);
+        // Garantia para o primeiro build if data is already available
+        if (!_initialized) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _initFields(empresa));
+        }
+        
         return SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 40),
           child: Form(
@@ -262,7 +313,30 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
 
                 _buildSectionTitle('Identidade Visual', Icons.palette_rounded, theme),
                 _buildCard([
-                  _buildTextField('Logotipo URL', _logoUrlCtrl),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(child: _buildTextField('Logotipo URL', _logoUrlCtrl)),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: _isUploading ? null : _pickAndUploadLogo,
+                          icon: _isUploading 
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.cloud_upload_rounded, size: 20),
+                          label: Text(_isUploading ? 'Enviando...' : 'Upload'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildLogoPreview(theme, empresa, baseUrl),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -345,4 +419,98 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
   }
 
   String? _requiredValidator(String? v) => (v == null || v.isEmpty) ? 'Obrigatório' : null;
+
+  Widget _buildLogoPreview(ThemeData theme, Empresa empresa, String baseUrl) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _logoUrlCtrl,
+      builder: (context, value, _) {
+        // Usa o valor do controlador, mas se estiver vazio durante o carregamento inicial, 
+        // tenta usar o valor que veio do banco de dados para garantir o preview.
+        String rawUrl = value.text.trim();
+        if (rawUrl.isEmpty && empresa.logotipoUrl != null) {
+          rawUrl = empresa.logotipoUrl!.trim();
+        }
+        
+        if (rawUrl.isEmpty) {
+          return _buildPlaceholder(theme, 'Sem URL');
+        }
+ 
+        // Formata a URL (garantindo que não haja barras duplas entre o host e o caminho)
+        String finalUrl = rawUrl;
+        if (rawUrl.startsWith('/uploads/')) {
+          finalUrl = baseUrl + rawUrl;
+          // Normaliza barras duplas sebaseUrl terminar com barra ou rawUrl tiver múltiplas
+          finalUrl = finalUrl.replaceAllMapped(RegExp(r'([^:])//+'), (match) => '${match[1]}/');
+          debugPrint('Logo Full URL: $finalUrl');
+        }
+ 
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Prévia do Logotipo', style: theme.textTheme.labelMedium),
+            const SizedBox(height: 8),
+            Container(
+              height: 120,
+              width: 120,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.outlineVariant),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.network(
+                finalUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.broken_image_rounded, color: AppTheme.accentRed, size: 32),
+                        const SizedBox(height: 4),
+                        Text('Erro ao carregar', style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.accentRed), textAlign: TextAlign.center),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+ 
+  Widget _buildPlaceholder(ThemeData theme, String text) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Prévia do Logotipo', style: theme.textTheme.labelMedium),
+        const SizedBox(height: 8),
+        Container(
+          height: 120,
+          width: 120,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.image_search_rounded, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5), size: 32),
+                const SizedBox(height: 4),
+                Text(text, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5))),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
