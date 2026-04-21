@@ -22,6 +22,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   final _horizontalController = ScrollController();
   String _searchQuery = '';
   bool _onlyLowStock = false;
+  bool _showStats = true; // Toggle for KPI cards
   
   // Filtros de Inventário
   DateTime? _invInicio;
@@ -138,10 +139,15 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     return Column(
       children: [
         // KPI Cards
-        reportAsync.when(
-          data: (data) => Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Wrap(
+        // KPI Cards with Animation
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: _showStats
+              ? reportAsync.when(
+                  data: (data) => Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Wrap(
               spacing: 16,
               runSpacing: 16,
               children: [
@@ -178,8 +184,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               ],
             ),
           ),
-          loading: () => const SizedBox(height: 100, child: LoadingOverlay()),
-          error: (_, __) => const SizedBox.shrink(),
+                  loading: () => const SizedBox(height: 100, child: LoadingOverlay()),
+                  error: (_, __) => const SizedBox.shrink(),
+                )
+              : const SizedBox.shrink(),
         ),
 
         // Search & Filters
@@ -209,6 +217,16 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               onSelected: (v) => setState(() => _onlyLowStock = v),
               selectedColor: AppTheme.accentOrange.withValues(alpha: 0.2),
               checkmarkColor: AppTheme.accentOrange,
+            ),
+            const SizedBox(width: 8),
+            // Toggle Stats Button
+            IconButton(
+              tooltip: _showStats ? 'Esconder Estatísticas' : 'Mostrar Estatísticas',
+              icon: Icon(
+                _showStats ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                color: AppTheme.primaryColor,
+              ),
+              onPressed: () => setState(() => _showStats = !_showStats),
             ),
           ],
         ),
