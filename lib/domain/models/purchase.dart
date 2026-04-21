@@ -78,6 +78,8 @@ class ItemCompra {
   final double valorTotal;
   final double valorDesconto;
   final DateTime? dataRecebimento;
+  final String? localizacao;
+  final DateTime? dataVencimento;
   final String? produtoNome;
 
   ItemCompra({
@@ -91,6 +93,8 @@ class ItemCompra {
     required this.valorTotal,
     this.valorDesconto = 0,
     this.dataRecebimento,
+    this.localizacao,
+    this.dataVencimento,
     this.produtoNome,
   });
 
@@ -107,6 +111,10 @@ class ItemCompra {
         valorDesconto: (json['valor_desconto'] as num?)?.toDouble() ?? 0,
         dataRecebimento: json['data_recebimento'] != null
             ? DateTime.parse(json['data_recebimento'] as String)
+            : null,
+        localizacao: json['localizacao'] as String?,
+        dataVencimento: json['data_vencimento'] != null
+            ? DateTime.parse(json['data_vencimento'] as String)
             : null,
         produtoNome: json['produto_nome'] as String?,
       );
@@ -137,17 +145,23 @@ class CriarItemCompraRequest {
   final int produtoId;
   final double quantidade;
   final double precoUnitario;
+  final String? localizacao;
+  final String? dataVencimento;
 
   CriarItemCompraRequest({
     required this.produtoId,
     required this.quantidade,
     required this.precoUnitario,
+    this.localizacao,
+    this.dataVencimento,
   });
 
   Map<String, dynamic> toJson() => {
         'produto_id': produtoId,
         'quantidade': quantidade,
         'preco_unitario': precoUnitario,
+        'localizacao': localizacao,
+        'data_vencimento': dataVencimento,
       };
 }
 

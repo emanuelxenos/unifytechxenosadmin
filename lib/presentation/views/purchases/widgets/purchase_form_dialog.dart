@@ -38,7 +38,13 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
       if (index >= 0) {
         _items[index].quantity += 1;
       } else {
-        _items.add(_CartItem(product: product, quantity: 1, costPrice: product.precoCusto));
+        _items.add(_CartItem(
+          product: product,
+          quantity: 1,
+          costPrice: product.precoCusto,
+          localizacao: product.localizacao ?? '',
+          dataVencimento: product.dataVencimento != null ? Formatters.date(product.dataVencimento!) : '',
+        ));
       }
     });
   }
@@ -56,6 +62,10 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
         produtoId: i.product.idProduto,
         quantidade: i.quantity,
         precoUnitario: i.costPrice,
+        localizacao: i.localizacao,
+        dataVencimento: i.dataVencimento.isNotEmpty 
+            ? Formatters.dateToIso(i.dataVencimento) 
+            : null,
       )).toList(),
     );
 
@@ -133,10 +143,11 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
                               title: Text(item.product.nome),
                               subtitle: Text('ID: ${item.product.idProduto}'),
                               trailing: SizedBox(
-                                width: 300,
+                                width: 520, // Increased width to accommodate new fields
                                 child: Row(
                                   children: [
                                     Expanded(
+                                      flex: 2,
                                       child: TextFormField(
                                         initialValue: item.quantity.toString(),
                                         decoration: const InputDecoration(labelText: 'Qtd'),
@@ -146,11 +157,44 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
+                                      flex: 3,
                                       child: TextFormField(
                                         initialValue: item.costPrice.toString(),
                                         decoration: const InputDecoration(labelText: 'Custo Un.', prefixText: 'R\$'),
                                         keyboardType: TextInputType.number,
                                         onChanged: (v) => setState(() => item.costPrice = double.tryParse(v) ?? 0),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 3,
+                                      child: TextFormField(
+                                        initialValue: item.localizacao,
+                                        decoration: const InputDecoration(labelText: 'Localização'),
+                                        onChanged: (v) => setState(() => item.localizacao = v),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 3,
+                                      child: TextFormField(
+                                        controller: TextEditingController(text: item.dataVencimento),
+                                        readOnly: true,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Validade',
+                                          suffixIcon: Icon(Icons.calendar_today, size: 16),
+                                        ),
+                                        onTap: () async {
+                                          final date = await showDatePicker(
+                                            context: context,
+                                            initialDate: DateTime.now(),
+                                            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                                            lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                          );
+                                          if (date != null) {
+                                            setState(() => item.dataVencimento = Formatters.date(date));
+                                          }
+                                        },
                                       ),
                                     ),
                                     IconButton(
@@ -229,6 +273,14 @@ class _CartItem {
   final Produto product;
   double quantity;
   double costPrice;
+  String localizacao;
+  String dataVencimento;
 
-  _CartItem({required this.product, required this.quantity, required this.costPrice});
+  _CartItem({
+    required this.product,
+    required this.quantity,
+    required this.costPrice,
+    this.localizacao = '',
+    this.dataVencimento = '',
+  });
 }
