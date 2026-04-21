@@ -360,7 +360,7 @@ class _StockMovementsProviderElement
   DateTime? get fim => (origin as StockMovementsProvider).fim;
 }
 
-String _$inventoriesHash() => r'c0185eea31a80a1ea3cf8274a18e01709dae075d';
+String _$inventoriesHash() => r'da41453e06954c9d5fc0b9ced5d12a16bd7027c3';
 
 abstract class _$Inventories
     extends BuildlessAutoDisposeAsyncNotifier<List<Inventario>> {

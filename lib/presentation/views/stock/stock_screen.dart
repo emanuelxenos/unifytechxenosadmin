@@ -28,6 +28,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   DateTime? _invFim;
   bool _filterToday = false;
 
+  // Filtros de Histórico
+  DateTime? _histInicio;
+  DateTime? _histFim;
+  bool _filterHistToday = false;
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -257,21 +262,84 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   }
 
   Widget _buildHistoricoTab(ThemeData theme) {
-    final movementsAsync = ref.watch(stockMovementsProvider(produtoId: null, inicio: null, fim: null));
+    // Normalizar data para evitar loops
+    final today = DateUtils.dateOnly(DateTime.now());
+    
+    final movementsAsync = ref.watch(stockMovementsProvider(
+      produtoId: null, 
+      inicio: _filterHistToday ? today : _histInicio, 
+      fim: _histFim,
+    ));
 
-    return Container(
-      decoration: AppTheme.glassCard(),
-      clipBehavior: Clip.antiAlias,
-      child: movementsAsync.when(
-        loading: () => const LoadingOverlay(message: 'Carregando histórico...'),
-        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
-        data: (movs) {
-          if (movs.isEmpty) {
-            return const EmptyState(
-              icon: Icons.history_rounded,
-              title: 'Nenhuma movimentação registrada',
-            );
-          }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            children: [
+              FilterChip(
+                label: const Text('Hoje'),
+                selected: _filterHistToday,
+                onSelected: (val) {
+                  setState(() {
+                    _filterHistToday = val;
+                    if (val) {
+                      _histInicio = null;
+                      _histFim = null;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: _selectHistDateRange,
+                icon: const Icon(Icons.date_range_rounded, size: 18),
+                label: Text(_histInicio != null ? 'Período Selecionado' : 'Selecionar Período'),
+              ),
+              const SizedBox(width: 8),
+              if (_histInicio != null || _histFim != null || _filterHistToday)
+                IconButton(
+                  tooltip: 'Limpar Filtros',
+                  onPressed: () {
+                    setState(() {
+                      _histInicio = null;
+                      _histFim = null;
+                      _filterHistToday = false;
+                    });
+                  },
+                  icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                ),
+            ],
+          ),
+        ),
+        if (_histInicio != null && _histFim != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                Text(
+                  'Período: ${Formatters.date(_histInicio!)} até ${Formatters.date(_histFim!)}',
+                  style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: Container(
+            decoration: AppTheme.glassCard(),
+            clipBehavior: Clip.antiAlias,
+            child: movementsAsync.when(
+              loading: () => const LoadingOverlay(message: 'Carregando histórico...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (movs) {
+                if (movs.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.history_rounded,
+                    title: _filterHistToday || _histInicio != null 
+                        ? 'Nenhuma movimentação no período' 
+                        : 'Nenhuma movimentação registrada',
+                  );
+                }
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -318,6 +386,9 @@ class _StockScreenState extends ConsumerState<StockScreen> {
           );
         },
       ),
+    ),
+  ),
+],
     );
   }
 
@@ -531,6 +602,34 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _selectHistDateRange() async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: _histInicio != null && _histFim != null
+          ? DateTimeRange(start: _histInicio!, end: _histFim!)
+          : null,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2101),
+      helpText: 'Selecione o período do histórico',
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            primary: AppTheme.primaryColor,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _histInicio = picked.start;
+        _histFim = picked.end;
+        _filterHistToday = false;
+      });
+    }
   }
 
   Future<void> _selectInvDateRange() async {
