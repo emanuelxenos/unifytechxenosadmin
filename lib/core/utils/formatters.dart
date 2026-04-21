@@ -45,6 +45,24 @@ class Formatters {
 
   static String dateForApi(DateTime dt) => _dateApiFormat.format(dt);
 
+  static String dateToIso(String ddMMyyyy) {
+    try {
+      final date = _dateFormat.parse(ddMMyyyy);
+      return _dateApiFormat.format(date);
+    } catch (_) {
+      return ddMMyyyy;
+    }
+  }
+
+  static DateTime? parseDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty || dateStr == '-') return null;
+    try {
+      return _dateFormat.parse(dateStr);
+    } catch (_) {
+      return null;
+    }
+  }
+
   static String cpf(String? cpf) {
     if (cpf == null || cpf.length != 11) return cpf ?? '';
     return '${cpf.substring(0, 3)}.${cpf.substring(3, 6)}.${cpf.substring(6, 9)}-${cpf.substring(9)}';
