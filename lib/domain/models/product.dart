@@ -29,6 +29,8 @@ class Produto {
   final String? fotoPrincipalUrl;
   final bool ativo;
   final bool destacado;
+  final String? localizacao;
+  final DateTime? dataVencimento;
   final String? categoriaNome;
 
   Produto({
@@ -60,6 +62,8 @@ class Produto {
     this.fotoPrincipalUrl,
     this.ativo = true,
     this.destacado = false,
+    this.localizacao,
+    this.dataVencimento,
     this.categoriaNome,
   });
 
@@ -117,6 +121,10 @@ class Produto {
         fotoPrincipalUrl: json['foto_principal_url'] as String?,
         ativo: json['ativo'] as bool? ?? true,
         destacado: json['destacado'] as bool? ?? false,
+        localizacao: json['localizacao'] as String?,
+        dataVencimento: json['data_vencimento'] != null
+            ? DateTime.parse(json['data_vencimento'] as String)
+            : null,
         categoriaNome: json['categoria_nome'] as String?,
       );
 
@@ -132,6 +140,8 @@ class Produto {
         'preco_custo': precoCusto,
         'preco_venda': precoVenda,
         'marca': marca,
+        'localizacao': localizacao,
+        'data_vencimento': dataVencimento?.toIso8601String(),
       };
 }
 
@@ -147,6 +157,8 @@ class CriarProdutoRequest {
   final double precoCusto;
   final double precoVenda;
   final String? marca;
+  final String? localizacao;
+  final DateTime? dataVencimento;
 
   CriarProdutoRequest({
     this.codigoBarras,
@@ -160,6 +172,8 @@ class CriarProdutoRequest {
     this.precoCusto = 0,
     required this.precoVenda,
     this.marca,
+    this.localizacao,
+    this.dataVencimento,
   });
 
   Map<String, dynamic> toJson() => {
@@ -174,5 +188,7 @@ class CriarProdutoRequest {
         'preco_custo': precoCusto,
         'preco_venda': precoVenda,
         'marca': marca,
+        'localizacao': localizacao,
+        'data_vencimento': dataVencimento?.toIso8601String(),
       };
 }

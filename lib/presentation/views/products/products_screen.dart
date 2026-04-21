@@ -53,6 +53,29 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     );
   }
 
+  Widget _buildVencimentoCell(DateTime? data) {
+    if (data == null) return const Text('-', style: TextStyle(color: Colors.white38));
+    final now = DateTime.now();
+    final diff = data.difference(now).inDays;
+    
+    Color? color;
+    if (data.isBefore(now)) {
+      color = AppTheme.accentRed;
+    } else if (diff <= 15) {
+      color = AppTheme.accentOrange;
+    } else if (diff <= 30) {
+      color = Colors.yellow;
+    }
+    
+    return Text(
+      Formatters.date(data),
+      style: TextStyle(
+        color: color,
+        fontWeight: color != null ? FontWeight.bold : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -181,6 +204,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                       DataColumn(label: Text('ESTOQUE'), numeric: true),
                                       DataColumn(label: Text('PREÇO CUSTO'), numeric: true),
                                       DataColumn(label: Text('PREÇO VENDA'), numeric: true),
+                                      DataColumn(label: Text('LOCAL')),
+                                      DataColumn(label: Text('VALIDADE')),
                                       DataColumn(label: Text('STATUS')),
                                       DataColumn(label: Text('AÇÕES')),
                                     ],
@@ -297,6 +322,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             ],
           ),
         ),
+        DataCell(Text(p.localizacao ?? '-')),
+        DataCell(_buildVencimentoCell(p.dataVencimento)),
         DataCell(StatusChip.fromStatus(p.ativo ? 'ativo' : 'inativo')),
         DataCell(
           Row(
@@ -381,6 +408,8 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
   late TextEditingController _precoVendaCtrl;
   late TextEditingController _precoCustoCtrl;
   late TextEditingController _estoqueMinCtrl;
+  late TextEditingController _localizacaoCtrl;
+  DateTime? _dataVencimento;
 
   // State
   int? _selectedCategoriaId;
@@ -405,6 +434,8 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
         TextEditingController(text: p != null ? p.precoCusto.toString() : '0');
     _estoqueMinCtrl = TextEditingController(
         text: p != null ? p.estoqueMinimo.toString() : '0');
+    _localizacaoCtrl = TextEditingController(text: p?.localizacao ?? '');
+    _dataVencimento = p?.dataVencimento;
     _selectedCategoriaId = p?.categoriaId;
     _unidadeVenda = p?.unidadeVenda ?? 'UN';
     _controlarEstoque = p?.controlarEstoque ?? true;
@@ -434,14 +465,10 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
       codigoInterno: _codigoInternoCtrl.text.trim().isEmpty
           ? null
           : _codigoInternoCtrl.text.trim(),
-      marca:
-          _marcaCtrl.text.trim().isEmpty ? null : _marcaCtrl.text.trim(),
-      categoriaId: _selectedCategoriaId,
-      unidadeVenda: _unidadeVenda,
-      controlarEstoque: _controlarEstoque,
-      estoqueMinimo: double.tryParse(_estoqueMinCtrl.text) ?? 0,
-      precoCusto: double.tryParse(_precoCustoCtrl.text) ?? 0,
       precoVenda: double.parse(_precoVendaCtrl.text),
+      marca: _marcaCtrl.text.trim().isEmpty ? null : _marcaCtrl.text.trim(),
+      localizacao: _localizacaoCtrl.text.trim().isEmpty ? null : _localizacaoCtrl.text.trim(),
+      dataVencimento: _dataVencimento,
     );
   }
 
@@ -681,6 +708,56 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
                           prefixIcon: Icon(Icons.inventory_2_rounded),
                         ),
                         keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // ─── Varejo e Validade ───
+                Text('Varejo e Validade',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _localizacaoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Localização (Aisle/Shelf)',
+                          prefixIcon: Icon(Icons.location_on_rounded),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _dataVencimento ?? DateTime.now(),
+                            firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                            lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          );
+                          if (date != null) {
+                            setState(() => _dataVencimento = date);
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Data de Vencimento',
+                            prefixIcon: Icon(Icons.event_note_rounded),
+                          ),
+                          child: Text(
+                            _dataVencimento != null
+                                ? Formatters.date(_dataVencimento!)
+                                : 'Selecionar data',
+                            style: TextStyle(
+                              color: _dataVencimento != null ? Colors.white : Colors.white38,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],

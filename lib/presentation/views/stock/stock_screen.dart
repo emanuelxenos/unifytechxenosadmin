@@ -110,6 +110,27 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
+  Widget _buildVencimentoCell(DateTime? data) {
+    if (data == null) return const Text('N/A', style: TextStyle(color: Colors.white54));
+    
+    final now = DateTime.now();
+    final difference = data.difference(now).inDays;
+    
+    Color color = Colors.white;
+    if (data.isBefore(now)) {
+      color = AppTheme.accentRed;
+    } else if (difference <= 15) {
+      color = AppTheme.accentOrange;
+    } else if (difference <= 30) {
+      color = Colors.yellow;
+    }
+
+    return Text(
+      Formatters.date(data),
+      style: TextStyle(color: color, fontWeight: color != Colors.white ? FontWeight.bold : null),
+    );
+  }
+
   Widget _buildPosicaoTab(ThemeData theme) {
     final productsAsync = ref.watch(productsProvider);
     final reportAsync = ref.watch(stockReportProvider);
@@ -141,6 +162,18 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   value: Formatters.currency(data['valor_total_custo']?.toDouble() ?? 0),
                   icon: Icons.attach_money_rounded,
                   color: AppTheme.accentGreen,
+                ),
+                _StockKpiCard(
+                  title: 'Reposição Necessária',
+                  value: Formatters.currency(data['sugestao_compra_total']?.toDouble() ?? 0),
+                  icon: Icons.shopping_cart_checkout_rounded,
+                  color: Colors.purple,
+                ),
+                _StockKpiCard(
+                  title: 'Vencendo (15 dias)',
+                  value: data['produtos_vencendo']?.toString() ?? '0',
+                  icon: Icons.event_busy_rounded,
+                  color: Colors.redAccent,
                 ),
               ],
             ),
@@ -222,6 +255,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                             DataColumn(label: Text('UNIDADE')),
                             DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
                             DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
+                            DataColumn(label: Text('LOCALIZAÇÃO')),
+                            DataColumn(label: Text('VENCIMENTO')),
                             DataColumn(label: Text('STATUS')),
                             DataColumn(label: Text('AÇÕES')),
                           ],
@@ -238,6 +273,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                 ),
                               )),
                               DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
+                              DataCell(Text(p.localizacao ?? 'N/A')),
+                              DataCell(_buildVencimentoCell(p.dataVencimento)),
                               DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
                               DataCell(
                                 IconButton(
