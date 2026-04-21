@@ -28,6 +28,8 @@ class ProductRepository {
     int limit = 50,
     int? categoriaId,
     String? search,
+    bool baixoEstoque = false,
+    bool vencendo = false,
   }) async {
     final response = await _api.get(
       ApiEndpoints.produtos,
@@ -36,6 +38,8 @@ class ProductRepository {
         'limit': limit,
         if (categoriaId != null) 'categoria_id': categoriaId,
         if (search != null && search.isNotEmpty) 'search': search,
+        if (baixoEstoque) 'baixo_estoque': true,
+        if (vencendo) 'vencendo': true,
       },
     );
     return PaginatedResponse.fromJson(

@@ -11,6 +11,9 @@ class ProductState {
   final int limit;
   final int? categoriaId;
   final String search;
+  final bool onlyLowStock;
+  final bool onlyExpiring;
+  final bool onlyReposition;
   final AsyncValue<PaginatedResponse<Produto>> response;
 
   ProductState({
@@ -18,6 +21,9 @@ class ProductState {
     this.limit = 50,
     this.categoriaId,
     this.search = '',
+    this.onlyLowStock = false,
+    this.onlyExpiring = false,
+    this.onlyReposition = false,
     this.response = const AsyncLoading(),
   });
 
@@ -26,6 +32,9 @@ class ProductState {
     int? limit,
     int? categoriaId,
     String? search,
+    bool? onlyLowStock,
+    bool? onlyExpiring,
+    bool? onlyReposition,
     AsyncValue<PaginatedResponse<Produto>>? response,
   }) {
     return ProductState(
@@ -33,6 +42,9 @@ class ProductState {
       limit: limit ?? this.limit,
       categoriaId: categoriaId ?? this.categoriaId,
       search: search ?? this.search,
+      onlyLowStock: onlyLowStock ?? this.onlyLowStock,
+      onlyExpiring: onlyExpiring ?? this.onlyExpiring,
+      onlyReposition: onlyReposition ?? this.onlyReposition,
       response: response ?? this.response,
     );
   }
@@ -55,6 +67,8 @@ class Products extends _$Products {
       limit: state.limit,
       categoriaId: state.categoriaId,
       search: state.search,
+      baixoEstoque: state.onlyLowStock || state.onlyReposition,
+      vencendo: state.onlyExpiring,
     ));
     
     state = state.copyWith(response: result);
@@ -75,6 +89,21 @@ class Products extends _$Products {
 
   void setSearch(String query) {
     state = state.copyWith(search: query, page: 1);
+    _load();
+  }
+
+  void setFilterLowStock(bool value) {
+    state = state.copyWith(onlyLowStock: value, page: 1);
+    _load();
+  }
+
+  void setFilterExpiring(bool value) {
+    state = state.copyWith(onlyExpiring: value, page: 1);
+    _load();
+  }
+
+  void setFilterReposition(bool value) {
+    state = state.copyWith(onlyReposition: value, page: 1);
     _load();
   }
 

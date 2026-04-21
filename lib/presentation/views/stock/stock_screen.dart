@@ -9,6 +9,7 @@ import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
 import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
+import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
@@ -20,8 +21,7 @@ class StockScreen extends ConsumerStatefulWidget {
 class _StockScreenState extends ConsumerState<StockScreen> {
   final _searchController = TextEditingController();
   final _horizontalController = ScrollController();
-  String _searchQuery = '';
-  bool _onlyLowStock = false;
+  final _debouncer = Debouncer(milliseconds: 500);
   bool _showStats = true; // Toggle for KPI cards
   
   // Filtros de Inventário
@@ -38,6 +38,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   void dispose() {
     _searchController.dispose();
     _horizontalController.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -133,8 +134,9 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   }
 
   Widget _buildPosicaoTab(ThemeData theme) {
-    final productsAsync = ref.watch(productsProvider);
+    final productsState = ref.watch(productsProvider);
     final reportAsync = ref.watch(stockReportProvider);
+    final productsNotifier = ref.read(productsProvider.notifier);
 
     return Column(
       children: [
@@ -143,8 +145,9 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          child: _showStats
-              ? reportAsync.when(
+          child: (!_showStats || productsState.onlyLowStock || productsState.onlyExpiring || productsState.onlyReposition)
+              ? const SizedBox.shrink() // Hide stats manually or when filtering
+              : reportAsync.when(
                   data: (data) => Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: Wrap(
@@ -186,127 +189,188 @@ class _StockScreenState extends ConsumerState<StockScreen> {
           ),
                   loading: () => const SizedBox(height: 100, child: LoadingOverlay()),
                   error: (_, __) => const SizedBox.shrink(),
-                )
-              : const SizedBox.shrink(),
+                ),
         ),
 
         // Search & Filters
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Container(
-                decoration: AppTheme.glassCard(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                  decoration: const InputDecoration(
-                    hintText: 'Buscar produto...',
-                    prefixIcon: Icon(Icons.search_rounded),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: AppTheme.glassCard(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (v) {
+                        _debouncer.run(() => productsNotifier.setSearch(v));
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar produto...',
+                        prefixIcon: Icon(Icons.search_rounded),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: _showStats ? 'Esconder Estatísticas' : 'Mostrar Estatísticas',
+                  icon: Icon(
+                    _showStats ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                    color: AppTheme.primaryColor,
+                  ),
+                  onPressed: () => setState(() => _showStats = !_showStats),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            FilterChip(
-              label: const Text('Apenas estoque baixo'),
-              selected: _onlyLowStock,
-              onSelected: (v) => setState(() => _onlyLowStock = v),
-              selectedColor: AppTheme.accentOrange.withValues(alpha: 0.2),
-              checkmarkColor: AppTheme.accentOrange,
-            ),
-            const SizedBox(width: 8),
-            // Toggle Stats Button
-            IconButton(
-              tooltip: _showStats ? 'Esconder Estatísticas' : 'Mostrar Estatísticas',
-              icon: Icon(
-                _showStats ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                color: AppTheme.primaryColor,
-              ),
-              onPressed: () => setState(() => _showStats = !_showStats),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('Estoque Baixo'),
+                  selected: productsState.onlyLowStock,
+                  onSelected: (v) => productsNotifier.setFilterLowStock(v),
+                  selectedColor: AppTheme.accentOrange.withValues(alpha: 0.2),
+                  checkmarkColor: AppTheme.accentOrange,
+                ),
+                FilterChip(
+                  label: const Text('Vencendo (15d)'),
+                  selected: productsState.onlyExpiring,
+                  onSelected: (v) => productsNotifier.setFilterExpiring(v),
+                  selectedColor: AppTheme.accentRed.withValues(alpha: 0.2),
+                  checkmarkColor: AppTheme.accentRed,
+                ),
+                FilterChip(
+                  label: const Text('Reposição'),
+                  selected: productsState.onlyReposition,
+                  onSelected: (v) => productsNotifier.setFilterReposition(v),
+                  selectedColor: Colors.purple.withValues(alpha: 0.2),
+                  checkmarkColor: Colors.purple,
+                ),
+              ],
             ),
           ],
         ),
         const SizedBox(height: 16),
 
         // Table
+        // Table with Pagination
         Expanded(
           child: Container(
             decoration: AppTheme.glassCard(),
             clipBehavior: Clip.antiAlias,
-            child: productsAsync.response.when(
+            child: productsState.response.when(
               loading: () => const LoadingOverlay(message: 'Carregando estoque...'),
               error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
               data: (paginated) {
                 final products = paginated.data;
-                final filtered = products.where((p) {
-                  if (!p.controlarEstoque) return false;
-                  if (_onlyLowStock && !p.estoqueBaixo) return false;
-                  
-                  if (_searchQuery.isEmpty) return true;
-                  return p.nome.toLowerCase().contains(_searchQuery) ||
-                         (p.codigoBarras ?? '').toLowerCase().contains(_searchQuery);
-                }).toList();
 
-                if (filtered.isEmpty) {
+                if (products.isEmpty) {
                   return const EmptyState(
                     icon: Icons.warehouse_outlined,
                     title: 'Nenhum item encontrado',
                   );
                 }
 
-                return Scrollbar(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: Scrollbar(
-                      controller: _horizontalController,
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        controller: _horizontalController,
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text('PRODUTO')),
-                            DataColumn(label: Text('UNIDADE')),
-                            DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
-                            DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
-                            DataColumn(label: Text('LOCALIZAÇÃO')),
-                            DataColumn(label: Text('VENCIMENTO')),
-                            DataColumn(label: Text('STATUS')),
-                            DataColumn(label: Text('AÇÕES')),
-                          ],
-                          rows: filtered.map((p) {
-                            final baixo = p.estoqueBaixo;
-                            return DataRow(cells: [
-                              DataCell(Text(p.nome, style: const TextStyle(fontWeight: FontWeight.w500))),
-                              DataCell(Text(p.unidadeVenda)),
-                              DataCell(Text(
-                                Formatters.quantity(p.estoqueAtual),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: baixo ? AppTheme.accentRed : null,
-                                ),
-                              )),
-                              DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
-                              DataCell(Text(p.localizacao ?? 'N/A')),
-                              DataCell(_buildVencimentoCell(p.dataVencimento)),
-                              DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
-                              DataCell(
-                                IconButton(
-                                  icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryColor),
-                                  onPressed: () => _showAjusteDialog(context, ref, p),
-                                  tooltip: 'Ajustar',
-                                ),
+                return Column(
+                  children: [
+                    Expanded(
+                      child: Scrollbar(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: Scrollbar(
+                            controller: _horizontalController,
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              controller: _horizontalController,
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text('PRODUTO')),
+                                  DataColumn(label: Text('UNIDADE')),
+                                  DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
+                                  DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
+                                  DataColumn(label: Text('LOCALIZAÇÃO')),
+                                  DataColumn(label: Text('VENCIMENTO')),
+                                  DataColumn(label: Text('STATUS')),
+                                  DataColumn(label: Text('AÇÕES')),
+                                ],
+                                rows: products.map((p) {
+                                  final baixo = p.estoqueBaixo;
+                                  return DataRow(cells: [
+                                    DataCell(Text(p.nome, style: const TextStyle(fontWeight: FontWeight.w500))),
+                                    DataCell(Text(p.unidadeVenda)),
+                                    DataCell(Text(
+                                      Formatters.quantity(p.estoqueAtual),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: baixo ? AppTheme.accentRed : null,
+                                      ),
+                                    )),
+                                    DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
+                                    DataCell(Text(p.localizacao ?? 'N/A')),
+                                    DataCell(_buildVencimentoCell(p.dataVencimento)),
+                                    DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
+                                    DataCell(
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryColor),
+                                        onPressed: () => _showAjusteDialog(context, ref, p),
+                                        tooltip: 'Ajustar',
+                                      ),
+                                    ),
+                                  ]);
+                                }).toList(),
                               ),
-                            ]);
-                          }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    const Divider(height: 1, color: Colors.white10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total: ${paginated.total} produtos',
+                            style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                'Página ${paginated.page} de ${(paginated.total / paginated.limit).ceil() == 0 ? 1 : (paginated.total / paginated.limit).ceil()}',
+                                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                              ),
+                              const SizedBox(width: 16),
+                              IconButton(
+                                onPressed: paginated.hasPreviousPage
+                                    ? () => productsNotifier.setPage(paginated.page - 1)
+                                    : null,
+                                icon: const Icon(Icons.chevron_left),
+                                color: Colors.white,
+                              ),
+                              IconButton(
+                                onPressed: paginated.hasNextPage
+                                    ? () => productsNotifier.setPage(paginated.page + 1)
+                                    : null,
+                                icon: const Icon(Icons.chevron_right),
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

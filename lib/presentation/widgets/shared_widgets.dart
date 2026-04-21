@@ -158,30 +158,32 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
               ),
-              child: Icon(icon, size: 48, color: theme.colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            Text(title, style: theme.textTheme.titleLarge),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(subtitle!, style: theme.textTheme.bodyMedium, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              Text(title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+              if (subtitle != null) ...[
+                const SizedBox(height: 8),
+                Text(subtitle!, style: theme.textTheme.bodyMedium, textAlign: TextAlign.center),
+              ],
+              if (action != null) ...[
+                const SizedBox(height: 20),
+                action!,
+              ],
             ],
-            if (action != null) ...[
-              const SizedBox(height: 20),
-              action!,
-            ],
-          ],
+          ),
         ),
       ),
     );

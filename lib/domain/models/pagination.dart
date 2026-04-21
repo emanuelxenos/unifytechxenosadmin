@@ -19,7 +19,7 @@ class PaginatedResponse<T> {
   ) {
     return PaginatedResponse<T>(
       success: json['success'] as bool? ?? false,
-      data: (json['data'] as List<dynamic>).map(fromJsonT).toList(),
+      data: (json['data'] as List<dynamic>? ?? []).map(fromJsonT).toList(),
       total: json['total'] as int? ?? 0,
       page: json['page'] as int? ?? 1,
       limit: json['limit'] as int? ?? 50,
