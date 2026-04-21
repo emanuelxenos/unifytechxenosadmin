@@ -33,13 +33,19 @@ class StockMovements extends _$StockMovements {
 @riverpod
 class Inventories extends _$Inventories {
   @override
-  Future<List<Inventario>> build() async {
-    return ref.read(stockRepositoryProvider).listarInventarios();
+  Future<List<Inventario>> build({DateTime? inicio, DateTime? fim}) async {
+    return ref.read(stockRepositoryProvider).listarInventarios(
+      inicio: inicio,
+      fim: fim,
+    );
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarInventarios());
+    state = await AsyncValue.guard(() => ref.read(stockRepositoryProvider).listarInventarios(
+      inicio: inicio,
+      fim: fim,
+    ));
   }
 }
 

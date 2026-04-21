@@ -22,6 +22,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   final _horizontalController = ScrollController();
   String _searchQuery = '';
   bool _onlyLowStock = false;
+  
+  // Filtros de Inventário
+  DateTime? _invInicio;
+  DateTime? _invFim;
+  bool _filterToday = false;
 
   @override
   void dispose() {
@@ -317,19 +322,68 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   }
 
   Widget _buildInventariosTab(ThemeData theme) {
-    final inventoriesAsync = ref.watch(inventoriesProvider);
+    // Normalizar data para evitar loops (key estável para o provider)
+    final today = DateUtils.dateOnly(DateTime.now());
+    
+    final inventoriesAsync = ref.watch(inventoriesProvider(
+      inicio: _filterToday ? today : _invInicio,
+      fim: _invFim,
+    ));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: ElevatedButton.icon(
-            onPressed: () => _showNovoInventarioDialog(context),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Novo Inventário'),
-          ),
+        Row(
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => _showNovoInventarioDialog(context),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Novo Inventário'),
+            ),
+            const SizedBox(width: 16),
+            FilterChip(
+              label: const Text('Hoje'),
+              selected: _filterToday,
+              onSelected: (val) {
+                setState(() {
+                  _filterToday = val;
+                  if (val) {
+                    _invInicio = null;
+                    _invFim = null;
+                  }
+                });
+              },
+            ),
+            const SizedBox(width: 8),
+            TextButton.icon(
+              onPressed: _selectInvDateRange,
+              icon: const Icon(Icons.date_range_rounded, size: 18),
+              label: Text(_invInicio != null ? 'Período Selecionado' : 'Selecionar Período'),
+            ),
+            const SizedBox(width: 8),
+            if (_invInicio != null || _invFim != null || _filterToday)
+              IconButton(
+                tooltip: 'Limpar Filtros',
+                onPressed: () {
+                  setState(() {
+                    _invInicio = null;
+                    _invFim = null;
+                    _filterToday = false;
+                  });
+                },
+                icon: const Icon(Icons.close_rounded, color: Colors.grey),
+              ),
+          ],
         ),
+        if (_invInicio != null && _invFim != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Período: ${Formatters.date(_invInicio!)} até ${Formatters.date(_invFim!)}',
+              style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
+            ),
+          ),
+        const SizedBox(height: 16),
         Expanded(
           child: Container(
             decoration: AppTheme.glassCard(),
@@ -339,9 +393,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
               data: (invs) {
                 if (invs.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.fact_check_outlined,
-                    title: 'Nenhum inventário planejado',
+                    title: _filterToday || _invInicio != null 
+                        ? 'Nenhum inventário no período' 
+                        : 'Nenhum inventário planejado',
                     subtitle: 'Crie um novo inventário para iniciar a contagem física.',
                   );
                 }
@@ -475,6 +531,34 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _selectInvDateRange() async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: _invInicio != null && _invFim != null
+          ? DateTimeRange(start: _invInicio!, end: _invFim!)
+          : null,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2101),
+      helpText: 'Selecione o período do inventário',
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            primary: AppTheme.primaryColor,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _invInicio = picked.start;
+        _invFim = picked.end;
+        _filterToday = false;
+      });
+    }
   }
 
   void _showNovoInventarioDialog(BuildContext context) {

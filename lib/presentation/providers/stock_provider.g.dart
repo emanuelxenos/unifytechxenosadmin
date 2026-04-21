@@ -360,22 +360,156 @@ class _StockMovementsProviderElement
   DateTime? get fim => (origin as StockMovementsProvider).fim;
 }
 
-String _$inventoriesHash() => r'0357ab91c29b10527b16e905b1d7d8682754d764';
+String _$inventoriesHash() => r'c0185eea31a80a1ea3cf8274a18e01709dae075d';
+
+abstract class _$Inventories
+    extends BuildlessAutoDisposeAsyncNotifier<List<Inventario>> {
+  late final DateTime? inicio;
+  late final DateTime? fim;
+
+  FutureOr<List<Inventario>> build({DateTime? inicio, DateTime? fim});
+}
 
 /// See also [Inventories].
 @ProviderFor(Inventories)
-final inventoriesProvider =
-    AutoDisposeAsyncNotifierProvider<Inventories, List<Inventario>>.internal(
-      Inventories.new,
-      name: r'inventoriesProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$inventoriesHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+const inventoriesProvider = InventoriesFamily();
 
-typedef _$Inventories = AutoDisposeAsyncNotifier<List<Inventario>>;
+/// See also [Inventories].
+class InventoriesFamily extends Family<AsyncValue<List<Inventario>>> {
+  /// See also [Inventories].
+  const InventoriesFamily();
+
+  /// See also [Inventories].
+  InventoriesProvider call({DateTime? inicio, DateTime? fim}) {
+    return InventoriesProvider(inicio: inicio, fim: fim);
+  }
+
+  @override
+  InventoriesProvider getProviderOverride(
+    covariant InventoriesProvider provider,
+  ) {
+    return call(inicio: provider.inicio, fim: provider.fim);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'inventoriesProvider';
+}
+
+/// See also [Inventories].
+class InventoriesProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<Inventories, List<Inventario>> {
+  /// See also [Inventories].
+  InventoriesProvider({DateTime? inicio, DateTime? fim})
+    : this._internal(
+        () => Inventories()
+          ..inicio = inicio
+          ..fim = fim,
+        from: inventoriesProvider,
+        name: r'inventoriesProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$inventoriesHash,
+        dependencies: InventoriesFamily._dependencies,
+        allTransitiveDependencies: InventoriesFamily._allTransitiveDependencies,
+        inicio: inicio,
+        fim: fim,
+      );
+
+  InventoriesProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.inicio,
+    required this.fim,
+  }) : super.internal();
+
+  final DateTime? inicio;
+  final DateTime? fim;
+
+  @override
+  FutureOr<List<Inventario>> runNotifierBuild(covariant Inventories notifier) {
+    return notifier.build(inicio: inicio, fim: fim);
+  }
+
+  @override
+  Override overrideWith(Inventories Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: InventoriesProvider._internal(
+        () => create()
+          ..inicio = inicio
+          ..fim = fim,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        inicio: inicio,
+        fim: fim,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<Inventories, List<Inventario>>
+  createElement() {
+    return _InventoriesProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is InventoriesProvider &&
+        other.inicio == inicio &&
+        other.fim == fim;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, inicio.hashCode);
+    hash = _SystemHash.combine(hash, fim.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin InventoriesRef on AutoDisposeAsyncNotifierProviderRef<List<Inventario>> {
+  /// The parameter `inicio` of this provider.
+  DateTime? get inicio;
+
+  /// The parameter `fim` of this provider.
+  DateTime? get fim;
+}
+
+class _InventoriesProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<Inventories, List<Inventario>>
+    with InventoriesRef {
+  _InventoriesProviderElement(super.provider);
+
+  @override
+  DateTime? get inicio => (origin as InventoriesProvider).inicio;
+  @override
+  DateTime? get fim => (origin as InventoriesProvider).fim;
+}
+
 String _$stockActionsHash() => r'307c3f830b0172f006229e4debc4fcefae017d79';
 
 /// See also [StockActions].
