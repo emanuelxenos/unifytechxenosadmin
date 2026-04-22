@@ -42,7 +42,44 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   String? _histTipo;
 
   @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleKeyPress);
+  }
+
+  bool _handleKeyPress(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+
+    final isControl = HardwareKeyboard.instance.isControlPressed;
+    final isAlt = HardwareKeyboard.instance.isAltPressed;
+
+    if (isControl && event.logicalKey == LogicalKeyboardKey.keyF) {
+      _searchFocus.requestFocus();
+      return true;
+    }
+    if (isAlt && event.logicalKey == LogicalKeyboardKey.keyS) {
+      _showSugestaoCompraDialog(context, ref);
+      return true;
+    }
+    if (isAlt && event.logicalKey == LogicalKeyboardKey.keyP) {
+      _imprimirEtiquetasLote();
+      return true;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      if (_searchFocus.hasFocus) {
+        _searchController.clear();
+        ref.read(productsProvider.notifier).setSearch('');
+        _searchFocus.unfocus();
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyPress);
     _searchController.dispose();
     _horizontalController.dispose();
     _debouncer.dispose();
@@ -233,18 +270,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
 
     return DefaultTabController(
       length: 3,
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _searchFocus.requestFocus(),
-          const SingleActivator(LogicalKeyboardKey.keyS, alt: true): () => _showSugestaoCompraDialog(context, ref),
-          const SingleActivator(LogicalKeyboardKey.keyP, alt: true): () => _imprimirEtiquetasLote(),
-          const SingleActivator(LogicalKeyboardKey.escape): () {
-            _searchController.clear();
-            ref.read(productsProvider.notifier).setSearch('');
-            _searchFocus.unfocus();
-          },
-        },
-        child: Scaffold(
+      child: Scaffold(
           backgroundColor: Colors.transparent,
           body: Padding(
             padding: const EdgeInsets.all(24),
@@ -301,9 +327,16 @@ class _StockScreenState extends ConsumerState<StockScreen> {
           onPressed: _isExporting ? null : () => _exportar('xlsx'),
         ),
         IconButton(
-          tooltip: 'Sugestão de Compra',
+          tooltip: 'Sugestão de Compra (Alt+S)',
           icon: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.blueAccent),
           onPressed: () => _showSugestaoCompraDialog(context, ref),
+        ),
+        Tooltip(
+          message: 'Atalhos do Teclado:\n• Ctrl + F: Buscar Produto\n• Alt + S: Sugestão de Compra\n• Alt + P: Imprimir Etiquetas (Lote)\n• Esc: Limpar busca/filtros',
+          child: IconButton(
+            icon: const Icon(Icons.keyboard_command_key_rounded, color: Colors.white70),
+            onPressed: () {},
+          ),
         ),
         const SizedBox(width: 8),
         ElevatedButton.icon(
@@ -332,7 +365,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
 
   Widget _buildBulkActionsBar(ThemeData theme) {
     return Container(
-      margin: const EdgeInsets.bottom(16),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withValues(alpha: 0.9),
