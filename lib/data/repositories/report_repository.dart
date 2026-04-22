@@ -135,4 +135,16 @@ class ReportRepository {
       queryParameters: {'ids': ids.join(',')},
     );
   }
+
+  Future<List<Map<String, dynamic>>> getPerformanceProduto(int id) async {
+    final response = await _api.get(
+      ApiEndpoints.relatorioPerformanceProduto,
+      queryParameters: {'id': id},
+    );
+    
+    if (response.data is List) {
+      return (response.data as List).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
 }

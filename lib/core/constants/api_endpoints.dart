@@ -74,6 +74,7 @@ class ApiEndpoints {
   static const String relatorioEtiqueta = '/api/relatorios/etiqueta';
   static const String relatorioEtiquetas = '/api/relatorios/etiquetas';
   static const String relatorioSugestaoCompra = '/api/relatorios/sugestao-compra';
+  static const String relatorioPerformanceProduto = '/api/relatorios/performance-produto';
 
   // Config (Admin)
   static const String config = '/api/config';

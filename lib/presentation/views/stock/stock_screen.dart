@@ -14,6 +14,7 @@ import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_
 import 'package:file_picker/file_picker.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -262,6 +263,157 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         );
       }
     }
+  }
+
+  Future<void> _showProductPerformanceDialog(dynamic product) async {
+    final theme = Theme.of(context);
+    final reportRepo = ref.read(reportRepositoryProvider);
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 600,
+          padding: const EdgeInsets.all(24),
+          decoration: AppTheme.glassCard(opacity: 0.95),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Performance do Produto', style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70)),
+                        Text(product.nome, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white54),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: reportRepo.getPerformanceProduto(product.idProduto),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Text('Sem dados de movimentação nos últimos 6 meses.', style: TextStyle(color: Colors.white54)),
+                      ),
+                    );
+                  }
+
+                  final data = snapshot.data!;
+                  return Column(
+                    children: [
+                      SizedBox(
+                        height: 250,
+                        child: BarChart(
+                          BarChartData(
+                            alignment: BarChartAlignment.spaceAround,
+                            maxY: _getMaxY(data),
+                            barGroups: _buildBarGroups(data),
+                            gridData: const FlGridData(show: false),
+                            borderData: FlBorderData(show: false),
+                            titlesData: FlTitlesData(
+                              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (val, meta) {
+                                    if (val.toInt() >= data.length) return const Text('');
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Text(
+                                        data[val.toInt()]['mes'],
+                                        style: const TextStyle(color: Colors.white54, fontSize: 10),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildLegend('Entradas', Colors.blueAccent),
+                          const SizedBox(width: 24),
+                          _buildLegend('Saídas', Colors.redAccent),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  double _getMaxY(List<Map<String, dynamic>> data) {
+    double max = 0;
+    for (var d in data) {
+      if (d['entrada'] > max) max = (d['entrada'] as num).toDouble();
+      if (d['saida'] > max) max = (d['saida'] as num).toDouble();
+    }
+    return max == 0 ? 10 : max * 1.2;
+  }
+
+  List<BarChartGroupData> _buildBarGroups(List<Map<String, dynamic>> data) {
+    return List.generate(data.length, (i) {
+      return BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+            toY: (data[i]['entrada'] as num).toDouble(),
+            color: Colors.blueAccent,
+            width: 12,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          BarChartRodData(
+            toY: (data[i]['saida'] as num).toDouble(),
+            color: Colors.redAccent,
+            width: 12,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildLegend(String label, Color color) {
+    return Row(
+      children: [
+        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      ],
+    );
   }
 
   @override
@@ -659,7 +811,23 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                           },
                                         ),
                                       ),
-                                      DataCell(Text(p.nome, style: const TextStyle(fontWeight: FontWeight.w500))),
+                                      DataCell(
+                                        InkWell(
+                                          onTap: () => _showProductPerformanceDialog(p),
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                            child: Text(
+                                              p.nome,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                color: AppTheme.primaryColor,
+                                                decoration: TextDecoration.underline,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     DataCell(Text(p.unidadeVenda)),
                                     DataCell(Text(
                                       Formatters.quantity(p.estoqueAtual),
