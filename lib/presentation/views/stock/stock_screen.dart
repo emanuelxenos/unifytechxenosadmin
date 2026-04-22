@@ -25,6 +25,7 @@ class StockScreen extends ConsumerStatefulWidget {
 class _StockScreenState extends ConsumerState<StockScreen> {
   final _searchController = TextEditingController();
   final _horizontalController = ScrollController();
+  final _verticalController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 500);
   bool _showStats = true; // Toggle for KPI cards
   bool _isExporting = false;
@@ -409,45 +410,58 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         }
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
-            child: Text('Nenhuma movimentação registrada.', style: TextStyle(color: Colors.white54)),
+            child: Text('Nenhuma movimentação registrada.',
+                style: TextStyle(color: Colors.white54)),
           );
         }
 
         final data = snapshot.data!;
-        return SingleChildScrollView(
-          child: Table(
-            columnWidths: const {
-              0: FlexColumnWidth(1.2),
-              1: FlexColumnWidth(1.5),
-              2: FlexColumnWidth(1),
-              3: FlexColumnWidth(1),
-              4: FlexColumnWidth(2),
-            },
-            children: [
-              TableRow(
-                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white10))),
-                children: [
-                  _headerCell('Data'),
-                  _headerCell('Usuário'),
-                  _headerCell('Operação'),
-                  _headerCell('Qtd'),
-                  _headerCell('Observação'),
-                ],
-              ),
-              ...data.map((m) {
-                final date = DateTime.parse(m['data']);
-                return TableRow(
-                  decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white05))),
+        final scrollController = ScrollController();
+        return Scrollbar(
+          controller: scrollController,
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1.2),
+                1: FlexColumnWidth(1.5),
+                2: FlexColumnWidth(1),
+                3: FlexColumnWidth(1),
+                4: FlexColumnWidth(2),
+              },
+              children: [
+                TableRow(
+                  decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.white10))),
                   children: [
-                    _dataCell(Formatters.dateTime(date)),
-                    _dataCell(m['usuario']),
-                    _dataCell(m['tipo'].toString().toUpperCase(), color: _getTipoColor(m['tipo'])),
-                    _dataCell(Formatters.quantity(m['quantidade']), bold: true),
-                    _dataCell(m['observacao'] ?? '-', size: 11),
+                    _headerCell('Data'),
+                    _headerCell('Usuário'),
+                    _headerCell('Operação'),
+                    _headerCell('Qtd'),
+                    _headerCell('Observação'),
                   ],
-                );
-              }),
-            ],
+                ),
+                ...data.map((m) {
+                  final date = DateTime.parse(m['data']);
+                  return TableRow(
+                    decoration: BoxDecoration(
+                        border: Border(
+                            bottom: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.05)))),
+                    children: [
+                      _dataCell(Formatters.dateTime(date)),
+                      _dataCell(m['usuario']),
+                      _dataCell(m['tipo'].toString().toUpperCase(),
+                          color: _getTipoColor(m['tipo'])),
+                      _dataCell(Formatters.quantity(m['quantidade']),
+                          bold: true),
+                      _dataCell(m['observacao'] ?? '-', size: 11),
+                    ],
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },
@@ -854,7 +868,9 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   children: [
                     Expanded(
                       child: Scrollbar(
+                        controller: _verticalController,
                         child: SingleChildScrollView(
+                          controller: _verticalController,
                           scrollDirection: Axis.vertical,
                           child: Scrollbar(
                             controller: _horizontalController,
