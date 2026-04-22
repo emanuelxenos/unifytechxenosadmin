@@ -31,6 +31,7 @@ class ProductState {
     int? page,
     int? limit,
     int? categoriaId,
+    bool clearCategoria = false,
     String? search,
     bool? onlyLowStock,
     bool? onlyExpiring,
@@ -40,7 +41,7 @@ class ProductState {
     return ProductState(
       page: page ?? this.page,
       limit: limit ?? this.limit,
-      categoriaId: categoriaId ?? this.categoriaId,
+      categoriaId: clearCategoria ? null : (categoriaId ?? this.categoriaId),
       search: search ?? this.search,
       onlyLowStock: onlyLowStock ?? this.onlyLowStock,
       onlyExpiring: onlyExpiring ?? this.onlyExpiring,
@@ -83,7 +84,11 @@ class Products extends _$Products {
   }
 
   void setCategoria(int? catId) {
-    state = state.copyWith(categoriaId: catId, page: 1);
+    state = state.copyWith(
+      categoriaId: catId,
+      clearCategoria: catId == null,
+      page: 1,
+    );
     _load();
   }
 

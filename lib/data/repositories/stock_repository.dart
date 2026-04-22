@@ -38,11 +38,12 @@ class StockRepository {
     await _api.post(ApiEndpoints.estoqueInventario, data: request.toJson());
   }
 
-  Future<List<EstoqueMovimentacao>> listarMovimentacoes({int? produtoId, DateTime? inicio, DateTime? fim}) async {
+  Future<List<EstoqueMovimentacao>> listarMovimentacoes({int? produtoId, DateTime? inicio, DateTime? fim, String? tipo}) async {
     final Map<String, dynamic> params = {};
     if (produtoId != null) params['produto_id'] = produtoId;
     if (inicio != null) params['data_inicio'] = inicio.toIso8601String().split('T')[0];
     if (fim != null) params['data_fim'] = fim.toIso8601String().split('T')[0];
+    if (tipo != null && tipo.isNotEmpty) params['tipo'] = tipo;
 
     final response = await _api.get(ApiEndpoints.estoqueMovimentacoes, queryParameters: params);
     final data = _extractData(response.data);

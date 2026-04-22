@@ -21,11 +21,12 @@ class LowStock extends _$LowStock {
 @riverpod
 class StockMovements extends _$StockMovements {
   @override
-  Future<List<EstoqueMovimentacao>> build({int? produtoId, DateTime? inicio, DateTime? fim}) async {
+  Future<List<EstoqueMovimentacao>> build({int? produtoId, DateTime? inicio, DateTime? fim, String? tipo}) async {
     return ref.read(stockRepositoryProvider).listarMovimentacoes(
       produtoId: produtoId,
       inicio: inicio,
       fim: fim,
+      tipo: tipo,
     );
   }
 }

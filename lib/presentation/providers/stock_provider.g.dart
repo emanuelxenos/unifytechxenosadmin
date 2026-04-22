@@ -166,18 +166,20 @@ final lowStockProvider =
     );
 
 typedef _$LowStock = AutoDisposeAsyncNotifier<List<EstoqueBaixoResponse>>;
-String _$stockMovementsHash() => r'ed76a58bf2efe912c574234465f9bf7a28b051ea';
+String _$stockMovementsHash() => r'2a95576201976cd098e1cd8e3662adc882e789ba';
 
 abstract class _$StockMovements
     extends BuildlessAutoDisposeAsyncNotifier<List<EstoqueMovimentacao>> {
   late final int? produtoId;
   late final DateTime? inicio;
   late final DateTime? fim;
+  late final String? tipo;
 
   FutureOr<List<EstoqueMovimentacao>> build({
     int? produtoId,
     DateTime? inicio,
     DateTime? fim,
+    String? tipo,
   });
 }
 
@@ -196,11 +198,13 @@ class StockMovementsFamily
     int? produtoId,
     DateTime? inicio,
     DateTime? fim,
+    String? tipo,
   }) {
     return StockMovementsProvider(
       produtoId: produtoId,
       inicio: inicio,
       fim: fim,
+      tipo: tipo,
     );
   }
 
@@ -212,6 +216,7 @@ class StockMovementsFamily
       produtoId: provider.produtoId,
       inicio: provider.inicio,
       fim: provider.fim,
+      tipo: provider.tipo,
     );
   }
 
@@ -238,24 +243,30 @@ class StockMovementsProvider
           List<EstoqueMovimentacao>
         > {
   /// See also [StockMovements].
-  StockMovementsProvider({int? produtoId, DateTime? inicio, DateTime? fim})
-    : this._internal(
-        () => StockMovements()
-          ..produtoId = produtoId
-          ..inicio = inicio
-          ..fim = fim,
-        from: stockMovementsProvider,
-        name: r'stockMovementsProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$stockMovementsHash,
-        dependencies: StockMovementsFamily._dependencies,
-        allTransitiveDependencies:
-            StockMovementsFamily._allTransitiveDependencies,
-        produtoId: produtoId,
-        inicio: inicio,
-        fim: fim,
-      );
+  StockMovementsProvider({
+    int? produtoId,
+    DateTime? inicio,
+    DateTime? fim,
+    String? tipo,
+  }) : this._internal(
+         () => StockMovements()
+           ..produtoId = produtoId
+           ..inicio = inicio
+           ..fim = fim
+           ..tipo = tipo,
+         from: stockMovementsProvider,
+         name: r'stockMovementsProvider',
+         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+             ? null
+             : _$stockMovementsHash,
+         dependencies: StockMovementsFamily._dependencies,
+         allTransitiveDependencies:
+             StockMovementsFamily._allTransitiveDependencies,
+         produtoId: produtoId,
+         inicio: inicio,
+         fim: fim,
+         tipo: tipo,
+       );
 
   StockMovementsProvider._internal(
     super._createNotifier, {
@@ -267,17 +278,24 @@ class StockMovementsProvider
     required this.produtoId,
     required this.inicio,
     required this.fim,
+    required this.tipo,
   }) : super.internal();
 
   final int? produtoId;
   final DateTime? inicio;
   final DateTime? fim;
+  final String? tipo;
 
   @override
   FutureOr<List<EstoqueMovimentacao>> runNotifierBuild(
     covariant StockMovements notifier,
   ) {
-    return notifier.build(produtoId: produtoId, inicio: inicio, fim: fim);
+    return notifier.build(
+      produtoId: produtoId,
+      inicio: inicio,
+      fim: fim,
+      tipo: tipo,
+    );
   }
 
   @override
@@ -288,7 +306,8 @@ class StockMovementsProvider
         () => create()
           ..produtoId = produtoId
           ..inicio = inicio
-          ..fim = fim,
+          ..fim = fim
+          ..tipo = tipo,
         from: from,
         name: null,
         dependencies: null,
@@ -297,6 +316,7 @@ class StockMovementsProvider
         produtoId: produtoId,
         inicio: inicio,
         fim: fim,
+        tipo: tipo,
       ),
     );
   }
@@ -315,7 +335,8 @@ class StockMovementsProvider
     return other is StockMovementsProvider &&
         other.produtoId == produtoId &&
         other.inicio == inicio &&
-        other.fim == fim;
+        other.fim == fim &&
+        other.tipo == tipo;
   }
 
   @override
@@ -324,6 +345,7 @@ class StockMovementsProvider
     hash = _SystemHash.combine(hash, produtoId.hashCode);
     hash = _SystemHash.combine(hash, inicio.hashCode);
     hash = _SystemHash.combine(hash, fim.hashCode);
+    hash = _SystemHash.combine(hash, tipo.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -341,6 +363,9 @@ mixin StockMovementsRef
 
   /// The parameter `fim` of this provider.
   DateTime? get fim;
+
+  /// The parameter `tipo` of this provider.
+  String? get tipo;
 }
 
 class _StockMovementsProviderElement
@@ -358,6 +383,8 @@ class _StockMovementsProviderElement
   DateTime? get inicio => (origin as StockMovementsProvider).inicio;
   @override
   DateTime? get fim => (origin as StockMovementsProvider).fim;
+  @override
+  String? get tipo => (origin as StockMovementsProvider).tipo;
 }
 
 String _$inventoriesHash() => r'da41453e06954c9d5fc0b9ced5d12a16bd7027c3';

@@ -71,6 +71,8 @@ class ApiEndpoints {
   static const String relatorioComissoes = '/api/relatorios/comissoes';
   static const String relatorioExportPdf = '/api/relatorios/exportar/pdf';
   static const String relatorioExportExcel = '/api/relatorios/exportar/excel';
+  static const String relatorioEtiqueta = '/api/relatorios/etiqueta';
+  static const String relatorioSugestaoCompra = '/api/relatorios/sugestao-compra';
 
   // Config (Admin)
   static const String config = '/api/config';

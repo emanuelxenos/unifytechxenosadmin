@@ -92,11 +92,39 @@ class ReportRepository {
     return _extractMapData(response.data);
   }
 
-  Future<void> exportarRelatorio(String formato, String savePath, String tipo) async {
+  Future<void> exportarRelatorio(String formato, String savePath, String tipo, {Map<String, dynamic>? params}) async {
     final endpoint = formato == 'pdf' 
         ? ApiEndpoints.relatorioExportPdf 
         : ApiEndpoints.relatorioExportExcel;
     
-    await _api.download(endpoint, savePath, queryParameters: {'tipo': tipo});
+    final Map<String, dynamic> queryParams = {'tipo': tipo};
+    if (params != null) {
+      queryParams.addAll(params);
+    }
+    
+    await _api.download(endpoint, savePath, queryParameters: queryParams);
+  }
+
+  Future<void> imprimirEtiqueta(int produtoId, String savePath) async {
+    await _api.download(
+      ApiEndpoints.relatorioEtiqueta, 
+      savePath, 
+      queryParameters: {'id': produtoId},
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> sugestaoCompra() async {
+    final response = await _api.get(ApiEndpoints.relatorioSugestaoCompra);
+    
+    // O backend retorna um JSON array diretamente ou dentro de um campo 'data'
+    dynamic rawData = response.data;
+    if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
+      rawData = rawData['data'];
+    }
+
+    if (rawData is List) {
+      return rawData.cast<Map<String, dynamic>>();
+    }
+    return [];
   }
 }

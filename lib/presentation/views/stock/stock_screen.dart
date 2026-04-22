@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/core/utils/formatters.dart';
@@ -11,6 +10,9 @@ import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart'
 import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
+import 'package:go_router/go_router.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -23,6 +25,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   final _horizontalController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 500);
   bool _showStats = true; // Toggle for KPI cards
+  bool _isExporting = false;
   
   // Filtros de Inventário
   DateTime? _invInicio;
@@ -33,6 +36,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   DateTime? _histInicio;
   DateTime? _histFim;
   bool _filterHistToday = false;
+  String? _histTipo;
 
   @override
   void dispose() {
@@ -40,6 +44,152 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     _horizontalController.dispose();
     _debouncer.dispose();
     super.dispose();
+  }
+
+  Future<void> _exportar(String formato) async {
+    setState(() => _isExporting = true);
+    final productsState = ref.read(productsProvider);
+    
+    try {
+      String fileName = 'estoque_${DateTime.now().millisecondsSinceEpoch}.$formato';
+      String? outputFile = await FilePicker.saveFile(
+        dialogTitle: 'Exportar Estoque',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: [formato],
+      );
+
+      if (outputFile != null) {
+        if (!outputFile.endsWith('.$formato')) outputFile += '.$formato';
+        
+        final params = {
+          'search': productsState.search,
+          'categoria_id': productsState.categoriaId,
+          'baixo_estoque': productsState.onlyLowStock,
+          'vencendo': productsState.onlyExpiring,
+        };
+
+        await ref.read(reportRepositoryProvider).exportarRelatorio(
+          formato, 
+          outputFile, 
+          'estoque_lista',
+          params: params,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Estoque exportado: $outputFile'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao exportar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<void> _imprimirEtiqueta(int produtoId) async {
+    try {
+      String? outputFile = await FilePicker.saveFile(
+        dialogTitle: 'Salvar Etiqueta',
+        fileName: 'etiqueta_$produtoId.pdf',
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (outputFile != null) {
+        if (!outputFile.endsWith('.pdf')) outputFile += '.pdf';
+        await ref.read(reportRepositoryProvider).imprimirEtiqueta(produtoId, outputFile);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Etiqueta gerada com sucesso!'), backgroundColor: Colors.green),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao imprimir etiqueta: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showSugestaoCompraDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.shopping_cart_checkout_rounded, color: Colors.blueAccent),
+            SizedBox(width: 12),
+            Text('Sugestão de Compra'),
+          ],
+        ),
+        content: SizedBox(
+          width: 500,
+          height: 400,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: ref.read(reportRepositoryProvider).sugestaoCompra(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('Nenhuma sugestão no momento.'));
+              }
+
+              return ListView.separated(
+                itemCount: snapshot.data!.length,
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, index) {
+                  final item = snapshot.data![index];
+                  return ListTile(
+                    title: Text(item['nome'] ?? ''),
+                    subtitle: Text('Estoque Atual: ${item['estoque_atual']} | Mín: ${item['estoque_minimo']}'),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Sugerido', style: TextStyle(fontSize: 11, color: Colors.blueAccent)),
+                        Text(
+                          '${item['sugestao_quantidade']}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/compras');
+            },
+            child: const Text('Ir para Compras'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -88,6 +238,27 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             ],
           ),
         ),
+        if (_isExporting)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+        IconButton(
+          tooltip: 'Exportar PDF',
+          icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent),
+          onPressed: _isExporting ? null : () => _exportar('pdf'),
+        ),
+        IconButton(
+          tooltip: 'Exportar Excel',
+          icon: const Icon(Icons.table_chart_rounded, color: Colors.green),
+          onPressed: _isExporting ? null : () => _exportar('xlsx'),
+        ),
+        IconButton(
+          tooltip: 'Sugestão de Compra',
+          icon: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.blueAccent),
+          onPressed: () => _showSugestaoCompraDialog(context, ref),
+        ),
+        const SizedBox(width: 8),
         ElevatedButton.icon(
           onPressed: () => _showAjusteDialog(context, ref),
           icon: const Icon(Icons.swap_vert_rounded, size: 18),
@@ -229,11 +400,46 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                // Filtro de Categoria
+                Container(
+                  height: 32,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                  ),
+                  child: ref.watch(categoriesProvider).response.when(
+                    data: (paginated) => DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        value: productsState.categoriaId,
+                        hint: const Text('Categoria', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppTheme.primaryColor),
+                        dropdownColor: const Color(0xFF1C2039),
+                        style: const TextStyle(fontSize: 13, color: Colors.white),
+                        onChanged: (id) => productsNotifier.setCategoria(id),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Todas Categorias'),
+                          ),
+                          ...paginated.data.map((cat) => DropdownMenuItem(
+                            value: cat.idCategoria,
+                            child: Text(cat.nome),
+                          )),
+                        ],
+                      ),
+                    ),
+                    loading: () => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    error: (_, __) => const Icon(Icons.error_outline, size: 18, color: Colors.red),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Estoque Baixo'),
                   selected: productsState.onlyLowStock,
@@ -320,10 +526,20 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                     DataCell(_buildVencimentoCell(p.dataVencimento)),
                                     DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
                                     DataCell(
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryColor),
-                                        onPressed: () => _showAjusteDialog(context, ref, p),
-                                        tooltip: 'Ajustar',
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.label_outline_rounded, color: Colors.orangeAccent),
+                                            onPressed: () => _imprimirEtiqueta(p.idProduto),
+                                            tooltip: 'Imprimir Etiqueta',
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryColor),
+                                            onPressed: () => _showAjusteDialog(context, ref, p),
+                                            tooltip: 'Ajustar',
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ]);
@@ -388,6 +604,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       produtoId: null, 
       inicio: _filterHistToday ? today : _histInicio, 
       fim: _histFim,
+      tipo: _histTipo,
     ));
 
     return Column(
@@ -408,6 +625,34 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     }
                   });
                 },
+              ),
+              const SizedBox(width: 8),
+              // Filtro de Tipo de Movimentação
+              Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value: _histTipo,
+                    hint: const Text('Tipo', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppTheme.primaryColor),
+                    dropdownColor: const Color(0xFF1C2039),
+                    style: const TextStyle(fontSize: 13, color: Colors.white),
+                    onChanged: (val) => setState(() => _histTipo = val),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('Todos Tipos')),
+                      DropdownMenuItem(value: 'entrada', child: Text('Entradas')),
+                      DropdownMenuItem(value: 'saida', child: Text('Saídas')),
+                      DropdownMenuItem(value: 'ajuste', child: Text('Ajustes')),
+                      DropdownMenuItem(value: 'inventario', child: Text('Inventário')),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               TextButton.icon(
