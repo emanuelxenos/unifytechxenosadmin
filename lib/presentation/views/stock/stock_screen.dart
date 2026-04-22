@@ -276,7 +276,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         child: Container(
           width: 600,
           padding: const EdgeInsets.all(24),
-          decoration: AppTheme.glassCard(opacity: 0.95),
+          decoration: AppTheme.glassCard(),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,12 +489,6 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             icon: const Icon(Icons.keyboard_command_key_rounded, color: Colors.white70),
             onPressed: () {},
           ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton.icon(
-          onPressed: () => _showAjusteDialog(context, ref),
-          icon: const Icon(Icons.swap_vert_rounded, size: 18),
-          label: const Text('Ajustar Estoque'),
         ),
       ],
     );
@@ -822,7 +816,6 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.w500,
                                                 color: AppTheme.primaryColor,
-                                                decoration: TextDecoration.underline,
                                               ),
                                             ),
                                           ),
