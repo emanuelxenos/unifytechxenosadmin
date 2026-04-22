@@ -271,108 +271,210 @@ class _StockScreenState extends ConsumerState<StockScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 600,
-          padding: const EdgeInsets.all(24),
-          decoration: AppTheme.glassCard(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Performance do Produto', style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70)),
-                        Text(product.nome, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              FutureBuilder<List<Map<String, dynamic>>>(
-                future: reportRepo.getPerformanceProduto(product.idProduto),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Text('Sem dados de movimentação nos últimos 6 meses.', style: TextStyle(color: Colors.white54)),
-                      ),
-                    );
-                  }
-
-                  final data = snapshot.data!;
-                  return Column(
-                    children: [
-                      SizedBox(
-                        height: 250,
-                        child: BarChart(
-                          BarChartData(
-                            alignment: BarChartAlignment.spaceAround,
-                            maxY: _getMaxY(data),
-                            barGroups: _buildBarGroups(data),
-                            gridData: const FlGridData(show: false),
-                            borderData: FlBorderData(show: false),
-                            titlesData: FlTitlesData(
-                              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  getTitlesWidget: (val, meta) {
-                                    if (val.toInt() >= data.length) return const Text('');
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Text(
-                                        data[val.toInt()]['mes'],
-                                        style: const TextStyle(color: Colors.white54, fontSize: 10),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+      builder: (context) => DefaultTabController(
+        length: 2,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: 700,
+            constraints: const BoxConstraints(maxHeight: 600),
+            padding: const EdgeInsets.all(24),
+            decoration: AppTheme.glassCard(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLegend('Entradas', Colors.blueAccent),
-                          const SizedBox(width: 24),
-                          _buildLegend('Saídas', Colors.redAccent),
+                          Text('Informações Detalhadas', style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70)),
+                          Text(product.nome, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  dividerColor: Colors.transparent,
+                  indicatorColor: AppTheme.primaryColor,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white54,
+                  tabs: const [
+                    Tab(text: 'Performance (6m)'),
+                    Tab(text: 'Histórico de Auditoria'),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // Tab 1: Performance Chart
+                      _buildPerformanceTab(reportRepo, product.idProduto),
+                      
+                      // Tab 2: Auditoria Log
+                      _buildAuditoriaTab(reportRepo, product.idProduto),
                     ],
-                  );
-                },
-              ),
-            ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildPerformanceTab(ReportRepository repo, int id) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: repo.getPerformanceProduto(id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('Sem dados de movimentação nos últimos 6 meses.', style: TextStyle(color: Colors.white54)),
+          );
+        }
+
+        final data = snapshot.data!;
+        return Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16, top: 16),
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: _getMaxY(data),
+                    barGroups: _buildBarGroups(data),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (val, meta) {
+                            if (val.toInt() >= data.length) return const Text('');
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                data[val.toInt()]['mes'],
+                                style: const TextStyle(color: Colors.white54, fontSize: 10),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildLegend('Entradas', Colors.blueAccent),
+                const SizedBox(width: 24),
+                _buildLegend('Saídas', Colors.redAccent),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAuditoriaTab(ReportRepository repo, int id) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: repo.getAuditoriaEstoque(id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('Nenhuma movimentação registrada.', style: TextStyle(color: Colors.white54)),
+          );
+        }
+
+        final data = snapshot.data!;
+        return SingleChildScrollView(
+          child: Table(
+            columnWidths: const {
+              0: FlexColumnWidth(1.2),
+              1: FlexColumnWidth(1.5),
+              2: FlexColumnWidth(1),
+              3: FlexColumnWidth(1),
+              4: FlexColumnWidth(2),
+            },
+            children: [
+              TableRow(
+                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white10))),
+                children: [
+                  _headerCell('Data'),
+                  _headerCell('Usuário'),
+                  _headerCell('Operação'),
+                  _headerCell('Qtd'),
+                  _headerCell('Observação'),
+                ],
+              ),
+              ...data.map((m) {
+                final date = DateTime.parse(m['data']);
+                return TableRow(
+                  decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white05))),
+                  children: [
+                    _dataCell(Formatters.dateTime(date)),
+                    _dataCell(m['usuario']),
+                    _dataCell(m['tipo'].toString().toUpperCase(), color: _getTipoColor(m['tipo'])),
+                    _dataCell(Formatters.quantity(m['quantidade']), bold: true),
+                    _dataCell(m['observacao'] ?? '-', size: 11),
+                  ],
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _headerCell(String text) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12)),
+  );
+
+  Widget _dataCell(String text, {Color? color, bool bold = false, double size = 12}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: color ?? Colors.white54,
+        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+        fontSize: size,
+      ),
+    ),
+  );
+
+  Color _getTipoColor(String tipo) {
+    if (tipo.contains('entrada') || tipo.contains('compra')) return Colors.greenAccent;
+    if (tipo.contains('saida') || tipo.contains('venda') || tipo.contains('perda')) return Colors.redAccent;
+    return Colors.blueAccent;
   }
 
   double _getMaxY(List<Map<String, dynamic>> data) {

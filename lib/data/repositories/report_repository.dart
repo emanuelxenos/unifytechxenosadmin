@@ -147,4 +147,16 @@ class ReportRepository {
     }
     return [];
   }
+
+  Future<List<Map<String, dynamic>>> getAuditoriaEstoque(int id) async {
+    final response = await _api.get(
+      ApiEndpoints.relatorioAuditoriaEstoque,
+      queryParameters: {'id': id},
+    );
+    
+    if (response.data is List) {
+      return (response.data as List).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
 }
