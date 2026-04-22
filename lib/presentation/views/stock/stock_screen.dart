@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/core/utils/formatters.dart';
@@ -26,6 +27,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   final _debouncer = Debouncer(milliseconds: 500);
   bool _showStats = true; // Toggle for KPI cards
   bool _isExporting = false;
+  final _searchFocus = FocusNode();
+  final Set<int> _selectedIds = {};
   
   // Filtros de Inventário
   DateTime? _invInicio;
@@ -43,6 +46,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     _searchController.dispose();
     _horizontalController.dispose();
     _debouncer.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -192,20 +196,63 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
+  Future<void> _imprimirEtiquetasLote() async {
+    if (_selectedIds.isEmpty) return;
+    
+    try {
+      String fileName = 'etiquetas_lote_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      String? outputFile = await FilePicker.saveFile(
+        dialogTitle: 'Salvar Etiquetas em Lote',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (outputFile != null) {
+        if (!outputFile.endsWith('.pdf')) outputFile += '.pdf';
+        await ref.read(reportRepositoryProvider).imprimirEtiquetasLote(_selectedIds.toList(), outputFile);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Lote de etiquetas gerado com sucesso!'), backgroundColor: Colors.green),
+          );
+          setState(() => _selectedIds.clear());
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao imprimir lote: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(theme),
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _searchFocus.requestFocus(),
+          const SingleActivator(LogicalKeyboardKey.keyS, alt: true): () => _showSugestaoCompraDialog(context, ref),
+          const SingleActivator(LogicalKeyboardKey.keyP, alt: true): () => _imprimirEtiquetasLote(),
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            _searchController.clear();
+            ref.read(productsProvider.notifier).setSearch('');
+            _searchFocus.unfocus();
+          },
+        },
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_selectedIds.isNotEmpty) _buildBulkActionsBar(theme),
+                _buildHeader(theme),
               const SizedBox(height: 20),
               _buildTabBar(),
               const SizedBox(height: 20),
@@ -280,6 +327,41 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         Tab(text: 'HISTÓRICO'),
         Tab(text: 'INVENTÁRIOS'),
       ],
+    );
+  }
+
+  Widget _buildBulkActionsBar(ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.bottom(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: AppTheme.glassBoxShadow,
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${_selectedIds.length} itens selecionados',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: _imprimirEtiquetasLote,
+            icon: const Icon(Icons.print_rounded, size: 18),
+            label: const Text('Imprimir Etiquetas (Lote)'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(width: 12),
+          TextButton(
+            onPressed: () => setState(() => _selectedIds.clear()),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -375,6 +457,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: TextField(
                       controller: _searchController,
+                      focusNode: _searchFocus,
                       onChanged: (v) {
                         _debouncer.run(() => productsNotifier.setSearch(v));
                       },
@@ -499,20 +582,51 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                               controller: _horizontalController,
                               scrollDirection: Axis.horizontal,
                               child: DataTable(
-                                columns: const [
-                                  DataColumn(label: Text('PRODUTO')),
-                                  DataColumn(label: Text('UNIDADE')),
-                                  DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
-                                  DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
-                                  DataColumn(label: Text('LOCALIZAÇÃO')),
-                                  DataColumn(label: Text('VENCIMENTO')),
-                                  DataColumn(label: Text('STATUS')),
-                                  DataColumn(label: Text('AÇÕES')),
+                                columns: [
+                                  DataColumn(
+                                    label: Checkbox(
+                                      value: products.isNotEmpty && _selectedIds.length == products.length,
+                                      onChanged: (val) {
+                                        setState(() {
+                                          if (val == true) {
+                                            _selectedIds.addAll(products.map((p) => p.idProduto));
+                                          } else {
+                                            _selectedIds.clear();
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  const DataColumn(label: Text('PRODUTO')),
+                                  const DataColumn(label: Text('UNIDADE')),
+                                  const DataColumn(label: Text('ESTOQUE ATUAL'), numeric: true),
+                                  const DataColumn(label: Text('ESTOQUE MÍN'), numeric: true),
+                                  const DataColumn(label: Text('LOCALIZAÇÃO')),
+                                  const DataColumn(label: Text('VENCIMENTO')),
+                                  const DataColumn(label: Text('STATUS')),
+                                  const DataColumn(label: Text('AÇÕES')),
                                 ],
                                 rows: products.map((p) {
                                   final baixo = p.estoqueBaixo;
-                                  return DataRow(cells: [
-                                    DataCell(Text(p.nome, style: const TextStyle(fontWeight: FontWeight.w500))),
+                                  final isSelected = _selectedIds.contains(p.idProduto);
+                                  return DataRow(
+                                    selected: isSelected,
+                                    cells: [
+                                      DataCell(
+                                        Checkbox(
+                                          value: isSelected,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              if (val == true) {
+                                                _selectedIds.add(p.idProduto);
+                                              } else {
+                                                _selectedIds.remove(p.idProduto);
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      DataCell(Text(p.nome, style: const TextStyle(fontWeight: FontWeight.w500))),
                                     DataCell(Text(p.unidadeVenda)),
                                     DataCell(Text(
                                       Formatters.quantity(p.estoqueAtual),

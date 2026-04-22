@@ -127,4 +127,12 @@ class ReportRepository {
     }
     return [];
   }
+
+  Future<void> imprimirEtiquetasLote(List<int> ids, String savePath) async {
+    await _api.download(
+      ApiEndpoints.relatorioEtiquetas,
+      savePath,
+      queryParameters: {'ids': ids.join(',')},
+    );
+  }
 }
