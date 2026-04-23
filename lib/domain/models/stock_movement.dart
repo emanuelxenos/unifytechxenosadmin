@@ -12,6 +12,7 @@ class EstoqueMovimentacao {
   final int? usuarioId;
   final String? observacao;
   final String? produtoNome;
+  final String? loteFabricante;
 
   EstoqueMovimentacao({
     required this.idMovimentacao,
@@ -27,6 +28,7 @@ class EstoqueMovimentacao {
     this.usuarioId,
     this.observacao,
     this.produtoNome,
+    this.loteFabricante,
   });
 
   factory EstoqueMovimentacao.fromJson(Map<String, dynamic> json) =>
@@ -45,6 +47,7 @@ class EstoqueMovimentacao {
         usuarioId: json['usuario_id'] as int?,
         observacao: json['observacao'] as String?,
         produtoNome: json['produto_nome'] as String?,
+        loteFabricante: json['lote_fabricante'] as String?,
       );
 }
 

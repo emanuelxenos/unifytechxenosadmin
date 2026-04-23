@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/presentation/providers/purchase_provider.dart';
+import 'package:unifytechxenosadmin/data/repositories/purchase_repository.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_detail_dialog.dart';
@@ -171,18 +172,32 @@ class HistoryTab extends ConsumerWidget {
   }
 
   Future<void> _confirmReceive(BuildContext context, WidgetRef ref, Compra compra) async {
-    final request = await showDialog<ReceberCompraRequest>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ReceivePurchaseDialog(compra: compra),
-    );
-
-    if (request != null) {
-      final (success, message) = await ref.read(purchaseActionsProvider.notifier).receber(compra.idCompra, request);
+    try {
+      // 1. Carregar detalhes completos da compra (garantir que itens existam)
+      final fullCompra = await ref.read(purchaseRepositoryProvider).buscarPorID(compra.idCompra);
       
+      if (!context.mounted) return;
+
+      // 2. Abrir diálogo com a compra completa
+      final request = await showDialog<ReceberCompraRequest>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ReceivePurchaseDialog(compra: fullCompra),
+      );
+
+      if (request != null) {
+        final (success, message) = await ref.read(purchaseActionsProvider.notifier).receber(compra.idCompra, request);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: success ? AppTheme.accentGreen : AppTheme.accentRed),
+          );
+        }
+      }
+    } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: success ? AppTheme.accentGreen : AppTheme.accentRed),
+          SnackBar(content: Text('Erro ao carregar itens da compra: $e'), backgroundColor: AppTheme.accentRed),
         );
       }
     }

@@ -80,6 +80,7 @@ class ItemCompra {
   final DateTime? dataRecebimento;
   final String? localizacao;
   final DateTime? dataVencimento;
+  final String? lote;
   final String? produtoNome;
 
   ItemCompra({
@@ -95,6 +96,7 @@ class ItemCompra {
     this.dataRecebimento,
     this.localizacao,
     this.dataVencimento,
+    this.lote,
     this.produtoNome,
   });
 
@@ -116,6 +118,7 @@ class ItemCompra {
         dataVencimento: json['data_vencimento'] != null
             ? DateTime.parse(json['data_vencimento'] as String)
             : null,
+        lote: json['lote'] as String?,
         produtoNome: json['produto_nome'] as String?,
       );
 }

@@ -1165,7 +1165,35 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   ),
                 ),
                 title: Text(m.produtoNome ?? 'Produto [${m.produtoId}]', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${m.tipoMovimentacao.toUpperCase()} - ${m.observacao ?? 'Sem observação'}'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${m.tipoMovimentacao.toUpperCase()} - ${m.observacao ?? 'Sem observação'}'),
+                    if (m.loteFabricante != null && m.loteFabricante!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.qr_code_scanner_rounded, size: 12, color: AppTheme.primaryColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                'LOTE: ${m.loteFabricante}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,

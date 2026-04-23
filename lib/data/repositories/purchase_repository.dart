@@ -32,9 +32,10 @@ class PurchaseRepository {
     DateTime? dataInicio,
     DateTime? dataFim,
   }) async {
-    final queryParams = <String, dynamic>{};
+    final Map<String, dynamic> queryParams = {};
+    
     if (fornecedorId != null && fornecedorId > 0) {
-      queryParams['fornecedor_id'] = fornecedorId;
+      queryParams['fornecedor_id'] = fornecedorId.toString();
     }
     if (status != null && status.isNotEmpty) {
       queryParams['status'] = status;
