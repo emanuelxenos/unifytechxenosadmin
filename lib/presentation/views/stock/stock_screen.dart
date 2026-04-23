@@ -1419,9 +1419,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                 );
                 if (context.mounted) {
                   Navigator.pop(context);
+                  ref.invalidate(inventoriesProvider);
                   ref.invalidate(productsProvider);
                   ref.invalidate(stockReportProvider);
-                  ref.invalidate(stockMovementsProvider(produtoId: null, inicio: null, fim: null));
+                  ref.invalidate(stockMovementsProvider); // Atualiza o histórico na hora!
                   
                   if (success) {
                     AppNotifications.showSuccess(context, msg);
