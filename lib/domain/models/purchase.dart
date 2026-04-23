@@ -147,6 +147,7 @@ class CriarItemCompraRequest {
   final double precoUnitario;
   final String? localizacao;
   final String? dataVencimento;
+  final String? lote;
 
   CriarItemCompraRequest({
     required this.produtoId,
@@ -154,6 +155,7 @@ class CriarItemCompraRequest {
     required this.precoUnitario,
     this.localizacao,
     this.dataVencimento,
+    this.lote,
   });
 
   Map<String, dynamic> toJson() => {
@@ -162,6 +164,7 @@ class CriarItemCompraRequest {
         'preco_unitario': precoUnitario,
         'localizacao': localizacao,
         'data_vencimento': dataVencimento,
+        'lote': lote,
       };
 }
 

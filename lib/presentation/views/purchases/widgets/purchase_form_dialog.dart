@@ -44,6 +44,7 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
           costPrice: product.precoCusto,
           localizacao: product.localizacao ?? '',
           dataVencimento: product.dataVencimento != null ? Formatters.date(product.dataVencimento!) : '',
+          lote: '',
         ));
       }
     });
@@ -66,6 +67,7 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
         dataVencimento: i.dataVencimento.isNotEmpty 
             ? Formatters.dateToIso(i.dataVencimento) 
             : null,
+        lote: i.lote,
       )).toList(),
     );
 
@@ -217,6 +219,16 @@ class _PurchaseFormDialogState extends ConsumerState<PurchaseFormDialog> {
                                             },
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          flex: 3,
+                                          child: TextFormField(
+                                            initialValue: item.lote,
+                                            decoration: const InputDecoration(labelText: 'Lote', isDense: true),
+                                            style: const TextStyle(fontSize: 13),
+                                            onChanged: (v) => setState(() => item.lote = v),
+                                          ),
+                                        ),
                                         IconButton(
                                           icon: const Icon(Icons.delete_outline, color: AppTheme.accentRed, size: 20),
                                           onPressed: () => setState(() => _items.removeAt(index)),
@@ -297,6 +309,7 @@ class _CartItem {
   double costPrice;
   String localizacao;
   String dataVencimento;
+  String lote;
 
   _CartItem({
     required this.product,
@@ -304,5 +317,6 @@ class _CartItem {
     required this.costPrice,
     this.localizacao = '',
     this.dataVencimento = '',
+    this.lote = '',
   });
 }
