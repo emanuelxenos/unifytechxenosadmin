@@ -92,4 +92,22 @@ class StockRepository {
       return false;
     }
   }
+
+  Future<List<EstoqueLote>> listarLotes(int produtoId) async {
+    final response = await _api.get(ApiEndpoints.estoqueLotePorProduto(produtoId));
+    final data = _extractData(response.data);
+    if (data is List) {
+      return data.map((e) => EstoqueLote.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
+
+  Future<List<EstoqueLocalizacao>> listarLocalizacoes() async {
+    final response = await _api.get(ApiEndpoints.estoqueLocalizacoes);
+    final data = _extractData(response.data);
+    if (data is List) {
+      return data.map((e) => EstoqueLocalizacao.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
 }

@@ -15,6 +15,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:unifytechxenosadmin/data/repositories/stock_repository.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -425,10 +426,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             child: Table(
               columnWidths: const {
                 0: FlexColumnWidth(1.2),
-                1: FlexColumnWidth(1.5),
+                1: FlexColumnWidth(1.2),
                 2: FlexColumnWidth(1),
-                3: FlexColumnWidth(1),
-                4: FlexColumnWidth(2),
+                3: FlexColumnWidth(0.8),
+                4: FlexColumnWidth(1),
+                5: FlexColumnWidth(1.8),
               },
               children: [
                 TableRow(
@@ -437,9 +439,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   children: [
                     _headerCell('Data'),
                     _headerCell('Usuário'),
-                    _headerCell('Operação'),
+                    _headerCell('Lote'),
+                    _headerCell('Op.'),
                     _headerCell('Qtd'),
-                    _headerCell('Observação'),
+                    _headerCell('Obs.'),
                   ],
                 ),
                 ...data.map((m) {
@@ -451,12 +454,14 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                 color: Colors.white.withValues(alpha: 0.05)))),
                     children: [
                       _dataCell(Formatters.dateTime(date)),
-                      _dataCell(m['usuario']),
+                      _dataCell(m['usuario'], size: 11),
+                      _dataCell(m['lote'] ?? '-',
+                          size: 10, color: Colors.blueGrey),
                       _dataCell(m['tipo'].toString().toUpperCase(),
-                          color: _getTipoColor(m['tipo'])),
+                          color: _getTipoColor(m['tipo']), size: 10),
                       _dataCell(Formatters.quantity(m['quantidade']),
-                          bold: true),
-                      _dataCell(m['observacao'] ?? '-', size: 11),
+                          bold: true, size: 11),
+                      _dataCell(m['observacao'] ?? '-', size: 10),
                     ],
                   );
                 }),
@@ -956,6 +961,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
+                                            icon: const Icon(Icons.layers_outlined, color: Colors.blueAccent),
+                                            onPressed: () => _showLotesDialog(context, ref, p),
+                                            tooltip: 'Ver Lotes',
+                                          ),
+                                          IconButton(
                                             icon: const Icon(Icons.label_outline_rounded, color: Colors.orangeAccent),
                                             onPressed: () => _imprimirEtiqueta(p.idProduto),
                                             tooltip: 'Imprimir Etiqueta',
@@ -1301,6 +1311,9 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     final produtoIdCtrl = TextEditingController(text: initialProduct?.idProduto.toString() ?? '');
     final quantidadeCtrl = TextEditingController();
     final motivoCtrl = TextEditingController();
+    final loteFabCtrl = TextEditingController();
+    final dataVencCtrl = TextEditingController();
+    DateTime? selectedVenc;
     String tipo = 'entrada';
     final formKey = GlobalKey<FormState>();
 
@@ -1356,6 +1369,35 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     decoration: const InputDecoration(labelText: 'Motivo *'),
                     validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
                   ),
+                  if (tipo == 'entrada') ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: loteFabCtrl,
+                      decoration: const InputDecoration(labelText: 'Lote do Fabricante (Opcional)'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: dataVencCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Data de Vencimento *',
+                        suffixIcon: Icon(Icons.calendar_today, size: 18),
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now().add(const Duration(days: 90)),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2101),
+                        );
+                        if (picked != null) {
+                          selectedVenc = picked;
+                          dataVencCtrl.text = Formatters.date(picked);
+                        }
+                      },
+                      validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório para entrada' : null,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1371,6 +1413,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     quantidade: double.parse(quantidadeCtrl.text),
                     tipo: tipo,
                     motivo: motivoCtrl.text,
+                    loteFabricante: loteFabCtrl.text.isEmpty ? null : loteFabCtrl.text,
+                    dataVencimento: selectedVenc,
                   ),
                 );
                 if (context.mounted) {
@@ -1527,6 +1571,94 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showLotesDialog(BuildContext context, WidgetRef ref, dynamic product) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Detalhamento de Lotes',
+                style: TextStyle(fontSize: 14, color: Colors.grey[400])),
+            Text(product.nome,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: 650,
+          height: 400,
+          child: FutureBuilder<List<EstoqueLote>>(
+            future: ref
+                .read(stockRepositoryProvider)
+                .listarLotes(product.idProduto),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  snapshot.data!.isEmpty) {
+                return const Center(
+                    child:
+                        Text('Nenhum lote ativo encontrado para este produto.'));
+              }
+
+              final lotes = snapshot.data!;
+              return SingleChildScrollView(
+                child: Table(
+                  columnWidths: const {
+                    0: FlexColumnWidth(1.2),
+                    1: FlexColumnWidth(1),
+                    2: FlexColumnWidth(1),
+                    3: FlexColumnWidth(1),
+                    4: FlexColumnWidth(0.8),
+                  },
+                  children: [
+                    TableRow(
+                      decoration: const BoxDecoration(
+                          border:
+                              Border(bottom: BorderSide(color: Colors.white10))),
+                      children: [
+                        _headerCell('Lote Interno'),
+                        _headerCell('Vencimento'),
+                        _headerCell('Localização'),
+                        _headerCell('Qtd Atual'),
+                        _headerCell('Status'),
+                      ],
+                    ),
+                    ...lotes.map((l) {
+                      final isVencido =
+                          l.dataVencimento.isBefore(DateTime.now());
+                      return TableRow(
+                        children: [
+                          _dataCell(l.loteInterno, size: 12),
+                          _dataCell(Formatters.date(l.dataVencimento),
+                              color: isVencido ? Colors.redAccent : null),
+                          _dataCell(l.localizacaoNome ?? 'Geral'),
+                          _dataCell(Formatters.quantity(l.quantidadeAtual),
+                              bold: true),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: StatusChip.fromStatus(l.status),
+                          ),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Fechar')),
+        ],
       ),
     );
   }

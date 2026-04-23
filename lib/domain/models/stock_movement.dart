@@ -148,12 +148,18 @@ class AjusteEstoqueRequest {
   final double quantidade;
   final String tipo;
   final String motivo;
+  final String? loteFabricante;
+  final DateTime? dataVencimento;
+  final int? localizacaoId;
 
   AjusteEstoqueRequest({
     required this.produtoId,
     required this.quantidade,
     required this.tipo,
     required this.motivo,
+    this.loteFabricante,
+    this.dataVencimento,
+    this.localizacaoId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -161,6 +167,9 @@ class AjusteEstoqueRequest {
         'quantidade': quantidade,
         'tipo': tipo,
         'motivo': motivo,
+        'lote_fabricante': loteFabricante,
+        'data_vencimento': dataVencimento?.toIso8601String(),
+        'localizacao_id': localizacaoId,
       };
 }
 
@@ -204,5 +213,86 @@ class EstoqueBaixoResponse {
         nome: json['nome'] as String,
         estoqueAtual: (json['estoque_atual'] as num).toDouble(),
         estoqueMinimo: (json['estoque_minimo'] as num).toDouble(),
+      );
+}
+
+class EstoqueLocalizacao {
+  final int idLocalizacao;
+  final int empresaId;
+  final String codigo;
+  final String nome;
+  final String? descricao;
+  final bool ativo;
+
+  EstoqueLocalizacao({
+    required this.idLocalizacao,
+    required this.empresaId,
+    required this.codigo,
+    required this.nome,
+    this.descricao,
+    this.ativo = true,
+  });
+
+  factory EstoqueLocalizacao.fromJson(Map<String, dynamic> json) =>
+      EstoqueLocalizacao(
+        idLocalizacao: json['id_localizacao'] as int,
+        empresaId: json['empresa_id'] as int,
+        codigo: json['codigo'] as String,
+        nome: json['nome'] as String,
+        descricao: json['descricao'] as String?,
+        ativo: json['ativo'] as bool? ?? true,
+      );
+}
+
+class EstoqueLote {
+  final int idLote;
+  final int empresaId;
+  final int produtoId;
+  final int? localizacaoId;
+  final String loteInterno;
+  final String? loteFabricante;
+  final double quantidadeInicial;
+  final double quantidadeAtual;
+  final DateTime? dataFabricacao;
+  final DateTime dataVencimento;
+  final DateTime dataRecebimento;
+  final String status;
+  final String? observacao;
+  final String? localizacaoNome;
+
+  EstoqueLote({
+    required this.idLote,
+    required this.empresaId,
+    required this.produtoId,
+    this.localizacaoId,
+    required this.loteInterno,
+    this.loteFabricante,
+    required this.quantidadeInicial,
+    required this.quantidadeAtual,
+    this.dataFabricacao,
+    required this.dataVencimento,
+    required this.dataRecebimento,
+    required this.status,
+    this.observacao,
+    this.localizacaoNome,
+  });
+
+  factory EstoqueLote.fromJson(Map<String, dynamic> json) => EstoqueLote(
+        idLote: json['id_lote'] as int,
+        empresaId: json['empresa_id'] as int,
+        produtoId: json['produto_id'] as int,
+        localizacaoId: json['localizacao_id'] as int?,
+        loteInterno: json['lote_interno'] as String,
+        loteFabricante: json['lote_fabricante'] as String?,
+        quantidadeInicial: (json['quantidade_inicial'] as num).toDouble(),
+        quantidadeAtual: (json['quantidade_atual'] as num).toDouble(),
+        dataFabricacao: json['data_fabricacao'] != null
+            ? DateTime.parse(json['data_fabricacao'] as String)
+            : null,
+        dataVencimento: DateTime.parse(json['data_vencimento'] as String),
+        dataRecebimento: DateTime.parse(json['data_recebimento'] as String),
+        status: json['status'] as String,
+        observacao: json['observacao'] as String?,
+        localizacaoNome: json['localizacao_nome'] as String?,
       );
 }
