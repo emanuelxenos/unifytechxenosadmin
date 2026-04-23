@@ -6,6 +6,7 @@ import 'package:unifytechxenosadmin/presentation/providers/purchase_provider.dar
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_detail_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/receive_purchase_dialog.dart';
 
 class HistoryTab extends ConsumerWidget {
   const HistoryTab({super.key});
@@ -170,26 +171,13 @@ class HistoryTab extends ConsumerWidget {
   }
 
   Future<void> _confirmReceive(BuildContext context, WidgetRef ref, Compra compra) async {
-    final confirmed = await showDialog<bool>(
+    final request = await showDialog<ReceberCompraRequest>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Receber Mercadoria'),
-        content: Text('Deseja marcar a compra NF ${compra.numeroNotaFiscal} como recebida?\nIsso atualizará o estoque dos produtos.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Não')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirmar Recebimento')),
-        ],
-      ),
+      barrierDismissible: false,
+      builder: (context) => ReceivePurchaseDialog(compra: compra),
     );
 
-    if (confirmed == true) {
-      final request = ReceberCompraRequest(
-        itensRecebidos: compra.itens.map((i) => ItemRecebidoRequest(
-          produtoId: i.produtoId,
-          quantidadeRecebida: i.quantidade,
-        )).toList(),
-      );
-      
+    if (request != null) {
       final (success, message) = await ref.read(purchaseActionsProvider.notifier).receber(compra.idCompra, request);
       
       if (context.mounted) {
