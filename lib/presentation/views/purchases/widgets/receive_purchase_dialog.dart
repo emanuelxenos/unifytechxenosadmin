@@ -14,10 +14,12 @@ class ReceivePurchaseDialog extends StatefulWidget {
 
 class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
   late List<Map<String, dynamic>> _items;
+  late TextEditingController _nfController;
 
   @override
   void initState() {
     super.initState();
+    _nfController = TextEditingController(text: widget.compra.numeroNotaFiscal ?? '');
     _items = widget.compra.itens.map((item) => {
       'produto_id': item.produtoId,
       'produto_nome': item.produtoNome,
@@ -29,6 +31,7 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
 
   @override
   void dispose() {
+    _nfController.dispose();
     for (var item in _items) {
       (item['lote_controller'] as TextEditingController).dispose();
     }
@@ -43,11 +46,33 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
       title: const Text('Conferência de Recebimento'),
       content: SizedBox(
         width: 850, 
-        height: 500,
+        height: 550, // Aumentado para o campo de NF
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _nfController,
+                    decoration: const InputDecoration(
+                      labelText: 'Número da Nota Fiscal (NF)',
+                      prefixIcon: Icon(Icons.description_outlined),
+                      hintText: 'Ajuste a NF se necessário...',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Text(
+                    'Fornecedor: ${widget.compra.fornecedorNome ?? 'Geral'}',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -58,10 +83,10 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
                 children: [
                   const Icon(Icons.fact_check_rounded, color: AppTheme.primaryColor, size: 20),
                   const SizedBox(width: 12),
-                  Expanded(
+                  const Expanded(
                     child: Text(
-                      'NF: ${widget.compra.numeroNotaFiscal ?? 'S/N'} | Fornecedor: ${widget.compra.fornecedorNome ?? 'Geral'}\nConfirme o lote e validade que constam na embalagem física.',
-                      style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                      'Confirme o lote e validade que constam na embalagem física.\nLotes vazios usarão o número da NF como padrão.',
+                      style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 ],
@@ -191,7 +216,10 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
                 : null,
             )).toList();
             
-            Navigator.pop(context, ReceberCompraRequest(itensRecebidos: requests));
+            Navigator.pop(context, ReceberCompraRequest(
+              numeroNotaFiscal: _nfController.text.trim().isEmpty ? null : _nfController.text.trim(),
+              itensRecebidos: requests,
+            ));
           },
           child: const Text('Confirmar e Entrar no Estoque'),
         ),

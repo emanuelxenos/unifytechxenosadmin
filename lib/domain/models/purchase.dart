@@ -172,11 +172,16 @@ class CriarItemCompraRequest {
 }
 
 class ReceberCompraRequest {
+  final String? numeroNotaFiscal;
   final List<ItemRecebidoRequest> itensRecebidos;
 
-  ReceberCompraRequest({required this.itensRecebidos});
+  ReceberCompraRequest({
+    this.numeroNotaFiscal,
+    required this.itensRecebidos,
+  });
 
   Map<String, dynamic> toJson() => {
+        'numero_nota_fiscal': numeroNotaFiscal,
         'itens_recebidos': itensRecebidos.map((e) => e.toJson()).toList(),
       };
 }
