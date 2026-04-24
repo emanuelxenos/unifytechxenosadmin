@@ -257,8 +257,8 @@ class EstoqueLote {
   final double quantidadeInicial;
   final double quantidadeAtual;
   final DateTime? dataFabricacao;
-  final DateTime dataVencimento;
-  final DateTime dataRecebimento;
+  final DateTime? dataVencimento;
+  final DateTime? dataRecebimento;
   final String status;
   final String? observacao;
   final String? localizacaoNome;
@@ -273,8 +273,8 @@ class EstoqueLote {
     required this.quantidadeInicial,
     required this.quantidadeAtual,
     this.dataFabricacao,
-    required this.dataVencimento,
-    required this.dataRecebimento,
+    this.dataVencimento,
+    this.dataRecebimento,
     required this.status,
     this.observacao,
     this.localizacaoNome,
@@ -292,9 +292,13 @@ class EstoqueLote {
         dataFabricacao: json['data_fabricacao'] != null
             ? DateTime.parse(json['data_fabricacao'] as String)
             : null,
-        dataVencimento: DateTime.parse(json['data_vencimento'] as String),
-        dataRecebimento: DateTime.parse(json['data_recebimento'] as String),
-        status: json['status'] as String,
+        dataVencimento: json['data_vencimento'] != null
+            ? DateTime.parse(json['data_vencimento'] as String)
+            : null,
+        dataRecebimento: json['data_recebimento'] != null
+            ? DateTime.parse(json['data_recebimento'] as String)
+            : null,
+        status: json['status'] as String? ?? 'ativo',
         observacao: json['observacao'] as String?,
         localizacaoNome: json['localizacao_nome'] as String?,
       );

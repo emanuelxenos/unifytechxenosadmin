@@ -953,7 +953,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                       ),
                                     )),
                                     DataCell(Text(Formatters.quantity(p.estoqueMinimo))),
-                                    DataCell(Text(p.localizacao ?? 'N/A')),
+                                    DataCell(Text(p.localizacao ?? 'Não Informada')),
                                     DataCell(_buildVencimentoCell(p.dataVencimento)),
                                     DataCell(StatusChip.fromStatus(baixo ? 'pendente' : 'ativo')),
                                     DataCell(
@@ -1660,14 +1660,17 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                       ],
                     ),
                     ...lotes.map((l) {
-                      final isVencido =
-                          l.dataVencimento.isBefore(DateTime.now());
+                      final isVencido = l.dataVencimento != null &&
+                          l.dataVencimento!.isBefore(DateTime.now());
                       return TableRow(
                         children: [
                           _dataCell(l.loteInterno, size: 12),
-                          _dataCell(Formatters.date(l.dataVencimento),
+                          _dataCell(
+                              l.dataVencimento != null
+                                  ? Formatters.date(l.dataVencimento!)
+                                  : 'S/V',
                               color: isVencido ? Colors.redAccent : null),
-                          _dataCell(l.localizacaoNome ?? 'Geral'),
+                          _dataCell(l.localizacaoNome ?? 'Não Informada'),
                           _dataCell(Formatters.quantity(l.quantidadeAtual),
                               bold: true),
                           Padding(

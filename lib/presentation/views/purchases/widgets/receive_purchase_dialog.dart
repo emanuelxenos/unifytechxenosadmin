@@ -21,24 +21,16 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
     _items = widget.compra.itens.map((item) => {
       'produto_id': item.produtoId,
       'produto_nome': item.produtoNome,
-      'quantidade': item.quantidade,
-      'lote_original': item.localizacao, // O campo localizacao as vezes é usado para lote em modelos antigos, mas vamos usar o campo especifico
-      'controller': TextEditingController(text: ''), // Iniciamos vazio, mas vamos preencher abaixo
+      'quantidade': item.quantidadeRecebida > 0 ? item.quantidadeRecebida : item.quantidade,
+      'lote_controller': TextEditingController(text: item.lote ?? ''),
+      'vencimento': item.dataVencimento, // Já é DateTime? no modelo novo
     }).toList();
-
-    // Preencher com o lote que veio da compra, se existir
-    for (int i = 0; i < widget.compra.itens.length; i++) {
-        final itemCompra = widget.compra.itens[i];
-        if (itemCompra.lote != null && itemCompra.lote!.isNotEmpty) {
-            (_items[i]['controller'] as TextEditingController).text = itemCompra.lote!;
-        }
-    }
   }
 
   @override
   void dispose() {
     for (var item in _items) {
-      (item['controller'] as TextEditingController).dispose();
+      (item['lote_controller'] as TextEditingController).dispose();
     }
     super.dispose();
   }
@@ -48,9 +40,10 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: const Text('Receber Mercadoria'),
+      title: const Text('Conferência de Recebimento'),
       content: SizedBox(
-        width: 700, // Um pouco mais largo para caber tudo
+        width: 850, 
+        height: 500,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,64 +51,116 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: AppTheme.primaryColor, size: 20),
+                  const Icon(Icons.fact_check_rounded, color: AppTheme.primaryColor, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Confirme os lotes dos produtos da NF ${widget.compra.numeroNotaFiscal ?? 'S/N'}.\nLotes vazios usarão o número da nota como padrão.',
+                      'NF: ${widget.compra.numeroNotaFiscal ?? 'S/N'} | Fornecedor: ${widget.compra.fornecedorNome ?? 'Geral'}\nConfirme o lote e validade que constam na embalagem física.',
                       style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            Flexible(
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(flex: 3, child: Text('Produto', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  SizedBox(width: 10),
+                  Expanded(flex: 1, child: Text('Qtd', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  SizedBox(width: 10),
+                  Expanded(flex: 2, child: Text('Lote Fabricante', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                  SizedBox(width: 10),
+                  Expanded(flex: 2, child: Text('Vencimento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
               child: ListView.separated(
-                shrinkWrap: true,
                 itemCount: _items.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
+                separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.white10),
                 itemBuilder: (context, index) {
                   final item = _items[index];
-                  return Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                     child: Row(
                       children: [
+                        // Nome
                         Expanded(
                           flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['produto_nome'] ?? 'Produto ${item['produto_id']}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Quantidade: ${Formatters.quantity(item['quantidade'])}',
-                                style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                              ),
-                            ],
+                          child: Text(
+                            item['produto_nome'] ?? 'Produto ${item['produto_id']}',
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                           ),
                         ),
-                        const SizedBox(width: 20),
-                        SizedBox(
-                          width: 250, // LARGURA FIXA PARA O CAMPO DE LOTE APARECER
-                          child: TextField(
-                            controller: item['controller'] as TextEditingController,
-                            decoration: InputDecoration(
-                              labelText: 'Lote do Fabricante',
-                              hintText: 'Digite o lote...',
-                              prefixIcon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
-                              filled: true,
-                              fillColor: theme.colorScheme.surface,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        const SizedBox(width: 10),
+                        // Quantidade
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            Formatters.quantity(item['quantidade']),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Lote
+                        Expanded(
+                          flex: 2,
+                          child: TextFormField(
+                            controller: item['lote_controller'] as TextEditingController,
+                            decoration: const InputDecoration(
+                              hintText: 'Lote...',
                               isDense: true,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                            ),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Vencimento
+                        Expanded(
+                          flex: 2,
+                          child: InkWell(
+                            onTap: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: item['vencimento'] ?? DateTime.now().add(const Duration(days: 365)),
+                                firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                                lastDate: DateTime.now().add(const Duration(days: 3650)),
+                              );
+                              if (date != null) {
+                                setState(() => item['vencimento'] = date);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    item['vencimento'] != null 
+                                      ? Formatters.date(item['vencimento']) 
+                                      : 'Selecionar',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: item['vencimento'] == null ? Colors.orangeAccent : Colors.white,
+                                    ),
+                                  ),
+                                  const Icon(Icons.calendar_today, size: 14, color: Colors.white54),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -135,17 +180,20 @@ class _ReceivePurchaseDialogState extends State<ReceivePurchaseDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            final requests = _items.map((item) => ItemRecebidoRequest(
+            final requests = _items.map<ItemRecebidoRequest>((item) => ItemRecebidoRequest(
               produtoId: item['produto_id'],
               quantidadeRecebida: item['quantidade'],
-              loteFabricante: (item['controller'] as TextEditingController).text.trim().isEmpty 
+              loteFabricante: (item['lote_controller'] as TextEditingController).text.trim().isEmpty 
                 ? null 
-                : (item['controller'] as TextEditingController).text.trim(),
+                : (item['lote_controller'] as TextEditingController).text.trim(),
+              dataVencimento: item['vencimento'] != null 
+                ? (item['vencimento'] as DateTime).toIso8601String()
+                : null,
             )).toList();
             
             Navigator.pop(context, ReceberCompraRequest(itensRecebidos: requests));
           },
-          child: const Text('Confirmar Recebimento'),
+          child: const Text('Confirmar e Entrar no Estoque'),
         ),
       ],
     );

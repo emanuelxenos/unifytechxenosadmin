@@ -185,16 +185,22 @@ class ItemRecebidoRequest {
   final int produtoId;
   final double quantidadeRecebida;
   final String? loteFabricante;
+  final String? dataVencimento;
+  final int? localizacaoId;
 
   ItemRecebidoRequest({
     required this.produtoId,
     required this.quantidadeRecebida,
     this.loteFabricante,
+    this.dataVencimento,
+    this.localizacaoId,
   });
 
   Map<String, dynamic> toJson() => {
         'produto_id': produtoId,
         'quantidade_recebida': quantidadeRecebida,
         'lote_fabricante': loteFabricante,
+        'data_vencimento': dataVencimento,
+        'localizacao_id': localizacaoId,
       };
 }
