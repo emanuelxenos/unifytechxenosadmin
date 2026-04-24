@@ -247,15 +247,12 @@ class _SalesReportPeriodProviderElement
   String get dataFim => (origin as SalesReportPeriodProvider).dataFim;
 }
 
-String _$stockReportHash() => r'e6bedbfedb66cc8f362ba6e2119b2b999deb1834';
+String _$stockReportHash() => r'4e85b257bac399e08004bd0757e325dee582cfaf';
 
 /// See also [StockReport].
 @ProviderFor(StockReport)
 final stockReportProvider =
-    AutoDisposeAsyncNotifierProvider<
-      StockReport,
-      Map<String, dynamic>
-    >.internal(
+    AutoDisposeAsyncNotifierProvider<StockReport, RelatorioEstoque>.internal(
       StockReport.new,
       name: r'stockReportProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -265,7 +262,7 @@ final stockReportProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$StockReport = AutoDisposeAsyncNotifier<Map<String, dynamic>>;
+typedef _$StockReport = AutoDisposeAsyncNotifier<RelatorioEstoque>;
 String _$financeReportHash() => r'7086e7036f52f7bcc389efb96800a8f3e8f4f691';
 
 /// See also [FinanceReport].

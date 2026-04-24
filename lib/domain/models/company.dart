@@ -121,3 +121,46 @@ class Empresa {
         'ativo': ativo,
       };
 }
+
+class Configuracao {
+  final int idConfig;
+  final String chave;
+  final String valor;
+  final String? descricao;
+
+  Configuracao({
+    required this.idConfig,
+    required this.chave,
+    required this.valor,
+    this.descricao,
+  });
+
+  factory Configuracao.fromJson(Map<String, dynamic> json) => Configuracao(
+        idConfig: json['id_configuracao'] as int,
+        chave: json['chave'] as String,
+        valor: json['valor'] as String,
+        descricao: json['descricao'] as String?,
+      );
+}
+
+class AtualizarConfigRequest {
+  final List<ConfigItem> configs;
+
+  AtualizarConfigRequest({required this.configs});
+
+  Map<String, dynamic> toJson() => {
+        'configs': configs.map((e) => e.toJson()).toList(),
+      };
+}
+
+class ConfigItem {
+  final String chave;
+  final String valor;
+
+  ConfigItem({required this.chave, required this.valor});
+
+  Map<String, dynamic> toJson() => {
+        'chave': chave,
+        'valor': valor,
+      };
+}

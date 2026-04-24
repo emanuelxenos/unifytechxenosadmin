@@ -709,31 +709,31 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               children: [
                 _StockKpiCard(
                   title: 'Total de Itens',
-                  value: data['total_produtos']?.toString() ?? '0',
+                  value: data.totalProdutos.toString(),
                   icon: Icons.inventory_2_outlined,
                   color: Colors.blue,
                 ),
                 _StockKpiCard(
                   title: 'Estoque Baixo',
-                  value: data['produtos_baixo_estoque']?.toString() ?? '0',
+                  value: data.produtosBaixos.toString(),
                   icon: Icons.warning_amber_rounded,
                   color: AppTheme.accentOrange,
                 ),
                 _StockKpiCard(
                   title: 'Valor (Custo)',
-                  value: Formatters.currency(data['valor_total_custo']?.toDouble() ?? 0),
+                  value: Formatters.currency(data.valorTotalCusto),
                   icon: Icons.attach_money_rounded,
                   color: AppTheme.accentGreen,
                 ),
                 _StockKpiCard(
                   title: 'Reposição Necessária',
-                  value: Formatters.currency(data['sugestao_compra_total']?.toDouble() ?? 0),
+                  value: Formatters.currency(data.sugestaoCompraTotal),
                   icon: Icons.shopping_cart_checkout_rounded,
                   color: Colors.purple,
                 ),
                 _StockKpiCard(
                   title: 'Vencendo (15 dias)',
-                  value: data['produtos_vencendo']?.toString() ?? '0',
+                  value: data.produtosVencendo.toString(),
                   icon: Icons.event_busy_rounded,
                   color: Colors.redAccent,
                 ),

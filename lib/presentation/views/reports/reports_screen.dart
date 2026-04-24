@@ -497,11 +497,6 @@ class _ReportStockView extends ConsumerWidget {
         loading: () => const LoadingOverlay(message: 'Carregando Estoque...'),
         error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro de Relatório', subtitle: '$e'),
         data: (data) {
-          final int total = data['total_produtos'] as int? ?? 0;
-          final double custo = (data['valor_total_custo'] as num?)?.toDouble() ?? 0;
-          final double venda = (data['valor_total_venda'] as num?)?.toDouble() ?? 0;
-          final int baixos = data['produtos_baixo_estoque'] as int? ?? 0;
-
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,14 +507,15 @@ class _ReportStockView extends ConsumerWidget {
                   spacing: 24,
                   runSpacing: 24,
                   children: [
-                    _KPICard(title: 'Total de Itens Cadastrados', value: '$total', icon: Icons.inventory_2, color: Colors.blueGrey),
-                    _KPICard(title: 'Alerta Estoque Baixo', value: '$baixos produtos', icon: Icons.warning_amber_rounded, color: Colors.orange),
-                    _KPICard(title: 'Valor Estoque (Custo)', value: Formatters.currency(custo), icon: Icons.price_change, color: Colors.red),
-                    _KPICard(title: 'Valor Estoque (Venda)', value: Formatters.currency(venda), icon: Icons.monetization_on, color: Colors.green),
+                    _KPICard(title: 'Total de Itens Cadastrados', value: '${data.totalProdutos}', icon: Icons.inventory_2, color: Colors.blueGrey),
+                    _KPICard(title: 'Alerta Estoque Baixo', value: '${data.produtosBaixos} produtos', icon: Icons.warning_amber_rounded, color: Colors.orange),
+                    _KPICard(title: 'Alerta Vencendo (15d)', value: '${data.produtosVencendo} produtos', icon: Icons.hourglass_bottom_rounded, color: Colors.redAccent),
+                    _KPICard(title: 'Valor Estoque (Custo)', value: Formatters.currency(data.valorTotalCusto), icon: Icons.price_change, color: Colors.red),
+                    _KPICard(title: 'Valor Estoque (Venda)', value: Formatters.currency(data.valorTotalVenda), icon: Icons.monetization_on, color: Colors.green),
                   ],
                 ),
                 const SizedBox(height: 48),
-                if (venda > 0)
+                if (data.valorTotalVenda > 0)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
@@ -527,7 +523,7 @@ class _ReportStockView extends ConsumerWidget {
                     children: [
                       const Icon(Icons.insights, color: Colors.green),
                       const SizedBox(width: 16),
-                      Expanded(child: Text('A margem de lucro bruta (estimada global) baseada no estoque atual é de aproximadamente ${(((venda - custo) / custo) * 100).toStringAsFixed(1)}%.')),
+                      Expanded(child: Text('A margem de lucro bruta (estimada global) baseada no estoque atual é de aproximadamente ${(((data.valorTotalVenda - data.valorTotalCusto) / data.valorTotalCusto) * 100).toStringAsFixed(1)}%.')),
                     ],
                   ),
                 )

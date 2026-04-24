@@ -3,6 +3,7 @@ import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/domain/models/account_payable.dart';
 import 'package:unifytechxenosadmin/domain/models/account_receivable.dart';
 import 'package:unifytechxenosadmin/domain/models/report.dart';
+import 'package:unifytechxenosadmin/domain/models/caixa.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 
 part 'finance_repository.g.dart';

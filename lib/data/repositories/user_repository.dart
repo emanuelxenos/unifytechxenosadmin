@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/domain/models/user.dart';
+import 'package:unifytechxenosadmin/domain/models/company.dart';
 import 'package:unifytechxenosadmin/domain/models/report.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
+import 'package:unifytechxenosadmin/domain/models/report.dart';
 
 part 'report_repository.g.dart';
 
@@ -56,9 +57,9 @@ class ReportRepository {
     return [];
   }
 
-  Future<Map<String, dynamic>> estoqueResumo() async {
+  Future<RelatorioEstoque> estoqueResumo() async {
     final response = await _api.get(ApiEndpoints.relatorioEstoqueResumo);
-    return _extractMapData(response.data);
+    return RelatorioEstoque.fromJson(_extractMapData(response.data));
   }
 
   Future<Map<String, dynamic>> financeiroResumo() async {

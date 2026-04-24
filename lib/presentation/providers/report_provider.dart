@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
+import 'package:unifytechxenosadmin/domain/models/report.dart';
 
 part 'report_provider.g.dart';
 
@@ -58,7 +59,7 @@ class SalesReportPeriod extends _$SalesReportPeriod {
 @riverpod
 class StockReport extends _$StockReport {
   @override
-  Future<Map<String, dynamic>> build() async {
+  Future<RelatorioEstoque> build() async {
     return ref.read(reportRepositoryProvider).estoqueResumo();
   }
 

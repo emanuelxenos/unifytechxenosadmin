@@ -17,7 +17,7 @@ class DashboardScreen extends ConsumerWidget {
     final today = DateTime.now().toString().split(' ')[0];
     final salesAsync = ref.watch(salesHistoryProvider(inicio: today, fim: today));
     final lowStockAsync = ref.watch(lowStockProvider);
-    final reportAsync = ref.watch(salesReportDayProvider);
+    final reportAsync = ref.watch(stockReportProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -26,7 +26,7 @@ class DashboardScreen extends ConsumerWidget {
           final today = DateTime.now().toString().split(' ')[0];
           ref.invalidate(salesHistoryProvider(inicio: today, fim: today));
           ref.invalidate(lowStockProvider);
-          ref.invalidate(salesReportDayProvider);
+          ref.invalidate(stockReportProvider);
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -53,7 +53,7 @@ class DashboardScreen extends ConsumerWidget {
                       final today = DateTime.now().toString().split(' ')[0];
                       ref.invalidate(salesHistoryProvider(inicio: today, fim: today));
                       ref.invalidate(lowStockProvider);
-                      ref.invalidate(salesReportDayProvider);
+                      ref.invalidate(stockReportProvider);
                     },
                     icon: const Icon(Icons.refresh_rounded, size: 18),
                     label: const Text('Atualizar'),
@@ -63,16 +63,15 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // KPI Cards
-              _buildKpiRow(context, ref, salesAsync, lowStockAsync, reportAsync),
+              _buildKpiRow(context, ref, salesAsync, reportAsync),
               const SizedBox(height: 24),
 
               // Charts & Tables Row
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Sales chart
+                  // Sales chart (Full Width)
                   Expanded(
-                    flex: 3,
                     child: Container(
                       height: 340,
                       decoration: AppTheme.glassCard(),
@@ -82,33 +81,9 @@ class DashboardScreen extends ConsumerWidget {
                         children: [
                           Text('Vendas do Dia', style: theme.textTheme.titleLarge),
                           const SizedBox(height: 4),
-                          Text('Resumo por hora', style: theme.textTheme.bodySmall),
+                          Text('Resumo de faturamento por hora', style: theme.textTheme.bodySmall),
                           const SizedBox(height: 20),
                           Expanded(child: _buildSalesChart(salesAsync)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Low stock alerts
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      height: 340,
-                      decoration: AppTheme.glassCardHighlight(accentColor: AppTheme.accentOrange),
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.warning_amber_rounded, color: AppTheme.accentOrange, size: 20),
-                              const SizedBox(width: 8),
-                              Text('Estoque Baixo', style: theme.textTheme.titleLarge),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Expanded(child: _buildLowStockList(lowStockAsync, theme)),
                         ],
                       ),
                     ),
@@ -147,20 +122,26 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildKpiRow(BuildContext context, WidgetRef ref, AsyncValue salesAsync, AsyncValue lowStockAsync, AsyncValue reportAsync) {
+  Widget _buildKpiRow(BuildContext context, WidgetRef ref, AsyncValue salesAsync, AsyncValue reportAsync) {
     final vendas = salesAsync.valueOrNull ?? [];
-    final lowStock = lowStockAsync.valueOrNull ?? [];
+    final report = reportAsync.valueOrNull; // Dados do RelatorioEstoque
+    
     final totalVendas = vendas.where((v) => v.status != 'cancelada').fold(0.0, (sum, v) => sum + v.valorTotal);
     final qtdVendas = vendas.where((v) => v.status != 'cancelada').length;
     final ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 48) / 4;
+        // Ajustando para 3 ou 6 cards dependendo da largura
+        final double spacing = 16;
+        final int cardsPerRow = constraints.maxWidth > 1200 ? 6 : (constraints.maxWidth > 800 ? 3 : 2);
+        final cardWidth = (constraints.maxWidth - (spacing * (cardsPerRow - 1))) / cardsPerRow;
+        
         return Wrap(
-          spacing: 16,
-          runSpacing: 16,
+          spacing: spacing,
+          runSpacing: spacing,
           children: [
+            // FINANCEIRO VENDAS
             SizedBox(
               width: cardWidth,
               child: KpiCard(
@@ -180,23 +161,48 @@ class DashboardScreen extends ConsumerWidget {
                 color: AppTheme.accentBlue,
               ),
             ),
+            
+            // ESTOQUE ALERTAS
             SizedBox(
               width: cardWidth,
               child: KpiCard(
                 title: 'Estoque Baixo',
-                value: '${lowStock.length}',
+                value: '${report?.produtosBaixos ?? 0}',
                 icon: Icons.warning_amber_rounded,
-                color: lowStock.isNotEmpty ? AppTheme.accentOrange : AppTheme.accentGreen,
-                subtitle: lowStock.isNotEmpty ? 'Produtos abaixo do mínimo' : 'Tudo em ordem',
+                color: (report?.produtosBaixos ?? 0) > 0 ? AppTheme.accentOrange : AppTheme.accentGreen,
+                subtitle: (report?.produtosBaixos ?? 0) > 0 ? 'Produtos abaixo do mínimo' : 'Tudo em ordem',
               ),
             ),
             SizedBox(
               width: cardWidth,
               child: KpiCard(
-                title: 'Total Vendas',
-                value: '$qtdVendas',
-                icon: Icons.shopping_bag_rounded,
+                title: 'Vencendo (15 dias)',
+                value: '${report?.produtosVencendo ?? 0}',
+                icon: Icons.hourglass_bottom_rounded,
+                color: (report?.produtosVencendo ?? 0) > 0 ? AppTheme.accentRed : AppTheme.accentGreen,
+                subtitle: (report?.produtosVencendo ?? 0) > 0 ? 'Risco de perda iminente' : 'Nenhuma perda prevista',
+              ),
+            ),
+            
+            // PATRIMÔNIO
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Valor em Estoque',
+                value: Formatters.currency(report?.valorTotalCusto ?? 0),
+                icon: Icons.inventory_2_rounded,
                 color: AppTheme.primaryColor,
+                subtitle: 'Total a preço de custo',
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Potencial de Venda',
+                value: Formatters.currency(report?.valorTotalVenda ?? 0),
+                icon: Icons.attach_money_rounded,
+                color: AppTheme.accentGreen,
+                subtitle: 'Total a preço de venda',
               ),
             ),
           ],

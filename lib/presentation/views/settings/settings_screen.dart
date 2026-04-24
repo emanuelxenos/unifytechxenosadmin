@@ -12,6 +12,7 @@ import 'package:unifytechxenosadmin/presentation/providers/backup_provider.dart'
 import 'dart:io';
 import 'package:unifytechxenosadmin/domain/models/report.dart';
 import 'package:unifytechxenosadmin/data/repositories/user_repository.dart';
+import 'package:unifytechxenosadmin/domain/models/company.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/server_settings_tab.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {

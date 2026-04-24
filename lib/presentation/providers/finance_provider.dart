@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/data/repositories/finance_repository.dart';
 import 'package:unifytechxenosadmin/domain/models/account_payable.dart';
 import 'package:unifytechxenosadmin/domain/models/account_receivable.dart';
+import 'package:unifytechxenosadmin/domain/models/caixa.dart';
 import 'package:unifytechxenosadmin/domain/models/report.dart';
 
 part 'finance_provider.g.dart';

@@ -207,3 +207,50 @@ class CaixaMovimentacao {
         usuarioId: json['usuario_id'] as int,
       );
 }
+
+class FluxoCaixaResponse {
+  final List<FluxoCaixaItem> items;
+  final double totalEntrada;
+  final double totalSaida;
+  final double saldo;
+
+  FluxoCaixaResponse({
+    required this.items,
+    required this.totalEntrada,
+    required this.totalSaida,
+    required this.saldo,
+  });
+
+  factory FluxoCaixaResponse.fromJson(Map<String, dynamic> json) => FluxoCaixaResponse(
+        items: (json['items'] as List? ?? [])
+            .map((e) => FluxoCaixaItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        totalEntrada: (json['total_entrada'] as num?)?.toDouble() ?? 0.0,
+        totalSaida: (json['total_saida'] as num?)?.toDouble() ?? 0.0,
+        saldo: (json['saldo'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class FluxoCaixaItem {
+  final DateTime data;
+  final String tipo;
+  final String descricao;
+  final double valor;
+  final String categoria;
+
+  FluxoCaixaItem({
+    required this.data,
+    required this.tipo,
+    required this.descricao,
+    required this.valor,
+    required this.categoria,
+  });
+
+  factory FluxoCaixaItem.fromJson(Map<String, dynamic> json) => FluxoCaixaItem(
+        data: DateTime.parse(json['data'] as String),
+        tipo: json['tipo'] as String,
+        descricao: json['descricao'] as String,
+        valor: (json['valor'] as num).toDouble(),
+        categoria: json['categoria'] as String? ?? 'Diversos',
+      );
+}
