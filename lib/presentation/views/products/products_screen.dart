@@ -457,15 +457,15 @@ class _ProductFormDialogState extends ConsumerState<_ProductFormDialog> {
   CriarProdutoRequest _buildRequest() {
     return CriarProdutoRequest(
       nome: _nomeCtrl.text.trim(),
-      descricao:
-          _descricaoCtrl.text.trim().isEmpty ? null : _descricaoCtrl.text.trim(),
-      codigoBarras: _codigoBarrasCtrl.text.trim().isEmpty
-          ? null
-          : _codigoBarrasCtrl.text.trim(),
-      codigoInterno: _codigoInternoCtrl.text.trim().isEmpty
-          ? null
-          : _codigoInternoCtrl.text.trim(),
-      precoVenda: double.parse(_precoVendaCtrl.text),
+      descricao: _descricaoCtrl.text.trim().isEmpty ? null : _descricaoCtrl.text.trim(),
+      codigoBarras: _codigoBarrasCtrl.text.trim().isEmpty ? null : _codigoBarrasCtrl.text.trim(),
+      codigoInterno: _codigoInternoCtrl.text.trim().isEmpty ? null : _codigoInternoCtrl.text.trim(),
+      categoriaId: _selectedCategoriaId,
+      unidadeVenda: _unidadeVenda,
+      controlarEstoque: _controlarEstoque,
+      estoqueMinimo: double.tryParse(_estoqueMinCtrl.text) ?? 0,
+      precoCusto: double.tryParse(_precoCustoCtrl.text) ?? 0,
+      precoVenda: double.tryParse(_precoVendaCtrl.text) ?? 0,
       marca: _marcaCtrl.text.trim().isEmpty ? null : _marcaCtrl.text.trim(),
       localizacao: _localizacaoCtrl.text.trim().isEmpty ? null : _localizacaoCtrl.text.trim(),
       dataVencimento: _dataVencimento,
