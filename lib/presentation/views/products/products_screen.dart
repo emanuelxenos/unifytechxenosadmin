@@ -11,6 +11,7 @@ import 'package:unifytechxenosadmin/domain/models/product.dart';
 import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_form_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/products/widgets/print_labels_dialog.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -463,6 +464,11 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 tooltip: p.ativo ? 'Inativar' : 'Ativar',
               ),
               IconButton(
+                icon: const Icon(Icons.print_outlined, size: 18, color: Colors.white70),
+                onPressed: () => _showPrintLabels(context, p),
+                tooltip: 'Imprimir Etiqueta',
+              ),
+              IconButton(
                 icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.amber),
                 onPressed: () => _duplicateProduct(p),
                 tooltip: 'Duplicar Produto',
@@ -471,6 +477,13 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showPrintLabels(BuildContext context, Produto product) {
+    showDialog(
+      context: context,
+      builder: (context) => PrintLabelsDialog(product: product),
     );
   }
 
