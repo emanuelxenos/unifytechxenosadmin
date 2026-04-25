@@ -21,6 +21,7 @@ class ProductsScreen extends ConsumerStatefulWidget {
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _searchController = TextEditingController();
   final _horizontalController = ScrollController();
+  final _verticalController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 500);
   final _searchFocus = FocusNode();
 
@@ -61,6 +62,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     HardwareKeyboard.instance.removeHandler(_handleKeyPress);
     _searchController.dispose();
     _horizontalController.dispose();
+    _verticalController.dispose();
     _debouncer.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -278,7 +280,9 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                       children: [
                         Expanded(
                           child: Scrollbar(
+                            controller: _verticalController,
                             child: SingleChildScrollView(
+                              controller: _verticalController,
                               scrollDirection: Axis.vertical,
                               child: Scrollbar(
                                 controller: _horizontalController,
@@ -436,7 +440,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   p.ativo ? Icons.block : Icons.check_circle_outline,
                   size: 18,
                   color:
-                      p.ativo ? AppTheme.accentRed : AppTheme.accentGreen,
+                          p.ativo ? AppTheme.accentRed : AppTheme.accentGreen,
                 ),
                 onPressed: () async {
                   if (p.ativo) {
@@ -457,6 +461,11 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   }
                 },
                 tooltip: p.ativo ? 'Inativar' : 'Ativar',
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.amber),
+                onPressed: () => _duplicateProduct(p),
+                tooltip: 'Duplicar Produto',
               ),
             ],
           ),
@@ -483,5 +492,32 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       context: context,
       builder: (context) => LotesProdutoDialog(product: product),
     );
+  }
+
+  void _duplicateProduct(Produto p) {
+    // Abrir formulário mas sem ID, códigos exclusivos e com nome alterado
+    final duplicated = Produto(
+      idProduto: 0, // Reset ID
+      empresaId: p.empresaId,
+      nome: '${p.nome} (Cópia)',
+      categoriaId: p.categoriaId,
+      categoriaNome: p.categoriaNome,
+      unidadeVenda: p.unidadeVenda,
+      precoCusto: p.precoCusto,
+      precoVenda: p.precoVenda,
+      precoPromocional: p.precoPromocional,
+      dataInicioPromocao: p.dataInicioPromocao,
+      dataFimPromocao: p.dataFimPromocao,
+      margemLucro: p.margemLucro,
+      estoqueMinimo: p.estoqueMinimo,
+      controlarEstoque: p.controlarEstoque,
+      marca: p.marca,
+      localizacao: p.localizacao,
+      descricao: p.descricao,
+      dataCadastro: DateTime.now(),
+      ativo: true,
+    );
+
+    _showProductForm(context, produto: duplicated);
   }
 }

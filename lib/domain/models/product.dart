@@ -141,7 +141,7 @@ class Produto {
         'preco_venda': precoVenda,
         'marca': marca,
         'localizacao': localizacao,
-        'data_vencimento': dataVencimento?.toIso8601String(),
+        'data_vencimento': dataVencimento?.toUtc().toIso8601String(),
       };
 }
 
@@ -156,6 +156,10 @@ class CriarProdutoRequest {
   final double estoqueMinimo;
   final double precoCusto;
   final double precoVenda;
+  final double? precoPromocional;
+  final DateTime? dataInicioPromocao;
+  final DateTime? dataFimPromocao;
+  final double? margemLucro;
   final String? marca;
   final String? localizacao;
   final DateTime? dataVencimento;
@@ -171,6 +175,10 @@ class CriarProdutoRequest {
     this.estoqueMinimo = 0,
     this.precoCusto = 0,
     required this.precoVenda,
+    this.precoPromocional,
+    this.dataInicioPromocao,
+    this.dataFimPromocao,
+    this.margemLucro,
     this.marca,
     this.localizacao,
     this.dataVencimento,
@@ -187,8 +195,12 @@ class CriarProdutoRequest {
         'estoque_minimo': estoqueMinimo,
         'preco_custo': precoCusto,
         'preco_venda': precoVenda,
+        'preco_promocional': precoPromocional,
+        'data_inicio_promocao': dataInicioPromocao?.toUtc().toIso8601String(),
+        'data_fim_promocao': dataFimPromocao?.toUtc().toIso8601String(),
+        'margem_lucro': margemLucro,
         'marca': marca,
         'localizacao': localizacao,
-        'data_vencimento': dataVencimento?.toIso8601String(),
+        'data_vencimento': dataVencimento?.toUtc().toIso8601String(),
       };
 }

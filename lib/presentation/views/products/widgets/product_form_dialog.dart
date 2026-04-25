@@ -29,16 +29,24 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   late TextEditingController _marcaCtrl;
   late TextEditingController _precoVendaCtrl;
   late TextEditingController _precoCustoCtrl;
+  late TextEditingController _precoPromocionalCtrl;
   late TextEditingController _estoqueMinCtrl;
   late TextEditingController _localizacaoCtrl;
+  
   DateTime? _dataVencimento;
+  DateTime? _dataInicioPromocao;
+  DateTime? _dataFimPromocao;
 
   // State
   int? _selectedCategoriaId;
   String _unidadeVenda = 'UN';
   bool _controlarEstoque = true;
 
-  bool get isEdit => widget.produto != null;
+  // Intelligence
+  double _margemLucro = 0;
+  double _markup = 0;
+
+  bool get isEdit => widget.produto != null && widget.produto!.idProduto != 0;
 
   @override
   void initState() {
@@ -54,13 +62,43 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
         TextEditingController(text: p != null ? p.precoVenda.toString() : '');
     _precoCustoCtrl =
         TextEditingController(text: p != null ? p.precoCusto.toString() : '0');
+    _precoPromocionalCtrl = TextEditingController(
+        text: p?.precoPromocional != null ? p!.precoPromocional.toString() : '');
     _estoqueMinCtrl = TextEditingController(
         text: p != null ? p.estoqueMinimo.toString() : '0');
     _localizacaoCtrl = TextEditingController(text: p?.localizacao ?? '');
+    
     _dataVencimento = p?.dataVencimento;
+    _dataInicioPromocao = p?.dataInicioPromocao;
+    _dataFimPromocao = p?.dataFimPromocao;
     _selectedCategoriaId = p?.categoriaId;
     _unidadeVenda = p?.unidadeVenda ?? 'UN';
     _controlarEstoque = p?.controlarEstoque ?? true;
+
+    _calculateIntelligence();
+
+    // Listeners for real-time calculation
+    _precoVendaCtrl.addListener(_calculateIntelligence);
+    _precoCustoCtrl.addListener(_calculateIntelligence);
+  }
+
+  void _calculateIntelligence() {
+    final custo = double.tryParse(_precoCustoCtrl.text) ?? 0;
+    final venda = double.tryParse(_precoVendaCtrl.text) ?? 0;
+
+    setState(() {
+      if (venda > 0) {
+        _margemLucro = ((venda - custo) / venda) * 100;
+      } else {
+        _margemLucro = 0;
+      }
+
+      if (custo > 0) {
+        _markup = ((venda - custo) / custo) * 100;
+      } else {
+        _markup = 0;
+      }
+    });
   }
 
   @override
@@ -72,6 +110,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _marcaCtrl.dispose();
     _precoVendaCtrl.dispose();
     _precoCustoCtrl.dispose();
+    _precoPromocionalCtrl.dispose();
     _estoqueMinCtrl.dispose();
     _localizacaoCtrl.dispose();
     super.dispose();
@@ -89,6 +128,10 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
       estoqueMinimo: double.tryParse(_estoqueMinCtrl.text) ?? 0,
       precoCusto: double.tryParse(_precoCustoCtrl.text) ?? 0,
       precoVenda: double.tryParse(_precoVendaCtrl.text) ?? 0,
+      precoPromocional: double.tryParse(_precoPromocionalCtrl.text),
+      dataInicioPromocao: _dataInicioPromocao,
+      dataFimPromocao: _dataFimPromocao,
+      margemLucro: _margemLucro,
       marca: _marcaCtrl.text.trim().isEmpty ? null : _marcaCtrl.text.trim(),
       localizacao: _localizacaoCtrl.text.trim().isEmpty ? null : _localizacaoCtrl.text.trim(),
       dataVencimento: _dataVencimento,
@@ -138,7 +181,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
         ],
       ),
       content: SizedBox(
-        width: 600,
+        width: 650,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -223,41 +266,49 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // ─── Códigos ───
-                Text('Códigos',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(height: 12),
+                // ─── Preços e Inteligência ───
                 Row(
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _codigoBarrasCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Código de Barras',
-                          prefixIcon: Icon(Icons.qr_code_rounded),
+                    Text('Preços e Inteligência',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _margemLucro >= 30 ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _margemLucro >= 30 ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'Margem: ${_margemLucro.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: _margemLucro >= 30 ? Colors.green : Colors.orange,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _codigoInternoCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Código Interno',
-                          prefixIcon: Icon(Icons.tag_rounded),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'Markup: ${_markup.toStringAsFixed(1)}%',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                // ─── Preços ───
-                Text('Preços',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -288,6 +339,110 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                           if (val == null || val <= 0) return 'Preço inválido';
                           return null;
                         },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // ─── Promoção ───
+                Row(
+                  children: [
+                    const Icon(Icons.campaign_rounded, color: AppTheme.accentOrange, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Promoção',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppTheme.accentOrange,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _precoPromocionalCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Preço Promocional',
+                          prefixIcon: Icon(Icons.local_offer_rounded),
+                          prefixText: 'R\$ ',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () async {
+                          final range = await showDateRangePicker(
+                            context: context,
+                            initialDateRange: _dataInicioPromocao != null && _dataFimPromocao != null
+                                ? DateTimeRange(start: _dataInicioPromocao!, end: _dataFimPromocao!)
+                                : null,
+                            firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                            builder: (context, child) {
+                              return Theme(
+                                data: theme.copyWith(
+                                  colorScheme: theme.colorScheme.copyWith(
+                                    primary: AppTheme.accentOrange,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
+                          );
+                          if (range != null) {
+                            setState(() {
+                              _dataInicioPromocao = range.start;
+                              _dataFimPromocao = range.end;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Vigência Promoção',
+                            prefixIcon: Icon(Icons.date_range_rounded),
+                          ),
+                          child: Text(
+                            _dataInicioPromocao != null && _dataFimPromocao != null
+                                ? '${Formatters.date(_dataInicioPromocao!)} - ${Formatters.date(_dataFimPromocao!)}'
+                                : 'Selecionar período',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _dataInicioPromocao != null ? Colors.white : Colors.white38,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // ─── Códigos ───
+                Text('Códigos',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _codigoBarrasCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Código de Barras',
+                          prefixIcon: Icon(Icons.qr_code_rounded),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _codigoInternoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Código Interno',
+                          prefixIcon: Icon(Icons.tag_rounded),
+                        ),
                       ),
                     ),
                   ],
@@ -396,32 +551,6 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   activeColor: AppTheme.primaryColor,
                   contentPadding: EdgeInsets.zero,
                 ),
-                if (!isEdit) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: AppTheme.accentBlue.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            color: AppTheme.accentBlue, size: 18),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'O estoque inicial é zero. Para dar entrada, use a tela de Estoque > Ajustar Estoque ou registre uma compra.',
-                            style: TextStyle(
-                                color: AppTheme.accentBlue, fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
