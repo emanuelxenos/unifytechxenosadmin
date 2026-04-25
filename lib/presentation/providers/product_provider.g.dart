@@ -24,7 +24,7 @@ final filteredProductsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FilteredProductsRef = AutoDisposeProviderRef<AsyncValue<List<Produto>>>;
-String _$productsHash() => r'b4515e60882272f427441d86205be66c2ce22e8a';
+String _$productsHash() => r'de6c9c0b3eb4d9fef2a175b9b6490a3b92566735';
 
 /// See also [Products].
 @ProviderFor(Products)

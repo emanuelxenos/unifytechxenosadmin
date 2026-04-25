@@ -3,6 +3,7 @@ import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/domain/models/product.dart';
 import 'package:unifytechxenosadmin/domain/models/pagination.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
+import 'package:dio/dio.dart';
 
 part 'product_repository.g.dart';
 
@@ -89,5 +90,23 @@ class ProductRepository {
 
   Future<void> inativar(int id) async {
     await _api.delete(ApiEndpoints.produtoPorId(id));
+  }
+
+  Future<String> uploadFoto(List<int> bytes, String fileName) async {
+    final formData = FormData.fromMap({
+      'foto': MultipartFile.fromBytes(bytes, filename: fileName),
+    });
+
+    final response = await _api.post(
+      ApiEndpoints.produtosUpload,
+      data: formData,
+    );
+
+    final data = _extractData(response.data);
+    if (data is Map && data.containsKey('url')) {
+      return data['url'] as String;
+    }
+    
+    throw Exception('Resposta do servidor inválida: URL não encontrada');
   }
 }

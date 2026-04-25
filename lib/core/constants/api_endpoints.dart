@@ -24,6 +24,7 @@ class ApiEndpoints {
   // Produtos
   static const String produtos = '/api/produtos';
   static const String produtosBusca = '/api/produtos/busca';
+  static const String produtosUpload = '/api/produtos/upload';
   static String produtoPorId(int id) => '/api/produtos/$id';
 
   // Categorias

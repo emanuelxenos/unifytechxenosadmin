@@ -142,6 +142,7 @@ class Produto {
         'marca': marca,
         'localizacao': localizacao,
         'data_vencimento': dataVencimento?.toUtc().toIso8601String(),
+        'foto_principal_url': fotoPrincipalUrl,
       };
 }
 
@@ -163,6 +164,7 @@ class CriarProdutoRequest {
   final String? marca;
   final String? localizacao;
   final DateTime? dataVencimento;
+  final String? fotoPrincipalUrl;
 
   CriarProdutoRequest({
     this.codigoBarras,
@@ -182,6 +184,7 @@ class CriarProdutoRequest {
     this.marca,
     this.localizacao,
     this.dataVencimento,
+    this.fotoPrincipalUrl,
   });
 
   Map<String, dynamic> toJson() => {
@@ -202,5 +205,48 @@ class CriarProdutoRequest {
         'marca': marca,
         'localizacao': localizacao,
         'data_vencimento': dataVencimento?.toUtc().toIso8601String(),
+        'foto_principal_url': fotoPrincipalUrl,
       };
+
+  CriarProdutoRequest copyWith({
+    String? nome,
+    String? descricao,
+    String? codigoBarras,
+    String? codigoInterno,
+    int? categoriaId,
+    String? unidadeVenda,
+    double? precoCusto,
+    double? precoVenda,
+    double? precoPromocional,
+    DateTime? dataInicioPromocao,
+    DateTime? dataFimPromocao,
+    double? margemLucro,
+    double? estoqueMinimo,
+    bool? controlarEstoque,
+    String? marca,
+    String? localizacao,
+    DateTime? dataVencimento,
+    String? fotoPrincipalUrl,
+  }) {
+    return CriarProdutoRequest(
+      nome: nome ?? this.nome,
+      descricao: descricao ?? this.descricao,
+      codigoBarras: codigoBarras ?? this.codigoBarras,
+      codigoInterno: codigoInterno ?? this.codigoInterno,
+      categoriaId: categoriaId ?? this.categoriaId,
+      unidadeVenda: unidadeVenda ?? this.unidadeVenda,
+      precoCusto: precoCusto ?? this.precoCusto,
+      precoVenda: precoVenda ?? this.precoVenda,
+      precoPromocional: precoPromocional ?? this.precoPromocional,
+      dataInicioPromocao: dataInicioPromocao ?? this.dataInicioPromocao,
+      dataFimPromocao: dataFimPromocao ?? this.dataFimPromocao,
+      margemLucro: margemLucro ?? this.margemLucro,
+      estoqueMinimo: estoqueMinimo ?? this.estoqueMinimo,
+      controlarEstoque: controlarEstoque ?? this.controlarEstoque,
+      marca: marca ?? this.marca,
+      localizacao: localizacao ?? this.localizacao,
+      dataVencimento: dataVencimento ?? this.dataVencimento,
+      fotoPrincipalUrl: fotoPrincipalUrl ?? this.fotoPrincipalUrl,
+    );
+  }
 }

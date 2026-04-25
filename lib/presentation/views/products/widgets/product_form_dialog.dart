@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
@@ -5,6 +6,8 @@ import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/domain/models/product.dart';
 import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:unifytechxenosadmin/services/api_service.dart';
 
 class ProductFormDialog extends ConsumerStatefulWidget {
   final Produto? produto;
@@ -41,6 +44,10 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   int? _selectedCategoriaId;
   String _unidadeVenda = 'UN';
   bool _controlarEstoque = true;
+  String? _fotoUrl;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
+  bool _uploading = false;
 
   // Intelligence
   double _margemLucro = 0;
@@ -74,6 +81,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _selectedCategoriaId = p?.categoriaId;
     _unidadeVenda = p?.unidadeVenda ?? 'UN';
     _controlarEstoque = p?.controlarEstoque ?? true;
+    _fotoUrl = p?.fotoPrincipalUrl;
 
     _calculateIntelligence();
 
@@ -116,6 +124,25 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+      withData: true,
+      allowMultiple: false,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    setState(() => _uploading = true);
+
+    final file = result.files.first;
+    setState(() {
+      _selectedImageBytes = file.bytes;
+      _selectedImageName = file.name;
+      _uploading = false;
+    });
+  }
+
   CriarProdutoRequest _buildRequest() {
     return CriarProdutoRequest(
       nome: _nomeCtrl.text.trim(),
@@ -135,6 +162,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
       marca: _marcaCtrl.text.trim().isEmpty ? null : _marcaCtrl.text.trim(),
       localizacao: _localizacaoCtrl.text.trim().isEmpty ? null : _localizacaoCtrl.text.trim(),
       dataVencimento: _dataVencimento,
+      fotoPrincipalUrl: _fotoUrl,
     );
   }
 
@@ -142,11 +170,31 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    String? finalFotoUrl = _fotoUrl;
+
+    // Se houver uma nova imagem selecionada, faz o upload agora
+    if (_selectedImageBytes != null && _selectedImageName != null) {
+      final (success, message, url) = await ref
+          .read(productsProvider.notifier)
+          .uploadFoto(_selectedImageBytes!, _selectedImageName!);
+      
+      if (!success) {
+        setState(() => _saving = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro no upload da foto: $message')),
+          );
+        }
+        return;
+      }
+      finalFotoUrl = url;
+    }
+
     final (success, message) = isEdit
         ? await ref
             .read(productsProvider.notifier)
-            .atualizar(widget.produto!.idProduto, _buildRequest())
-        : await ref.read(productsProvider.notifier).criar(_buildRequest());
+            .atualizar(widget.produto!.idProduto, _buildRequest().copyWith(fotoPrincipalUrl: finalFotoUrl))
+        : await ref.read(productsProvider.notifier).criar(_buildRequest().copyWith(fotoPrincipalUrl: finalFotoUrl));
 
     setState(() => _saving = false);
 
@@ -189,6 +237,71 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ─── Foto do Produto ───
+                Center(
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _uploading ? null : _pickImage,
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                              width: 2,
+                            ),
+                            image: _selectedImageBytes != null
+                                ? DecorationImage(
+                                    image: MemoryImage(_selectedImageBytes!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : (_fotoUrl != null
+                                    ? DecorationImage(
+                                        image: NetworkImage('${ref.read(apiServiceProvider).baseUrl}$_fotoUrl'),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null),
+                          ),
+                          child: _selectedImageBytes == null && _fotoUrl == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _uploading ? Icons.cloud_upload_rounded : Icons.add_a_photo_rounded,
+                                      size: 40,
+                                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _uploading ? 'Enviando...' : 'Adicionar Foto',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : null,
+                        ),
+                      ),
+                      if (_selectedImageBytes != null || _fotoUrl != null)
+                        TextButton.icon(
+                          onPressed: () => setState(() {
+                            _selectedImageBytes = null;
+                            _selectedImageName = null;
+                            _fotoUrl = null;
+                          }),
+                          icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                          label: const Text('Remover Foto'),
+                          style: TextButton.styleFrom(foregroundColor: AppTheme.accentRed),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 // ─── Informações Básicas ───
                 Text('Informações Básicas',
                     style: theme.textTheme.titleSmall?.copyWith(

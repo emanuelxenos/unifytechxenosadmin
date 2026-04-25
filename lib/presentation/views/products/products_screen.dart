@@ -14,6 +14,7 @@ import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_di
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/print_labels_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/bulk_print_labels_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_bulk_actions_bar.dart';
+import 'package:unifytechxenosadmin/services/api_service.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -416,6 +417,22 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  color: Colors.white.withValues(alpha: 0.05),
+                  child: p.fotoPrincipalUrl != null
+                      ? Image.network(
+                          '${ref.read(apiServiceProvider).baseUrl}${p.fotoPrincipalUrl}',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 16, color: Colors.white24),
+                        )
+                      : const Icon(Icons.image_outlined, size: 16, color: Colors.white24),
+                ),
+              ),
+              const SizedBox(width: 10),
               if (p.estoqueBaixo)
                 const Padding(
                   padding: EdgeInsets.only(right: 6),
@@ -573,6 +590,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       marca: p.marca,
       localizacao: p.localizacao,
       descricao: p.descricao,
+      fotoPrincipalUrl: p.fotoPrincipalUrl,
       dataCadastro: DateTime.now(),
       ativo: true,
     );

@@ -141,6 +141,15 @@ class Products extends _$Products {
       return (false, ApiService.extractError(e));
     }
   }
+
+  Future<(bool, String, String?)> uploadFoto(List<int> bytes, String fileName) async {
+    try {
+      final url = await ref.read(productRepositoryProvider).uploadFoto(bytes, fileName);
+      return (true, 'Upload realizado!', url);
+    } catch (e) {
+      return (false, ApiService.extractError(e), null);
+    }
+  }
 }
 
 @riverpod
