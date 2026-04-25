@@ -1,4 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
+import 'package:unifytechxenosadmin/core/utils/formatters.dart';
+import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
+import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
+import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
+import 'package:unifytechxenosadmin/presentation/widgets/confirmation_dialog.dart';
+import 'package:unifytechxenosadmin/domain/models/product.dart';
+import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_form_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_dialog.dart';
 
@@ -9,6 +19,9 @@ class ProductsScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
+  final _searchController = TextEditingController();
+  final _horizontalController = ScrollController();
+  final _debouncer = Debouncer(milliseconds: 500);
   final _searchFocus = FocusNode();
 
   @override
@@ -104,7 +117,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final productsAsync = ref.watch(productsProvider);
-    final filtered = ref.watch(filteredProductsProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -135,7 +147,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            // Search bar
+            // Search & Filters
             Container(
               decoration: AppTheme.glassCard(),
               padding: const EdgeInsets.all(16),
