@@ -4,9 +4,10 @@ import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:unifytechxenosadmin/domain/models/product.dart';
 
 class PerformanceProdutoDialog extends ConsumerWidget {
-  final dynamic product;
+  final Produto product;
 
   const PerformanceProdutoDialog({super.key, required this.product});
 

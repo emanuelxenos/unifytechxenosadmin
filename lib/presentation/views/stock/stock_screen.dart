@@ -7,6 +7,7 @@ import 'package:unifytechxenosadmin/presentation/providers/stock_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
+import 'package:unifytechxenosadmin/domain/models/product.dart';
 import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
@@ -213,13 +214,26 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     }
   }
 
-  Future<void> _showProductPerformanceDialog(dynamic product) async {
+  Future<void> _showProductPerformanceDialog(Produto product) async {
     showDialog(
       context: context,
       builder: (context) => PerformanceProdutoDialog(product: product),
     );
   }
 
+  void _showAjuste([Produto? product]) {
+    showDialog(
+      context: context,
+      builder: (context) => AjusteEstoqueDialog(initialProduct: product),
+    );
+  }
+
+  void _showLotes(Produto product) {
+    showDialog(
+      context: context,
+      builder: (context) => LotesProdutoDialog(product: product),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -989,13 +1003,6 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
-  void _showAjuste([dynamic product]) {
-    showDialog(
-      context: context,
-      builder: (context) => AjusteEstoqueDialog(initialProduct: product),
-    );
-  }
-
   Future<void> _selectHistDateRange() async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -1056,13 +1063,6 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     showDialog(
       context: context,
       builder: (context) => const NovoInventarioDialog(),
-    );
-  }
-
-  void _showLotes(dynamic product) {
-    showDialog(
-      context: context,
-      builder: (context) => LotesProdutoDialog(product: product),
     );
   }
 }

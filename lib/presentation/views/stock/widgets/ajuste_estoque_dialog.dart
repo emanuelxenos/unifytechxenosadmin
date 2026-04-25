@@ -6,9 +6,10 @@ import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart
 import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
+import 'package:unifytechxenosadmin/domain/models/product.dart';
 
 class AjusteEstoqueDialog extends ConsumerStatefulWidget {
-  final dynamic initialProduct;
+  final Produto? initialProduct;
 
   const AjusteEstoqueDialog({super.key, this.initialProduct});
 

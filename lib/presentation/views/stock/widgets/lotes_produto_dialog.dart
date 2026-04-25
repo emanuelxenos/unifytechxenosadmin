@@ -4,9 +4,10 @@ import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
 import 'package:unifytechxenosadmin/data/repositories/stock_repository.dart';
+import 'package:unifytechxenosadmin/domain/models/product.dart';
 
 class LotesProdutoDialog extends ConsumerWidget {
-  final dynamic product;
+  final Produto product;
 
   const LotesProdutoDialog({super.key, required this.product});
 
