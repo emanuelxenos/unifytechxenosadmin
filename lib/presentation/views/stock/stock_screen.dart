@@ -10,12 +10,17 @@ import 'package:unifytechxenosadmin/domain/models/stock_movement.dart';
 import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
-import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:unifytechxenosadmin/data/repositories/stock_repository.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/stock_kpi_card.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/stock_bulk_actions_bar.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/ajuste_estoque_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/lotes_produto_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/novo_inventario_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/performance_produto_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/widgets/sugestao_compra_dialog.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -61,7 +66,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       return true;
     }
     if (isAlt && event.logicalKey == LogicalKeyboardKey.keyS) {
-      _showSugestaoCompraDialog(context, ref);
+      _showSugestaoCompra();
       return true;
     }
     if (isAlt && event.logicalKey == LogicalKeyboardKey.keyP) {
@@ -170,69 +175,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     }
   }
 
-  void _showSugestaoCompraDialog(BuildContext context, WidgetRef ref) {
+  void _showSugestaoCompra() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.shopping_cart_checkout_rounded, color: Colors.blueAccent),
-            SizedBox(width: 12),
-            Text('Sugestão de Compra'),
-          ],
-        ),
-        content: SizedBox(
-          width: 500,
-          height: 400,
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: ref.read(reportRepositoryProvider).sugestaoCompra(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('Nenhuma sugestão no momento.'));
-              }
-
-              return ListView.separated(
-                itemCount: snapshot.data!.length,
-                separatorBuilder: (_, __) => const Divider(),
-                itemBuilder: (context, index) {
-                  final item = snapshot.data![index];
-                  return ListTile(
-                    title: Text(item['nome'] ?? ''),
-                    subtitle: Text('Estoque Atual: ${item['estoque_atual']} | Mín: ${item['estoque_minimo']}'),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text('Sugerido', style: TextStyle(fontSize: 11, color: Colors.blueAccent)),
-                        Text(
-                          '${item['sugestao_quantidade']}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.go('/compras');
-            },
-            child: const Text('Ir para Compras'),
-          ),
-        ],
-      ),
+      builder: (context) => const SugestaoCompraDialog(),
     );
   }
 
@@ -268,274 +214,12 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   }
 
   Future<void> _showProductPerformanceDialog(dynamic product) async {
-    final theme = Theme.of(context);
-    final reportRepo = ref.read(reportRepositoryProvider);
-
     showDialog(
       context: context,
-      builder: (context) => DefaultTabController(
-        length: 2,
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 700,
-            constraints: const BoxConstraints(maxHeight: 600),
-            padding: const EdgeInsets.all(24),
-            decoration: AppTheme.glassCard(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Informações Detalhadas', style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70)),
-                          Text(product.nome, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white54),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  dividerColor: Colors.transparent,
-                  indicatorColor: AppTheme.primaryColor,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white54,
-                  tabs: const [
-                    Tab(text: 'Performance (6m)'),
-                    Tab(text: 'Histórico de Auditoria'),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      // Tab 1: Performance Chart
-                      _buildPerformanceTab(reportRepo, product.idProduto),
-                      
-                      // Tab 2: Auditoria Log
-                      _buildAuditoriaTab(reportRepo, product.idProduto),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      builder: (context) => PerformanceProdutoDialog(product: product),
     );
   }
 
-  Widget _buildPerformanceTab(ReportRepository repo, int id) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: repo.getPerformanceProduto(id),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('Sem dados de movimentação nos últimos 6 meses.', style: TextStyle(color: Colors.white54)),
-          );
-        }
-
-        final data = snapshot.data!;
-        return Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16, top: 16),
-                child: BarChart(
-                  BarChartData(
-                    alignment: BarChartAlignment.spaceAround,
-                    maxY: _getMaxY(data),
-                    barGroups: _buildBarGroups(data),
-                    gridData: const FlGridData(show: false),
-                    borderData: FlBorderData(show: false),
-                    titlesData: FlTitlesData(
-                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (val, meta) {
-                            if (val.toInt() >= data.length) return const Text('');
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                data[val.toInt()]['mes'],
-                                style: const TextStyle(color: Colors.white54, fontSize: 10),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegend('Entradas', Colors.blueAccent),
-                const SizedBox(width: 24),
-                _buildLegend('Saídas', Colors.redAccent),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildAuditoriaTab(ReportRepository repo, int id) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: repo.getAuditoriaEstoque(id),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('Nenhuma movimentação registrada.',
-                style: TextStyle(color: Colors.white54)),
-          );
-        }
-
-        final data = snapshot.data!;
-        final scrollController = ScrollController();
-        return Scrollbar(
-          controller: scrollController,
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Table(
-              columnWidths: const {
-                0: FlexColumnWidth(1.2),
-                1: FlexColumnWidth(1.2),
-                2: FlexColumnWidth(1),
-                3: FlexColumnWidth(0.8),
-                4: FlexColumnWidth(1),
-                5: FlexColumnWidth(1.8),
-              },
-              children: [
-                TableRow(
-                  decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.white10))),
-                  children: [
-                    _headerCell('Data'),
-                    _headerCell('Usuário'),
-                    _headerCell('Lote'),
-                    _headerCell('Op.'),
-                    _headerCell('Qtd'),
-                    _headerCell('Obs.'),
-                  ],
-                ),
-                ...data.map((m) {
-                  final date = DateTime.parse(m['data']);
-                  return TableRow(
-                    decoration: BoxDecoration(
-                        border: Border(
-                            bottom: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.05)))),
-                    children: [
-                      _dataCell(Formatters.dateTime(date)),
-                      _dataCell(m['usuario'], size: 11),
-                      _dataCell(m['lote'] ?? '-',
-                          size: 10, color: Colors.blueGrey),
-                      _dataCell(m['tipo'].toString().toUpperCase(),
-                          color: _getTipoColor(m['tipo']), size: 10),
-                      _dataCell(Formatters.quantity(m['quantidade']),
-                          bold: true, size: 11),
-                      _dataCell(m['observacao'] ?? '-', size: 10),
-                    ],
-                  );
-                }),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _headerCell(String text) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, fontSize: 12)),
-  );
-
-  Widget _dataCell(String text, {Color? color, bool bold = false, double size = 12}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Text(
-      text,
-      style: TextStyle(
-        color: color ?? Colors.white54,
-        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-        fontSize: size,
-      ),
-    ),
-  );
-
-  Color _getTipoColor(String tipo) {
-    if (tipo.contains('entrada') || tipo.contains('compra')) return Colors.greenAccent;
-    if (tipo.contains('saida') || tipo.contains('venda') || tipo.contains('perda')) return Colors.redAccent;
-    return Colors.blueAccent;
-  }
-
-  double _getMaxY(List<Map<String, dynamic>> data) {
-    double max = 0;
-    for (var d in data) {
-      if (d['entrada'] > max) max = (d['entrada'] as num).toDouble();
-      if (d['saida'] > max) max = (d['saida'] as num).toDouble();
-    }
-    return max == 0 ? 10 : max * 1.2;
-  }
-
-  List<BarChartGroupData> _buildBarGroups(List<Map<String, dynamic>> data) {
-    return List.generate(data.length, (i) {
-      return BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
-            toY: (data[i]['entrada'] as num).toDouble(),
-            color: Colors.blueAccent,
-            width: 12,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          BarChartRodData(
-            toY: (data[i]['saida'] as num).toDouble(),
-            color: Colors.redAccent,
-            width: 12,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildLegend(String label, Color color) {
-    return Row(
-      children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -550,7 +234,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_selectedIds.isNotEmpty) _buildBulkActionsBar(theme),
+                 if (_selectedIds.isNotEmpty) StockBulkActionsBar(
+                   selectedCount: _selectedIds.length,
+                   onPrintLabels: _imprimirEtiquetasLote,
+                   onCancel: () => setState(() => _selectedIds.clear()),
+                 ),
                 _buildHeader(theme),
               const SizedBox(height: 20),
               _buildTabBar(),
@@ -602,7 +290,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         IconButton(
           tooltip: 'Sugestão de Compra (Alt+S)',
           icon: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.blueAccent),
-          onPressed: () => _showSugestaoCompraDialog(context, ref),
+          onPressed: _showSugestaoCompra,
         ),
         Tooltip(
           message: 'Atalhos do Teclado:\n• Ctrl + F: Buscar Produto\n• Alt + S: Sugestão de Compra\n• Alt + P: Imprimir Etiquetas (Lote)\n• Esc: Limpar busca/filtros',
@@ -630,40 +318,6 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
-  Widget _buildBulkActionsBar(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: AppTheme.glassBoxShadow,
-      ),
-      child: Row(
-        children: [
-          Text(
-            '${_selectedIds.length} itens selecionados',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: _imprimirEtiquetasLote,
-            icon: const Icon(Icons.print_rounded, size: 18),
-            label: const Text('Imprimir Etiquetas (Lote)'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(width: 12),
-          TextButton(
-            onPressed: () => setState(() => _selectedIds.clear()),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildVencimentoCell(DateTime? data) {
     if (data == null) return const Text('N/A', style: TextStyle(color: Colors.white54));
@@ -707,31 +361,31 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               spacing: 16,
               runSpacing: 16,
               children: [
-                _StockKpiCard(
+                StockKpiCard(
                   title: 'Total de Itens',
                   value: data.totalProdutos.toString(),
                   icon: Icons.inventory_2_outlined,
                   color: Colors.blue,
                 ),
-                _StockKpiCard(
+                StockKpiCard(
                   title: 'Estoque Baixo',
                   value: data.produtosBaixos.toString(),
                   icon: Icons.warning_amber_rounded,
                   color: AppTheme.accentOrange,
                 ),
-                _StockKpiCard(
+                StockKpiCard(
                   title: 'Valor (Custo)',
                   value: Formatters.currency(data.valorTotalCusto),
                   icon: Icons.attach_money_rounded,
                   color: AppTheme.accentGreen,
                 ),
-                _StockKpiCard(
+                StockKpiCard(
                   title: 'Reposição Necessária',
                   value: Formatters.currency(data.sugestaoCompraTotal),
                   icon: Icons.shopping_cart_checkout_rounded,
                   color: Colors.purple,
                 ),
-                _StockKpiCard(
+                StockKpiCard(
                   title: 'Vencendo (15 dias)',
                   value: data.produtosVencendo.toString(),
                   icon: Icons.event_busy_rounded,
@@ -962,7 +616,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                         children: [
                                           IconButton(
                                             icon: const Icon(Icons.layers_outlined, color: Colors.blueAccent),
-                                            onPressed: () => _showLotesDialog(context, ref, p),
+                                            onPressed: () => _showLotes(p),
                                             tooltip: 'Ver Lotes',
                                           ),
                                           IconButton(
@@ -972,7 +626,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryColor),
-                                            onPressed: () => _showAjusteDialog(context, ref, p),
+                                            onPressed: () => _showAjuste(p),
                                             tooltip: 'Ajustar',
                                           ),
                                         ],
@@ -1235,7 +889,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         Row(
           children: [
             ElevatedButton.icon(
-              onPressed: () => _showNovoInventarioDialog(context),
+              onPressed: _showNovoInventario,
               icon: const Icon(Icons.add_rounded),
               label: const Text('Novo Inventário'),
             ),
@@ -1335,135 +989,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
-  void _showAjusteDialog(BuildContext context, WidgetRef ref, [dynamic initialProduct]) {
-    final produtoIdCtrl = TextEditingController(text: initialProduct?.idProduto.toString() ?? '');
-    final quantidadeCtrl = TextEditingController();
-    final motivoCtrl = TextEditingController();
-    final loteFabCtrl = TextEditingController();
-    final dataVencCtrl = TextEditingController();
-    DateTime? selectedVenc;
-    String tipo = 'entrada';
-    final formKey = GlobalKey<FormState>();
-
+  void _showAjuste([dynamic product]) {
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(initialProduct != null ? 'Ajustar: ${initialProduct.nome}' : 'Ajustar Estoque'),
-          content: SizedBox(
-            width: 400,
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (initialProduct != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        'Código: ${initialProduct.codigoBarras ?? initialProduct.idProduto}',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  TextFormField(
-                    controller: produtoIdCtrl,
-                    decoration: const InputDecoration(labelText: 'ID do Produto *'),
-                    keyboardType: TextInputType.number,
-                    enabled: initialProduct == null,
-                    validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: tipo,
-                    decoration: const InputDecoration(labelText: 'Tipo'),
-                    items: const [
-                      DropdownMenuItem(value: 'entrada', child: Text('Entrada')),
-                      DropdownMenuItem(value: 'saida', child: Text('Saída')),
-                      DropdownMenuItem(value: 'ajuste', child: Text('Ajuste')),
-                      DropdownMenuItem(value: 'perda', child: Text('Perda')),
-                    ],
-                    onChanged: (v) => setDialogState(() => tipo = v!),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: quantidadeCtrl,
-                    decoration: const InputDecoration(labelText: 'Quantidade *'),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: motivoCtrl,
-                    decoration: const InputDecoration(labelText: 'Motivo *'),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
-                  ),
-                  if (tipo == 'entrada') ...[
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: loteFabCtrl,
-                      decoration: const InputDecoration(labelText: 'Lote do Fabricante (Opcional)'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: dataVencCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Data de Vencimento *',
-                        suffixIcon: Icon(Icons.calendar_today, size: 18),
-                      ),
-                      readOnly: true,
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now().add(const Duration(days: 90)),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2101),
-                        );
-                        if (picked != null) {
-                          selectedVenc = picked;
-                          dataVencCtrl.text = Formatters.date(picked);
-                        }
-                      },
-                      validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório para entrada' : null,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                final (success, msg) = await ref.read(stockActionsProvider.notifier).ajustar(
-                  AjusteEstoqueRequest(
-                    produtoId: int.parse(produtoIdCtrl.text),
-                    quantidade: double.parse(quantidadeCtrl.text),
-                    tipo: tipo,
-                    motivo: motivoCtrl.text,
-                    loteFabricante: loteFabCtrl.text.isEmpty ? null : loteFabCtrl.text,
-                    dataVencimento: selectedVenc,
-                  ),
-                );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ref.invalidate(inventoriesProvider);
-                  ref.invalidate(productsProvider);
-                  ref.invalidate(stockReportProvider);
-                  ref.invalidate(stockMovementsProvider); // Atualiza o histórico na hora!
-                  
-                  if (success) {
-                    AppNotifications.showSuccess(context, msg);
-                  } else {
-                    AppNotifications.showError(context, msg);
-                  }
-                }
-              },
-              child: const Text('Confirmar'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => AjusteEstoqueDialog(initialProduct: product),
     );
   }
 
@@ -1523,237 +1052,17 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     }
   }
 
-  void _showNovoInventarioDialog(BuildContext context) {
-    final codigoCtrl = TextEditingController(text: 'INV-${DateTime.now().millisecondsSinceEpoch ~/ 10000}');
-    final descCtrl = TextEditingController();
-    int? selectedCategoria;
-    final categoriesAsync = ref.watch(categoriesProvider);
-    final formKey = GlobalKey<FormState>();
-
+  void _showNovoInventario() {
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Novo Inventário'),
-          content: SizedBox(
-            width: 400,
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: codigoCtrl,
-                    decoration: const InputDecoration(labelText: 'Código / Identificação *'),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: descCtrl,
-                    decoration: const InputDecoration(labelText: 'Descrição (Opcional)'),
-                  ),
-                  const SizedBox(height: 12),
-                  categoriesAsync.response.when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (_, __) => const Text('Erro ao carregar categorias'),
-                    data: (paginated) {
-                      final cats = paginated.data;
-                      return DropdownButtonFormField<int?>(
-                        value: selectedCategoria,
-                        decoration: const InputDecoration(labelText: 'Filtrar por Categoria (Opcional)'),
-                        hint: const Text('Todas as Categorias'),
-                        items: [
-                          const DropdownMenuItem(value: null, child: Text('Todas as Categorias')),
-                          ...cats.map((c) => DropdownMenuItem(value: c.idCategoria, child: Text(c.nome))),
-                        ],
-                        onChanged: (v) => setDialogState(() => selectedCategoria = v),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                final (success, msg) = await ref.read(stockActionsProvider.notifier).criarInventario(
-                  CriarInventarioRequest(
-                    codigo: codigoCtrl.text,
-                    descricao: descCtrl.text,
-                    dataInicio: DateTime.now().toIso8601String(),
-                    categoriaId: selectedCategoria,
-                  ),
-                );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  if (success) {
-                    AppNotifications.showSuccess(context, msg);
-                  } else {
-                    AppNotifications.showError(context, msg);
-                  }
-                }
-              },
-              child: const Text('Iniciar Contagem'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => const NovoInventarioDialog(),
     );
   }
 
-  void _showLotesDialog(BuildContext context, WidgetRef ref, dynamic product) {
+  void _showLotes(dynamic product) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Detalhamento de Lotes',
-                style: TextStyle(fontSize: 14, color: Colors.grey[400])),
-            Text(product.nome,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SizedBox(
-          width: 650,
-          height: 400,
-          child: FutureBuilder<List<EstoqueLote>>(
-            future: ref
-                .read(stockRepositoryProvider)
-                .listarLotes(product.idProduto),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError ||
-                  !snapshot.hasData ||
-                  snapshot.data!.isEmpty) {
-                return const Center(
-                    child:
-                        Text('Nenhum lote ativo encontrado para este produto.'));
-              }
-
-              final lotes = snapshot.data!;
-              return SingleChildScrollView(
-                child: Table(
-                  columnWidths: const {
-                    0: FlexColumnWidth(1.2),
-                    1: FlexColumnWidth(1),
-                    2: FlexColumnWidth(1),
-                    3: FlexColumnWidth(1),
-                    4: FlexColumnWidth(0.8),
-                  },
-                  children: [
-                    TableRow(
-                      decoration: const BoxDecoration(
-                          border:
-                              Border(bottom: BorderSide(color: Colors.white10))),
-                      children: [
-                        _headerCell('Lote Interno'),
-                        _headerCell('Vencimento'),
-                        _headerCell('Localização'),
-                        _headerCell('Qtd Atual'),
-                        _headerCell('Status'),
-                      ],
-                    ),
-                    ...lotes.map((l) {
-                      final isVencido = l.dataVencimento != null &&
-                          l.dataVencimento!.isBefore(DateTime.now());
-                      return TableRow(
-                        children: [
-                          _dataCell(l.loteInterno, size: 12),
-                          _dataCell(
-                              l.dataVencimento != null
-                                  ? Formatters.date(l.dataVencimento!)
-                                  : 'S/V',
-                              color: isVencido ? Colors.redAccent : null),
-                          _dataCell(l.localizacaoNome ?? 'Não Informada'),
-                          _dataCell(Formatters.quantity(l.quantidadeAtual),
-                              bold: true),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: StatusChip.fromStatus(l.status),
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Fechar')),
-        ],
-      ),
-    );
-  }
-}
-
-class _StockKpiCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StockKpiCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      builder: (context) => LotesProdutoDialog(product: product),
     );
   }
 }
