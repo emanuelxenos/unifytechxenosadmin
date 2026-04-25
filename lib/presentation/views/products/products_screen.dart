@@ -12,6 +12,8 @@ import 'package:unifytechxenosadmin/presentation/providers/category_provider.dar
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_form_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/print_labels_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/products/widgets/bulk_print_labels_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_bulk_actions_bar.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -25,6 +27,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _verticalController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 500);
   final _searchFocus = FocusNode();
+  final Set<int> _selectedIds = {};
 
   @override
   void initState() {
@@ -292,7 +295,16 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                   controller: _horizontalController,
                                   scrollDirection: Axis.horizontal,
                                   child: DataTable(
-                                    showCheckboxColumn: false,
+                                    showCheckboxColumn: true,
+                                    onSelectAll: (selected) {
+                                      setState(() {
+                                        if (selected == true) {
+                                          _selectedIds.addAll(products.map((p) => p.idProduto));
+                                        } else {
+                                          _selectedIds.clear();
+                                        }
+                                      });
+                                    },
                                     columns: const [
                                       DataColumn(label: Text('CÓDIGO')),
                                       DataColumn(label: Text('NOME')),
@@ -360,6 +372,22 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 ),
               ),
             ),
+            if (_selectedIds.isNotEmpty)
+              productsAsync.response.when(
+                data: (paginated) {
+                  final selectedProducts = paginated.data
+                      .where((p) => _selectedIds.contains(p.idProduto))
+                      .toList();
+                  return ProductBulkActionsBar(
+                    selectedCount: _selectedIds.length,
+                    onClearSelection: () => setState(() => _selectedIds.clear()),
+                    onPrintLabels: () =>
+                        _showBulkPrintLabels(context, selectedProducts),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
           ],
         ),
       ),
@@ -367,7 +395,18 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   }
 
   DataRow _buildProductRow(Produto p, ThemeData theme) {
+    final isSelected = _selectedIds.contains(p.idProduto);
     return DataRow(
+      selected: isSelected,
+      onSelectChanged: (selected) {
+        setState(() {
+          if (selected == true) {
+            _selectedIds.add(p.idProduto);
+          } else {
+            _selectedIds.remove(p.idProduto);
+          }
+        });
+      },
       cells: [
         DataCell(Text(
           p.codigoBarras ?? p.codigoInterno ?? '#${p.idProduto}',
@@ -484,6 +523,13 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     showDialog(
       context: context,
       builder: (context) => PrintLabelsDialog(product: product),
+    );
+  }
+
+  void _showBulkPrintLabels(BuildContext context, List<Produto> products) {
+    showDialog(
+      context: context,
+      builder: (context) => BulkPrintLabelsDialog(products: products),
     );
   }
 

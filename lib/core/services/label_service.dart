@@ -15,77 +15,93 @@ class LabelService {
     double widthMm = 40,
     double heightMm = 25,
   }) async {
+    await printMultipleProductLabels(
+      productQuantities: [MapEntry(product, quantity)],
+      widthMm: widthMm,
+      heightMm: heightMm,
+    );
+  }
+
+  /// Gera etiquetas para múltiplos produtos de uma vez
+  static Future<void> printMultipleProductLabels({
+    required List<MapEntry<Produto, int>> productQuantities,
+    double widthMm = 40,
+    double heightMm = 25,
+  }) async {
     final pdf = pw.Document();
     
-    // Carrega uma fonte com suporte a Unicode (acentos, R$, etc)
     final font = await PdfGoogleFonts.robotoRegular();
     final fontBold = await PdfGoogleFonts.robotoBold();
 
-    // Adiciona uma página para cada etiqueta
-    for (var i = 0; i < quantity; i++) {
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat(
-            widthMm * PdfPageFormat.mm,
-            heightMm * PdfPageFormat.mm,
-            marginAll: 2 * PdfPageFormat.mm,
+    // Criamos uma lista com todas as etiquetas individuais
+    final List<pw.Widget> allLabels = [];
+    
+    for (final entry in productQuantities) {
+      final product = entry.key;
+      final quantity = entry.value;
+
+      for (var i = 0; i < quantity; i++) {
+        allLabels.add(
+          pw.Container(
+            width: widthMm * PdfPageFormat.mm,
+            height: heightMm * PdfPageFormat.mm,
+            padding: const pw.EdgeInsets.all(2),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+            ),
+            child: pw.Column(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.Text(
+                  product.nome.toUpperCase(),
+                  style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold),
+                  textAlign: pw.TextAlign.center,
+                  maxLines: 2,
+                ),
+                pw.SizedBox(height: 1),
+                pw.Expanded(
+                  child: pw.Center(
+                    child: pw.BarcodeWidget(
+                      barcode: Barcode.code128(),
+                      data: product.codigoBarras ?? product.idProduto.toString(),
+                      drawText: false,
+                    ),
+                  ),
+                ),
+                pw.SizedBox(height: 1),
+                pw.Text(
+                  _currencyFormat.format(product.precoVenda),
+                  style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                ),
+              ],
+            ),
           ),
-          theme: pw.ThemeData.withFont(
-            base: font,
-            bold: fontBold,
-          ),
-          build: (pw.Context context) {
-            return pw.Container(
-              width: widthMm * PdfPageFormat.mm,
-              height: heightMm * PdfPageFormat.mm,
-              child: pw.Column(
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  // Nome do Produto
-                  pw.Text(
-                    product.nome.toUpperCase(),
-                    style: pw.TextStyle(
-                      fontSize: 7,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                    textAlign: pw.TextAlign.center,
-                    maxLines: 2,
-                  ),
-                  pw.SizedBox(height: 2),
-                  
-                  // Código de Barras
-                  pw.Expanded(
-                    child: pw.Center(
-                      child: pw.BarcodeWidget(
-                        barcode: Barcode.code128(),
-                        data: product.codigoBarras ?? product.idProduto.toString(),
-                        drawText: false,
-                      ),
-                    ),
-                  ),
-                  
-                  pw.SizedBox(height: 2),
-                  
-                  // Preço
-                  pw.Text(
-                    _currencyFormat.format(product.precoVenda),
-                    style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      );
+        );
+      }
     }
+
+    // Adicionamos as etiquetas em páginas A4 usando Wrap para preencher a folha
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(10 * PdfPageFormat.mm),
+        theme: pw.ThemeData.withFont(base: font, bold: fontBold),
+        build: (pw.Context context) {
+          return [
+            pw.Wrap(
+              spacing: 2 * PdfPageFormat.mm,
+              runSpacing: 2 * PdfPageFormat.mm,
+              children: allLabels,
+            ),
+          ];
+        },
+      ),
+    );
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'Etiquetas - ${product.nome}',
+      name: 'Etiquetas_A4_${DateFormat('ddMMyyyy_HHmm').format(DateTime.now())}',
     );
   }
 

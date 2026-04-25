@@ -105,7 +105,7 @@ class _PrintLabelsDialogState extends State<PrintLabelsDialog> {
               child: ElevatedButton(
                 onPressed: _isPrinting ? null : _handlePrint,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentBlue,
+                  backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                 ),
                 child: _isPrinting
