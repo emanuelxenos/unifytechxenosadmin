@@ -18,7 +18,7 @@ import 'package:unifytechxenosadmin/data/repositories/stock_repository.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/stock_kpi_card.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/stock_bulk_actions_bar.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/ajuste_estoque_dialog.dart';
-import 'package:unifytechxenosadmin/presentation/views/stock/widgets/lotes_produto_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/novo_inventario_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/performance_produto_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/sugestao_compra_dialog.dart';
