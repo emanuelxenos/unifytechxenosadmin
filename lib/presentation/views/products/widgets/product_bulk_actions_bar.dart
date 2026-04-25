@@ -5,6 +5,7 @@ class ProductBulkActionsBar extends StatelessWidget {
   final int selectedCount;
   final VoidCallback onClearSelection;
   final VoidCallback onPrintLabels;
+  final VoidCallback onEditPrices;
   final VoidCallback? onInactivateAll;
 
   const ProductBulkActionsBar({
@@ -12,6 +13,7 @@ class ProductBulkActionsBar extends StatelessWidget {
     required this.selectedCount,
     required this.onClearSelection,
     required this.onPrintLabels,
+    required this.onEditPrices,
     this.onInactivateAll,
   });
 
@@ -67,6 +69,15 @@ class ProductBulkActionsBar extends StatelessWidget {
                 label: const Text('IMPRIMIR ETIQUETAS'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: onEditPrices,
+                icon: const Icon(Icons.price_change_rounded),
+                label: const Text('REAJUSTAR PREÇOS'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent.withValues(alpha: 0.8),
                   foregroundColor: Colors.white,
                 ),
               ),

@@ -109,4 +109,11 @@ class ProductRepository {
     
     throw Exception('Resposta do servidor inválida: URL não encontrada');
   }
+
+  Future<void> atualizarPrecosLote(List<Map<String, dynamic>> updates) async {
+    await _api.put(
+      ApiEndpoints.produtosBulkPreco,
+      data: {'updates': updates},
+    );
+  }
 }

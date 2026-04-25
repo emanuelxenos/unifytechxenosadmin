@@ -150,6 +150,16 @@ class Products extends _$Products {
       return (false, ApiService.extractError(e), null);
     }
   }
+
+  Future<(bool, String)> atualizarPrecosLote(List<Map<String, dynamic>> updates) async {
+    try {
+      await ref.read(productRepositoryProvider).atualizarPrecosLote(updates);
+      await refresh();
+      return (true, 'Preços atualizados com sucesso!');
+    } catch (e) {
+      return (false, ApiService.extractError(e));
+    }
+  }
 }
 
 @riverpod

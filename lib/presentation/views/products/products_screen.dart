@@ -14,6 +14,7 @@ import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_di
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/print_labels_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/bulk_print_labels_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_bulk_actions_bar.dart';
+import 'package:unifytechxenosadmin/presentation/views/products/widgets/batch_price_edit_dialog.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
@@ -384,6 +385,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                     onClearSelection: () => setState(() => _selectedIds.clear()),
                     onPrintLabels: () =>
                         _showBulkPrintLabels(context, selectedProducts),
+                    onEditPrices: () =>
+                        _showBatchPriceEdit(context, selectedProducts),
                   );
                 },
                 loading: () => const SizedBox.shrink(),
@@ -547,6 +550,14 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     showDialog(
       context: context,
       builder: (context) => BulkPrintLabelsDialog(products: products),
+    );
+  }
+
+  void _showBatchPriceEdit(BuildContext context, List<Produto> products) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BatchPriceEditDialog(products: products),
     );
   }
 
