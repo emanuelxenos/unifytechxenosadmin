@@ -44,26 +44,7 @@ final salesReportMonthProvider =
     );
 
 typedef _$SalesReportMonth = AutoDisposeAsyncNotifier<Map<String, dynamic>>;
-String _$bestSellersHash() => r'b9a01334f32101f524a7c6f47b3c66b4f392623c';
-
-/// See also [BestSellers].
-@ProviderFor(BestSellers)
-final bestSellersProvider =
-    AutoDisposeAsyncNotifierProvider<
-      BestSellers,
-      List<Map<String, dynamic>>
-    >.internal(
-      BestSellers.new,
-      name: r'bestSellersProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$bestSellersHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$BestSellers = AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
-String _$salesReportPeriodHash() => r'6e3d0145dd6cf7215067aa6f58f1cab1ec094870';
+String _$bestSellersHash() => r'c2ca02d8db1acba7e1ca91b365dcbb65dc1223cf';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -85,6 +66,151 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+abstract class _$BestSellers
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final int? categoriaId;
+
+  FutureOr<List<Map<String, dynamic>>> build({int? categoriaId});
+}
+
+/// See also [BestSellers].
+@ProviderFor(BestSellers)
+const bestSellersProvider = BestSellersFamily();
+
+/// See also [BestSellers].
+class BestSellersFamily extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [BestSellers].
+  const BestSellersFamily();
+
+  /// See also [BestSellers].
+  BestSellersProvider call({int? categoriaId}) {
+    return BestSellersProvider(categoriaId: categoriaId);
+  }
+
+  @override
+  BestSellersProvider getProviderOverride(
+    covariant BestSellersProvider provider,
+  ) {
+    return call(categoriaId: provider.categoriaId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'bestSellersProvider';
+}
+
+/// See also [BestSellers].
+class BestSellersProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          BestSellers,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [BestSellers].
+  BestSellersProvider({int? categoriaId})
+    : this._internal(
+        () => BestSellers()..categoriaId = categoriaId,
+        from: bestSellersProvider,
+        name: r'bestSellersProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$bestSellersHash,
+        dependencies: BestSellersFamily._dependencies,
+        allTransitiveDependencies: BestSellersFamily._allTransitiveDependencies,
+        categoriaId: categoriaId,
+      );
+
+  BestSellersProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.categoriaId,
+  }) : super.internal();
+
+  final int? categoriaId;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant BestSellers notifier,
+  ) {
+    return notifier.build(categoriaId: categoriaId);
+  }
+
+  @override
+  Override overrideWith(BestSellers Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: BestSellersProvider._internal(
+        () => create()..categoriaId = categoriaId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        categoriaId: categoriaId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    BestSellers,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _BestSellersProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is BestSellersProvider && other.categoriaId == categoriaId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, categoriaId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin BestSellersRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `categoriaId` of this provider.
+  int? get categoriaId;
+}
+
+class _BestSellersProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          BestSellers,
+          List<Map<String, dynamic>>
+        >
+    with BestSellersRef {
+  _BestSellersProviderElement(super.provider);
+
+  @override
+  int? get categoriaId => (origin as BestSellersProvider).categoriaId;
+}
+
+String _$salesReportPeriodHash() => r'6e3d0145dd6cf7215067aa6f58f1cab1ec094870';
 
 abstract class _$SalesReportPeriod
     extends BuildlessAutoDisposeAsyncNotifier<Map<String, dynamic>> {

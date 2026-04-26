@@ -7,6 +7,7 @@ import 'package:unifytechxenosadmin/core/utils/formatters.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 import 'package:unifytechxenosadmin/presentation/providers/report_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
+import 'package:unifytechxenosadmin/presentation/providers/category_provider.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -383,102 +384,221 @@ class _KPICard extends StatelessWidget {
   }
 }
 
-class _BestSellersView extends ConsumerWidget {
+class _BestSellersView extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_BestSellersView> createState() => _BestSellersViewState();
+}
+
+class _BestSellersViewState extends ConsumerState<_BestSellersView> {
+  int? _selectedCategoryId;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dataAsync = ref.watch(bestSellersProvider);
+    final dataAsync = ref.watch(bestSellersProvider(categoriaId: _selectedCategoryId));
+    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Container(
       decoration: AppTheme.glassCard(),
-      clipBehavior: Clip.antiAlias,
-      child: dataAsync.when(
-        loading: () => const LoadingOverlay(message: 'Carregando Produtos...'),
-        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
-        data: (products) {
-          if (products.isEmpty) {
-            return const EmptyState(icon: Icons.bar_chart_rounded, title: 'Poucos dados na última semana');
-          }
-
-          // Gráfico de Barras para os top 5
-          final topProducts = products.take(5).toList();
-          List<BarChartGroupData> barGroups = [];
-          for (int i = 0; i < topProducts.length; i++) {
-            barGroups.add(BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: (topProducts[i]['quantidade_vendida'] as num?)?.toDouble() ?? 0,
-                  color: AppTheme.primaryColor,
-                  width: 20,
-                  borderRadius: BorderRadius.circular(4),
-                )
-              ],
-            ));
-          }
-
-          return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header com Filtro
+          Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Top Produtos (Volume)', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 250,
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      barGroups: barGroups,
-                      borderData: FlBorderData(show: false),
-                      titlesData: FlTitlesData(
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (val, meta) {
-                              if (val.toInt() < topProducts.length) {
-                                String name = topProducts[val.toInt()]['nome'] ?? '';
-                                if (name.length > 10) name = '${name.substring(0, 10)}...';
-                                return Padding(padding: const EdgeInsets.only(top: 8), child: Text(name, style: const TextStyle(fontSize: 10)));
-                              }
-                              return const Text('');
-                            },
-                          ),
-                        ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('🏆 Ranking de Performance', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text('Os 10 produtos com maior volume de saída', style: theme.textTheme.bodySmall),
+                  ],
+                ),
+                // Filtro de Categoria
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                  ),
+                  child: categoriesAsync.response.when(
+                    data: (paginated) => DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        value: _selectedCategoryId,
+                        hint: const Text('Filtrar Categoria', style: TextStyle(fontSize: 13, color: Colors.white70)),
+                        icon: const Icon(Icons.filter_list_rounded, size: 18, color: AppTheme.primaryColor),
+                        dropdownColor: const Color(0xFF1C2039),
+                        style: const TextStyle(fontSize: 13, color: Colors.white),
+                        onChanged: (id) => setState(() => _selectedCategoryId = id),
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('Todas as Categorias')),
+                          ...paginated.data.map((cat) => DropdownMenuItem(
+                            value: cat.idCategoria,
+                            child: Text(cat.nome),
+                          )),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-                Text('Detalhes do Relatório', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text('#')),
-                      DataColumn(label: Text('PRODUTO')),
-                      DataColumn(label: Text('QTD VENDIDA'), numeric: true),
-                      DataColumn(label: Text('TOTAL (\$)'), numeric: true),
-                    ],
-                    rows: products.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final p = entry.value;
-                      return DataRow(cells: [
-                        DataCell(Text('${i + 1}', style: const TextStyle(fontWeight: FontWeight.bold))),
-                        DataCell(Text(p['nome']?.toString() ?? '-')),
-                        DataCell(Text(Formatters.quantity((p['quantidade_vendida'] as num?)?.toDouble() ?? 0))),
-                        DataCell(Text(Formatters.currency((p['valor_total'] as num?)?.toDouble() ?? 0))),
-                      ]);
-                    }).toList(),
+                    loading: () => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    error: (_, __) => const Icon(Icons.error, size: 18, color: Colors.red),
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Analisando dados...'),
+              error: (e, _) => EmptyState(icon: Icons.analytics_outlined, title: 'Erro na análise', subtitle: '$e'),
+              data: (products) {
+                if (products.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.bar_chart_rounded, 
+                    title: 'Sem dados para exibir',
+                    subtitle: 'Não houve vendas registradas nesta categoria no período.',
+                  );
+                }
+
+                final topProducts = products.take(10).toList();
+                List<BarChartGroupData> barGroups = [];
+                for (int i = 0; i < topProducts.length; i++) {
+                  final double qty = (topProducts[i]['quantidade_vendida'] as num?)?.toDouble() ?? 0;
+                  barGroups.add(BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: qty,
+                        color: AppTheme.primaryColor,
+                        width: 24,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                      )
+                    ],
+                  ));
+                }
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Gráfico Premium
+                      Container(
+                        height: 320,
+                        padding: const EdgeInsets.only(top: 20, right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: BarChart(
+                          BarChartData(
+                            alignment: BarChartAlignment.spaceAround,
+                            barGroups: barGroups,
+                            gridData: FlGridData(
+                              show: true,
+                              drawVerticalLine: false,
+                              getDrawingHorizontalLine: (value) => FlLine(color: Colors.white10, strokeWidth: 1),
+                            ),
+                            borderData: FlBorderData(show: false),
+                            titlesData: FlTitlesData(
+                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 40,
+                                  getTitlesWidget: (val, meta) => Text(val.toInt().toString(), style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 60,
+                                  getTitlesWidget: (val, meta) {
+                                    if (val.toInt() < topProducts.length) {
+                                      String name = topProducts[val.toInt()]['nome'] ?? '';
+                                      if (name.length > 12) name = '${name.substring(0, 10)}..';
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: RotatedBox(
+                                          quarterTurns: 1,
+                                          child: Text(name, style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                                        ),
+                                      );
+                                    }
+                                    return const Text('');
+                                  },
+                                ),
+                              ),
+                            ),
+                            barTouchData: BarTouchData(
+                              touchTooltipData: BarTouchTooltipData(
+                                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                  return BarTooltipItem(
+                                    '${topProducts[groupIndex]['nome']}\n',
+                                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    children: [
+                                      TextSpan(
+                                        text: '${rod.toY.toInt()} vendidos',
+                                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.normal, fontSize: 12),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      Text('📄 Listagem Detalhada', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DataTable(
+                          headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                          columns: const [
+                            DataColumn(label: Text('#')),
+                            DataColumn(label: Text('PRODUTO')),
+                            DataColumn(label: Text('QTD VENDIDA'), numeric: true),
+                            DataColumn(label: Text('FATURAMENTO'), numeric: true),
+                          ],
+                          rows: products.asMap().entries.map((entry) {
+                            final i = entry.key;
+                            final p = entry.value;
+                            return DataRow(
+                              color: WidgetStateProperty.resolveWith<Color?>((states) => i < 3 ? AppTheme.primaryColor.withValues(alpha: 0.05) : null),
+                              cells: [
+                                DataCell(Text('${i + 1}', style: TextStyle(fontWeight: i < 3 ? FontWeight.bold : FontWeight.normal))),
+                                DataCell(
+                                  Row(
+                                    children: [
+                                      if (i < 3) Padding(padding: const EdgeInsets.only(right: 8), child: Icon(Icons.workspace_premium, size: 16, color: i == 0 ? Colors.amber : (i == 1 ? Colors.grey : Colors.brown))),
+                                      Text(p['nome']?.toString() ?? '-'),
+                                    ],
+                                  ),
+                                ),
+                                DataCell(Text(Formatters.quantity((p['quantidade_vendida'] as num?)?.toDouble() ?? 0))),
+                                DataCell(Text(Formatters.currency((p['valor_total'] as num?)?.toDouble() ?? 0))),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

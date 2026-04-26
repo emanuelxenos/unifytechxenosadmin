@@ -42,10 +42,13 @@ class ReportRepository {
     return _extractMapData(response.data);
   }
 
-  Future<List<Map<String, dynamic>>> maisVendidos({String periodo = '30d'}) async {
+  Future<List<Map<String, dynamic>>> maisVendidos({String periodo = '30d', int? categoriaId}) async {
     final response = await _api.get(
       ApiEndpoints.relatorioMaisVendidos,
-      queryParameters: {'periodo': periodo},
+      queryParameters: {
+        'periodo': periodo,
+        if (categoriaId != null && categoriaId > 0) 'categoria_id': categoriaId,
+      },
     );
     final data = response.data;
     if (data is List) {

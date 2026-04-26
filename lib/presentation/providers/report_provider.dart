@@ -33,13 +33,13 @@ class SalesReportMonth extends _$SalesReportMonth {
 @riverpod
 class BestSellers extends _$BestSellers {
   @override
-  Future<List<Map<String, dynamic>>> build() async {
-    return ref.read(reportRepositoryProvider).maisVendidos();
+  Future<List<Map<String, dynamic>>> build({int? categoriaId}) async {
+    return ref.read(reportRepositoryProvider).maisVendidos(categoriaId: categoriaId);
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).maisVendidos());
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).maisVendidos(categoriaId: categoriaId));
   }
 }
 
