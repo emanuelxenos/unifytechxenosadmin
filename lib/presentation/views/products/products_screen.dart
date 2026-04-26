@@ -16,6 +16,8 @@ import 'package:unifytechxenosadmin/presentation/views/products/widgets/bulk_pri
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/product_bulk_actions_bar.dart';
 import 'package:unifytechxenosadmin/presentation/views/products/widgets/batch_price_edit_dialog.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -30,6 +32,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _debouncer = Debouncer(milliseconds: 500);
   final _searchFocus = FocusNode();
   final Set<int> _selectedIds = {};
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -121,6 +124,44 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     );
   }
 
+  Future<void> _exportar(String formato) async {
+    setState(() => _isExporting = true);
+    final productsState = ref.read(productsProvider);
+    
+    try {
+      String fileName = 'produtos_${DateTime.now().millisecondsSinceEpoch}.$formato';
+      String? outputFile = await FilePicker.saveFile(
+        dialogTitle: 'Exportar Produtos',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: [formato],
+      );
+
+      if (outputFile != null) {
+        if (!outputFile.endsWith('.$formato')) outputFile += '.$formato';
+        
+        final params = {
+          'search': productsState.search,
+          'categoria_id': productsState.categoriaId,
+          'baixo_estoque': productsState.onlyLowStock,
+        };
+
+        await ref.read(reportRepositoryProvider).exportarRelatorio(
+          formato, 
+          outputFile, 
+          'estoque_lista',
+          params: params,
+        );
+
+        _showFeedback('Catálogo exportado: $outputFile', true);
+      }
+    } catch (e) {
+      _showFeedback('Erro ao exportar: $e', false);
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -147,10 +188,30 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _showProductForm(context),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Novo Produto (Alt+N)'),
+                Row(
+                  children: [
+                    if (_isExporting)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                    IconButton(
+                      tooltip: 'Exportar PDF',
+                      icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent),
+                      onPressed: _isExporting ? null : () => _exportar('pdf'),
+                    ),
+                    IconButton(
+                      tooltip: 'Exportar Excel',
+                      icon: const Icon(Icons.table_chart_rounded, color: Colors.green),
+                      onPressed: _isExporting ? null : () => _exportar('xlsx'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _showProductForm(context),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Novo Produto (Alt+N)'),
+                    ),
+                  ],
                 ),
               ],
             ),
