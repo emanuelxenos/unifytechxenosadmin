@@ -50,4 +50,27 @@ class CustomerRepository {
   Future<void> inativar(int id) async {
     await _api.delete(ApiEndpoints.clientePorId(id));
   }
+
+  Future<void> amortizar(int id, int vendaId, double valor) async {
+    await _api.post('${ApiEndpoints.clientePorId(id)}/amortizar', data: {'valor': valor, 'venda_id': vendaId});
+  }
+
+  Future<List<dynamic>> listarCompras(int id) async {
+    final response = await _api.get('${ApiEndpoints.clientePorId(id)}/compras');
+    final data = _extractData(response.data);
+    if (data is List) {
+      return data;
+    }
+    return [];
+  }
+
+  Future<List<dynamic>> listarAmortizacoes(int id) async {
+    final response = await _api.get('${ApiEndpoints.clientePorId(id)}/amortizacoes');
+    final data = _extractData(response.data);
+    if (data is List) {
+      return data;
+    }
+    return [];
+  }
 }
+

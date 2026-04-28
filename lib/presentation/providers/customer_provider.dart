@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/data/repositories/customer_repository.dart';
 import 'package:unifytechxenosadmin/domain/models/customer.dart';
+import 'package:unifytechxenosadmin/domain/models/sale.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 
 part 'customer_provider.g.dart';
@@ -54,6 +55,15 @@ class Customers extends _$Customers {
       return (false, ApiService.extractError(e));
     }
   }
+  Future<(bool, String)> amortizarDivida(int id, int vendaId, double valor) async {
+    try {
+      await ref.read(customerRepositoryProvider).amortizar(id, vendaId, valor);
+      await refresh();
+      return (true, 'Dívida amortizada com sucesso');
+    } catch (e) {
+      return (false, ApiService.extractError(e));
+    }
+  }
 }
 
 @riverpod
@@ -90,4 +100,16 @@ class CustomerInactives extends _$CustomerInactives {
 
   void toggle() => state = !state;
   void set(bool value) => state = value;
+}
+
+@riverpod
+Future<List<Venda>> customerHistory(CustomerHistoryRef ref, int clienteId) async {
+  final data = await ref.read(customerRepositoryProvider).listarCompras(clienteId);
+  return data.map((e) => Venda.fromJson(e as Map<String, dynamic>)).toList();
+}
+
+@riverpod
+Future<List<AmortizacaoHistorico>> customerAmortizations(CustomerAmortizationsRef ref, int clienteId) async {
+  final data = await ref.read(customerRepositoryProvider).listarAmortizacoes(clienteId);
+  return data.map((e) => AmortizacaoHistorico.fromJson(e as Map<String, dynamic>)).toList();
 }

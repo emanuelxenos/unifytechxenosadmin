@@ -261,3 +261,31 @@ class CancelarVendaRequest {
         'senha_supervisor': senhaSupervisor,
       };
 }
+
+class AmortizacaoHistorico {
+  final int idAmortizacao;
+  final int vendaId;
+  final String numeroVenda;
+  final double valor;
+  final DateTime dataPagamento;
+  final String usuarioNome;
+
+  AmortizacaoHistorico({
+    required this.idAmortizacao,
+    required this.vendaId,
+    required this.numeroVenda,
+    required this.valor,
+    required this.dataPagamento,
+    required this.usuarioNome,
+  });
+
+  factory AmortizacaoHistorico.fromJson(Map<String, dynamic> json) =>
+      AmortizacaoHistorico(
+        idAmortizacao: json['id_amortizacao'] as int,
+        vendaId: json['venda_id'] as int,
+        numeroVenda: json['numero_venda'] as String,
+        valor: (json['valor'] as num).toDouble(),
+        dataPagamento: DateTime.parse(json['data_pagamento'] as String),
+        usuarioNome: json['usuario_nome'] as String,
+      );
+}

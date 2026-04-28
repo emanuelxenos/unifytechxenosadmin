@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/domain/models/customer.dart';
+import 'package:unifytechxenosadmin/domain/models/sale.dart';
 import 'package:unifytechxenosadmin/presentation/providers/auth_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/customer_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
@@ -161,6 +162,11 @@ class CustomersScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              icon: const Icon(Icons.history_rounded, size: 18, color: Colors.blueAccent),
+              tooltip: 'Histórico',
+              onPressed: () => _showCustomerHistory(context, ref, c),
+            ),
+            IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
               tooltip: 'Editar',
               onPressed: () => _showCustomerForm(context, cliente: c),
@@ -223,6 +229,13 @@ class CustomersScreen extends ConsumerWidget {
         if (!success) AppNotifications.showError(context, message);
       }
     }
+  }
+
+  void _showCustomerHistory(BuildContext context, WidgetRef ref, Cliente c) {
+    showDialog(
+      context: context,
+      builder: (context) => _CustomerHistoryDialog(cliente: c),
+    );
   }
 }
 
@@ -601,3 +614,270 @@ class _TipoButton extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// CRM Features (Amortizar & History)
+// ---------------------------------------------------------------------------
+
+class _PagarVendaDialog extends ConsumerStatefulWidget {
+  final Cliente cliente;
+  final Venda venda;
+  const _PagarVendaDialog({required this.cliente, required this.venda});
+
+  @override
+  ConsumerState<_PagarVendaDialog> createState() => _PagarVendaDialogState();
+}
+
+class _PagarVendaDialogState extends ConsumerState<_PagarVendaDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _valorCtrl = TextEditingController();
+  bool _saving = false;
+  late double saldoDevedor;
+
+  @override
+  void initState() {
+    super.initState();
+    saldoDevedor = widget.venda.valorTotal - widget.venda.valorPago;
+    _valorCtrl.text = saldoDevedor.toStringAsFixed(2);
+  }
+
+  @override
+  void dispose() {
+    _valorCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1C2039),
+      title: const Text('Pagar Venda', style: TextStyle(color: Colors.white)),
+      content: SizedBox(
+        width: 320,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Venda: ${widget.venda.numeroVenda}',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Saldo a Pagar: R\$ ${saldoDevedor.toStringAsFixed(2)}',
+                style: const TextStyle(color: AppTheme.accentRed, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _valorCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Valor a Pagar (R\$)',
+                  labelStyle: TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Obrigatório';
+                  final valor = double.tryParse(v.replaceAll(',', '.'));
+                  if (valor == null || valor <= 0) return 'Valor inválido';
+                  if (valor > saldoDevedor) {
+                    return 'Não pode ser maior que o saldo da venda';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+        ),
+        ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: _saving
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Confirmar Pagamento'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+
+    final valor = double.tryParse(_valorCtrl.text.trim().replaceAll(',', '.')) ?? 0.0;
+    final (success, message) = await ref.read(customersProvider.notifier).amortizarDivida(widget.cliente.idCliente, widget.venda.idVenda, valor);
+
+    if (mounted) {
+      setState(() => _saving = false);
+      Navigator.pop(context, success);
+      if (success) {
+        AppNotifications.showSuccess(context, message);
+        ref.invalidate(customerHistoryProvider(widget.cliente.idCliente));
+        ref.invalidate(customerAmortizationsProvider(widget.cliente.idCliente));
+      } else {
+        AppNotifications.showError(context, message);
+      }
+    }
+  }
+}
+
+class _CustomerHistoryDialog extends ConsumerWidget {
+  final Cliente cliente;
+  const _CustomerHistoryDialog({required this.cliente});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DefaultTabController(
+      length: 2,
+      child: AlertDialog(
+        backgroundColor: const Color(0xFF1C2039),
+        title: Row(
+          children: [
+            const Icon(Icons.account_box_rounded, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text('Histórico - ${cliente.nome}', style: const TextStyle(color: Colors.white, fontSize: 18)),
+          ],
+        ),
+        content: SizedBox(
+          width: 650,
+          height: 450,
+          child: Column(
+            children: [
+              const TabBar(
+                indicatorColor: AppTheme.primaryColor,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white54,
+                tabs: [
+                  Tab(text: 'Compras e Dívidas', icon: Icon(Icons.shopping_bag_outlined)),
+                  Tab(text: 'Pagamentos Realizados', icon: Icon(Icons.payments_outlined)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildComprasTab(context, ref),
+                    _buildPagamentosTab(ref),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComprasTab(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(customerHistoryProvider(cliente.idCliente));
+    return historyAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Erro: $e', style: const TextStyle(color: AppTheme.accentRed))),
+      data: (vendas) {
+        if (vendas.isEmpty) {
+          return const Center(child: Text('Nenhuma compra encontrada para este cliente.', style: TextStyle(color: Colors.white70)));
+        }
+        return ListView.builder(
+          itemCount: vendas.length,
+          itemBuilder: (context, index) {
+            final venda = vendas[index];
+            final saldo = venda.valorTotal - venda.valorPago;
+            final isPendente = saldo > 0 && venda.status == 'concluida';
+
+            return Card(
+              color: Colors.white.withValues(alpha: 0.05),
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: venda.status == 'concluida' ? Colors.green.withValues(alpha: 0.2) : AppTheme.accentRed.withValues(alpha: 0.2),
+                  child: Icon(
+                    venda.status == 'concluida' ? Icons.check_circle_outline : Icons.cancel_outlined,
+                    color: venda.status == 'concluida' ? Colors.green : AppTheme.accentRed,
+                  ),
+                ),
+                title: Text('${venda.numeroVenda} - R\$ ${venda.valorTotal.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Data: ${venda.dataVenda.day.toString().padLeft(2, '0')}/${venda.dataVenda.month.toString().padLeft(2, '0')}/${venda.dataVenda.year}',
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    if (isPendente)
+                      Text('Falta pagar: R\$ ${saldo.toStringAsFixed(2)}', style: const TextStyle(color: AppTheme.accentRed, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+                trailing: isPendente
+                    ? ElevatedButton.icon(
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (_) => _PagarVendaDialog(cliente: cliente, venda: venda),
+                        ),
+                        icon: const Icon(Icons.payment, size: 16),
+                        label: const Text('Pagar'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0)),
+                      )
+                    : Text(
+                        venda.status == 'concluida' ? 'Quitado' : 'Cancelada',
+                        style: TextStyle(color: venda.status == 'concluida' ? Colors.green : AppTheme.accentRed, fontWeight: FontWeight.bold),
+                      ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPagamentosTab(WidgetRef ref) {
+    final amortizationsAsync = ref.watch(customerAmortizationsProvider(cliente.idCliente));
+    return amortizationsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Erro: $e', style: const TextStyle(color: AppTheme.accentRed))),
+      data: (pagamentos) {
+        if (pagamentos.isEmpty) {
+          return const Center(child: Text('Nenhum pagamento registrado.', style: TextStyle(color: Colors.white70)));
+        }
+        return ListView.builder(
+          itemCount: pagamentos.length,
+          itemBuilder: (context, index) {
+            final pag = pagamentos[index];
+            return Card(
+              color: Colors.white.withValues(alpha: 0.05),
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                  child: const Icon(Icons.receipt_long, color: AppTheme.primaryColor),
+                ),
+                title: Text('Ref. ${pag.numeroVenda}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                subtitle: Text(
+                  'Recebido em: ${pag.dataPagamento.day.toString().padLeft(2, '0')}/${pag.dataPagamento.month.toString().padLeft(2, '0')}/${pag.dataPagamento.year}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                trailing: Text(
+                  '+ R\$ ${pag.valor.toStringAsFixed(2)}',
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+

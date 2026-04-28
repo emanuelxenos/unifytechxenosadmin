@@ -23,7 +23,277 @@ final filteredCustomersProvider = AutoDisposeProvider<List<Cliente>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FilteredCustomersRef = AutoDisposeProviderRef<List<Cliente>>;
-String _$customersHash() => r'8e31b30eae865f9fbae200a15f3405652b0dfb4a';
+String _$customerHistoryHash() => r'3f6fe9ed55a7900391ea71c3885438c4e8b8ef7f';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+/// See also [customerHistory].
+@ProviderFor(customerHistory)
+const customerHistoryProvider = CustomerHistoryFamily();
+
+/// See also [customerHistory].
+class CustomerHistoryFamily extends Family<AsyncValue<List<Venda>>> {
+  /// See also [customerHistory].
+  const CustomerHistoryFamily();
+
+  /// See also [customerHistory].
+  CustomerHistoryProvider call(int clienteId) {
+    return CustomerHistoryProvider(clienteId);
+  }
+
+  @override
+  CustomerHistoryProvider getProviderOverride(
+    covariant CustomerHistoryProvider provider,
+  ) {
+    return call(provider.clienteId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'customerHistoryProvider';
+}
+
+/// See also [customerHistory].
+class CustomerHistoryProvider extends AutoDisposeFutureProvider<List<Venda>> {
+  /// See also [customerHistory].
+  CustomerHistoryProvider(int clienteId)
+    : this._internal(
+        (ref) => customerHistory(ref as CustomerHistoryRef, clienteId),
+        from: customerHistoryProvider,
+        name: r'customerHistoryProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$customerHistoryHash,
+        dependencies: CustomerHistoryFamily._dependencies,
+        allTransitiveDependencies:
+            CustomerHistoryFamily._allTransitiveDependencies,
+        clienteId: clienteId,
+      );
+
+  CustomerHistoryProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.clienteId,
+  }) : super.internal();
+
+  final int clienteId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Venda>> Function(CustomerHistoryRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CustomerHistoryProvider._internal(
+        (ref) => create(ref as CustomerHistoryRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        clienteId: clienteId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Venda>> createElement() {
+    return _CustomerHistoryProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomerHistoryProvider && other.clienteId == clienteId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, clienteId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin CustomerHistoryRef on AutoDisposeFutureProviderRef<List<Venda>> {
+  /// The parameter `clienteId` of this provider.
+  int get clienteId;
+}
+
+class _CustomerHistoryProviderElement
+    extends AutoDisposeFutureProviderElement<List<Venda>>
+    with CustomerHistoryRef {
+  _CustomerHistoryProviderElement(super.provider);
+
+  @override
+  int get clienteId => (origin as CustomerHistoryProvider).clienteId;
+}
+
+String _$customerAmortizationsHash() =>
+    r'9ce3dd71e19eb606f67ca8aaa374025dc2478314';
+
+/// See also [customerAmortizations].
+@ProviderFor(customerAmortizations)
+const customerAmortizationsProvider = CustomerAmortizationsFamily();
+
+/// See also [customerAmortizations].
+class CustomerAmortizationsFamily
+    extends Family<AsyncValue<List<AmortizacaoHistorico>>> {
+  /// See also [customerAmortizations].
+  const CustomerAmortizationsFamily();
+
+  /// See also [customerAmortizations].
+  CustomerAmortizationsProvider call(int clienteId) {
+    return CustomerAmortizationsProvider(clienteId);
+  }
+
+  @override
+  CustomerAmortizationsProvider getProviderOverride(
+    covariant CustomerAmortizationsProvider provider,
+  ) {
+    return call(provider.clienteId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'customerAmortizationsProvider';
+}
+
+/// See also [customerAmortizations].
+class CustomerAmortizationsProvider
+    extends AutoDisposeFutureProvider<List<AmortizacaoHistorico>> {
+  /// See also [customerAmortizations].
+  CustomerAmortizationsProvider(int clienteId)
+    : this._internal(
+        (ref) =>
+            customerAmortizations(ref as CustomerAmortizationsRef, clienteId),
+        from: customerAmortizationsProvider,
+        name: r'customerAmortizationsProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$customerAmortizationsHash,
+        dependencies: CustomerAmortizationsFamily._dependencies,
+        allTransitiveDependencies:
+            CustomerAmortizationsFamily._allTransitiveDependencies,
+        clienteId: clienteId,
+      );
+
+  CustomerAmortizationsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.clienteId,
+  }) : super.internal();
+
+  final int clienteId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<AmortizacaoHistorico>> Function(
+      CustomerAmortizationsRef provider,
+    )
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CustomerAmortizationsProvider._internal(
+        (ref) => create(ref as CustomerAmortizationsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        clienteId: clienteId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<AmortizacaoHistorico>> createElement() {
+    return _CustomerAmortizationsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CustomerAmortizationsProvider &&
+        other.clienteId == clienteId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, clienteId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin CustomerAmortizationsRef
+    on AutoDisposeFutureProviderRef<List<AmortizacaoHistorico>> {
+  /// The parameter `clienteId` of this provider.
+  int get clienteId;
+}
+
+class _CustomerAmortizationsProviderElement
+    extends AutoDisposeFutureProviderElement<List<AmortizacaoHistorico>>
+    with CustomerAmortizationsRef {
+  _CustomerAmortizationsProviderElement(super.provider);
+
+  @override
+  int get clienteId => (origin as CustomerAmortizationsProvider).clienteId;
+}
+
+String _$customersHash() => r'01b2e8addeea19a444af3c87a90839d0f77f6cdb';
 
 /// See also [Customers].
 @ProviderFor(Customers)
