@@ -17,10 +17,14 @@ class FinanceRepository {
   final ApiService _api;
   FinanceRepository(this._api);
 
-  Future<List<ContaPagar>> contasPagar({String? status}) async {
+  Future<List<ContaPagar>> contasPagar({String? status, String? vencInicio, String? vencFim}) async {
     final response = await _api.get(
       ApiEndpoints.contasPagar,
-      queryParameters: status != null ? {'status': status} : null,
+      queryParameters: {
+        if (status != null) 'status': status,
+        if (vencInicio != null) 'vencimento_inicio': vencInicio,
+        if (vencFim != null) 'vencimento_fim': vencFim,
+      },
     );
     final data = response.data;
     if (data is List) {
@@ -40,10 +44,14 @@ class FinanceRepository {
     await _api.post(ApiEndpoints.contaPagarPagar(id), data: request.toJson());
   }
 
-  Future<List<ContaReceber>> contasReceber({String? status}) async {
+  Future<List<ContaReceber>> contasReceber({String? status, String? vencInicio, String? vencFim}) async {
     final response = await _api.get(
       ApiEndpoints.contasReceber,
-      queryParameters: status != null ? {'status': status} : null,
+      queryParameters: {
+        if (status != null) 'status': status,
+        if (vencInicio != null) 'vencimento_inicio': vencInicio,
+        if (vencFim != null) 'vencimento_fim': vencFim,
+      },
     );
     final data = response.data;
     if (data is List) {
@@ -53,6 +61,10 @@ class FinanceRepository {
       return (data['data'] as List).map((e) => ContaReceber.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
+  }
+
+  Future<void> criarContaReceber(CriarContaReceberRequest request) async {
+    await _api.post(ApiEndpoints.contasReceber, data: request.toJson());
   }
 
   Future<void> receberConta(int id, ReceberContaRequest request) async {

@@ -6,7 +6,7 @@ part of 'finance_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$accountsPayableHash() => r'0dd3b3917fce5933b4477709f0a3ce6be02295ff';
+String _$accountsPayableHash() => r'599f8dcdf2948a142848b08a3cf533728f350f40';
 
 /// See also [AccountsPayable].
 @ProviderFor(AccountsPayable)
@@ -26,7 +26,7 @@ final accountsPayableProvider =
 
 typedef _$AccountsPayable = AutoDisposeAsyncNotifier<List<ContaPagar>>;
 String _$accountsReceivableHash() =>
-    r'04400aa72b7a137ae901715927e3455787f6a0b1';
+    r'006f1c62e237d5ce189da8f4d81def1eda37ee03';
 
 /// See also [AccountsReceivable].
 @ProviderFor(AccountsReceivable)
@@ -45,7 +45,7 @@ final accountsReceivableProvider =
     );
 
 typedef _$AccountsReceivable = AutoDisposeAsyncNotifier<List<ContaReceber>>;
-String _$cashFlowHash() => r'272e20dc6cecb40a95147183b6909cf8e6083323';
+String _$cashFlowHash() => r'f08197b3368a9fbb6f2a0e3fcf2f1f8eaa50e513';
 
 /// See also [CashFlow].
 @ProviderFor(CashFlow)
@@ -61,5 +61,25 @@ final cashFlowProvider =
     );
 
 typedef _$CashFlow = AutoDisposeAsyncNotifier<FluxoCaixaResponse>;
+String _$financialFiltersHash() => r'bee4da4f953cc0d05ff63ca39598a779d361a140';
+
+/// See also [FinancialFilters].
+@ProviderFor(FinancialFilters)
+final financialFiltersProvider =
+    AutoDisposeNotifierProvider<
+      FinancialFilters,
+      ({DateTime? start, DateTime? end})
+    >.internal(
+      FinancialFilters.new,
+      name: r'financialFiltersProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$financialFiltersHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$FinancialFilters =
+    AutoDisposeNotifier<({DateTime? start, DateTime? end})>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

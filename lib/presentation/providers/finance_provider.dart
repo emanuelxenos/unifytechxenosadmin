@@ -11,12 +11,15 @@ part 'finance_provider.g.dart';
 class AccountsPayable extends _$AccountsPayable {
   @override
   Future<List<ContaPagar>> build() async {
-    return ref.read(financeRepositoryProvider).contasPagar();
+    final filters = ref.watch(financialFiltersProvider);
+    return ref.read(financeRepositoryProvider).contasPagar(
+      vencInicio: filters.start?.toString().split(' ')[0],
+      vencFim: filters.end?.toString().split(' ')[0],
+    );
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(financeRepositoryProvider).contasPagar());
+    ref.invalidateSelf();
   }
 
   Future<bool> criar(CriarContaPagarRequest request) async {
@@ -44,12 +47,25 @@ class AccountsPayable extends _$AccountsPayable {
 class AccountsReceivable extends _$AccountsReceivable {
   @override
   Future<List<ContaReceber>> build() async {
-    return ref.read(financeRepositoryProvider).contasReceber();
+    final filters = ref.watch(financialFiltersProvider);
+    return ref.read(financeRepositoryProvider).contasReceber(
+      vencInicio: filters.start?.toString().split(' ')[0],
+      vencFim: filters.end?.toString().split(' ')[0],
+    );
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(financeRepositoryProvider).contasReceber());
+    ref.invalidateSelf();
+  }
+
+  Future<bool> criar(CriarContaReceberRequest request) async {
+    try {
+      await ref.read(financeRepositoryProvider).criarContaReceber(request);
+      await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> receber(int id, ReceberContaRequest request) async {
@@ -67,11 +83,24 @@ class AccountsReceivable extends _$AccountsReceivable {
 class CashFlow extends _$CashFlow {
   @override
   Future<FluxoCaixaResponse> build() async {
-    return ref.read(financeRepositoryProvider).fluxoCaixa();
+    final filters = ref.watch(financialFiltersProvider);
+    return ref.read(financeRepositoryProvider).fluxoCaixa(
+      dataInicio: filters.start?.toString().split(' ')[0],
+      dataFim: filters.end?.toString().split(' ')[0],
+    );
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(financeRepositoryProvider).fluxoCaixa());
+    ref.invalidateSelf();
+  }
+}
+
+@riverpod
+class FinancialFilters extends _$FinancialFilters {
+  @override
+  ({DateTime? start, DateTime? end}) build() => (start: null, end: null);
+
+  void setRange(DateTime? start, DateTime? end) {
+    state = (start: start, end: end);
   }
 }

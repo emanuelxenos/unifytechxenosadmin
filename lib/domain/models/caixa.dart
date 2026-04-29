@@ -247,10 +247,10 @@ class FluxoCaixaItem {
   });
 
   factory FluxoCaixaItem.fromJson(Map<String, dynamic> json) => FluxoCaixaItem(
-        data: DateTime.parse(json['data'] as String),
-        tipo: json['tipo'] as String,
-        descricao: json['descricao'] as String,
-        valor: (json['valor'] as num).toDouble(),
+        data: json['data'] != null ? DateTime.parse(json['data'] as String) : DateTime.now(),
+        tipo: json['tipo'] as String? ?? 'desconhecido',
+        descricao: json['descricao'] as String? ?? 'Sem descrição',
+        valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
         categoria: json['categoria'] as String? ?? 'Diversos',
       );
 }

@@ -10,6 +10,7 @@ class ContaReceber {
   final DateTime dataVencimento;
   final DateTime? dataRecebimento;
   final String status;
+  final String categoria;
   final String? observacoes;
   final DateTime dataCadastro;
   final int? usuarioId;
@@ -27,6 +28,7 @@ class ContaReceber {
     required this.dataVencimento,
     this.dataRecebimento,
     this.status = 'aberta',
+    this.categoria = 'venda',
     this.observacoes,
     required this.dataCadastro,
     this.usuarioId,
@@ -50,6 +52,7 @@ class ContaReceber {
             ? DateTime.parse(json['data_recebimento'] as String)
             : null,
         status: json['status'] as String? ?? 'aberta',
+        categoria: json['categoria'] as String? ?? 'venda',
         observacoes: json['observacoes'] as String?,
         dataCadastro: DateTime.parse(json['data_cadastro'] as String),
         usuarioId: json['usuario_id'] as int?,
@@ -69,5 +72,29 @@ class ReceberContaRequest {
   Map<String, dynamic> toJson() => {
         'valor_recebido': valorRecebido,
         'data_recebimento': dataRecebimento,
+      };
+}
+
+class CriarContaReceberRequest {
+  final String descricao;
+  final double valorOriginal;
+  final String dataVencimento;
+  final int? clienteId;
+  final String categoria;
+
+  CriarContaReceberRequest({
+    required this.descricao,
+    required this.valorOriginal,
+    required this.dataVencimento,
+    this.clienteId,
+    this.categoria = 'geral',
+  });
+
+  Map<String, dynamic> toJson() => {
+        'descricao': descricao,
+        'valor_original': valorOriginal,
+        'data_vencimento': dataVencimento,
+        'cliente_id': clienteId,
+        'categoria': categoria,
       };
 }
