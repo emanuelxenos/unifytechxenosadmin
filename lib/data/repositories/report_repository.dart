@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
@@ -22,6 +23,17 @@ class ReportRepository {
       return responseData;
     }
     return {};
+  }
+
+  List<Map<String, dynamic>> _extractListData(dynamic responseData) {
+    if (responseData is Map && responseData.containsKey('data')) {
+      final list = responseData['data'];
+      if (list is List) return list.cast<Map<String, dynamic>>();
+    }
+    if (responseData is List) {
+      return responseData.cast<Map<String, dynamic>>();
+    }
+    return [];
   }
 
   Future<Map<String, dynamic>> vendasDia() async {
@@ -50,14 +62,7 @@ class ReportRepository {
         if (categoriaId != null && categoriaId > 0) 'categoria_id': categoriaId,
       },
     );
-    final data = response.data;
-    if (data is List) {
-      return data.cast<Map<String, dynamic>>();
-    }
-    if (data is Map && data['data'] is List) {
-      return (data['data'] as List).cast<Map<String, dynamic>>();
-    }
-    return [];
+    return _extractListData(response.data);
   }
 
   Future<RelatorioEstoque> estoqueResumo() async {
@@ -96,6 +101,52 @@ class ReportRepository {
     return _extractMapData(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> rankingClientes() async {
+    final response = await _api.get(ApiEndpoints.relatorioRankingClientes);
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> clientesInativos() async {
+    final response = await _api.get(ApiEndpoints.relatorioClientesInativos);
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> clientesAusentes({int dias = 30}) async {
+    final response = await _api.get(
+      ApiEndpoints.relatorioClientesAusentes,
+      queryParameters: {'dias': dias},
+    );
+    return _extractListData(response.data);
+  }
+
+  Future<Map<String, dynamic>> dreDetalhado({int? mes, int? ano}) async {
+    final response = await _api.get(ApiEndpoints.relatorioDREDetalhado, queryParameters: {
+      if (mes != null) 'mes': mes,
+      if (ano != null) 'ano': ano,
+    });
+    return _extractMapData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> projecaoCaixa() async {
+    final response = await _api.get(ApiEndpoints.relatorioProjecaoCaixa);
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> cancelamentos() async {
+    final response = await _api.get(ApiEndpoints.relatorioCancelamentos);
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> giroEstoque() async {
+    final response = await _api.get(ApiEndpoints.relatorioGiroEstoque);
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> rupturaEstoque() async {
+    final response = await _api.get(ApiEndpoints.relatorioRupturaEstoque);
+    return _extractListData(response.data);
+  }
+
   Future<void> exportarRelatorio(String formato, String savePath, String tipo, {Map<String, dynamic>? params}) async {
     final endpoint = formato == 'pdf' 
         ? ApiEndpoints.relatorioExportPdf 
@@ -119,17 +170,7 @@ class ReportRepository {
 
   Future<List<Map<String, dynamic>>> sugestaoCompra() async {
     final response = await _api.get(ApiEndpoints.relatorioSugestaoCompra);
-    
-    // O backend retorna um JSON array diretamente ou dentro de um campo 'data'
-    dynamic rawData = response.data;
-    if (rawData is Map<String, dynamic> && rawData.containsKey('data')) {
-      rawData = rawData['data'];
-    }
-
-    if (rawData is List) {
-      return rawData.cast<Map<String, dynamic>>();
-    }
-    return [];
+    return _extractListData(response.data);
   }
 
   Future<void> imprimirEtiquetasLote(List<int> ids, String savePath) async {
@@ -145,11 +186,7 @@ class ReportRepository {
       ApiEndpoints.relatorioPerformanceProduto,
       queryParameters: {'id': id},
     );
-    
-    if (response.data is List) {
-      return (response.data as List).cast<Map<String, dynamic>>();
-    }
-    return [];
+    return _extractListData(response.data);
   }
 
   Future<List<Map<String, dynamic>>> getAuditoriaEstoque(int id) async {
@@ -157,10 +194,6 @@ class ReportRepository {
       ApiEndpoints.relatorioAuditoriaEstoque,
       queryParameters: {'id': id},
     );
-    
-    if (response.data is List) {
-      return (response.data as List).cast<Map<String, dynamic>>();
-    }
-    return [];
+    return _extractListData(response.data);
   }
 }

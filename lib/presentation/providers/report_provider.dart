@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/data/repositories/report_repository.dart';
 import 'package:unifytechxenosadmin/domain/models/report.dart';
@@ -131,5 +132,109 @@ class ComissoesReport extends _$ComissoesReport {
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).comissoes(mes: mes, ano: ano));
+  }
+}
+
+@riverpod
+class RankingClientesReport extends _$RankingClientesReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).rankingClientes();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).rankingClientes());
+  }
+}
+
+@riverpod
+class ClientesInativosReport extends _$ClientesInativosReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).clientesInativos();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).clientesInativos());
+  }
+}
+
+@riverpod
+class ClientesAusentesReport extends _$ClientesAusentesReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).clientesAusentes(dias: 30);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).clientesAusentes(dias: 30));
+  }
+}
+
+@riverpod
+class DreDetalhadoReport extends _$DreDetalhadoReport {
+  @override
+  Future<Map<String, dynamic>> build({int? mes, int? ano}) async {
+    return ref.read(reportRepositoryProvider).dreDetalhado(mes: mes, ano: ano);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).dreDetalhado(mes: mes, ano: ano));
+  }
+}
+
+@riverpod
+class ProjecaoCaixaReport extends _$ProjecaoCaixaReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).projecaoCaixa();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).projecaoCaixa());
+  }
+}
+
+@riverpod
+class CancelamentosReport extends _$CancelamentosReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).cancelamentos();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).cancelamentos());
+  }
+}
+
+@riverpod
+class GiroEstoqueReport extends _$GiroEstoqueReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).giroEstoque();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).giroEstoque());
+  }
+}
+
+@riverpod
+class RupturaEstoqueReport extends _$RupturaEstoqueReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).rupturaEstoque();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).rupturaEstoque());
   }
 }

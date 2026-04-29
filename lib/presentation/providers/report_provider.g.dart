@@ -756,5 +756,316 @@ class _ComissoesReportProviderElement
   int? get ano => (origin as ComissoesReportProvider).ano;
 }
 
+String _$rankingClientesReportHash() =>
+    r'0fcd689ff8d7f5b82568e8a05d7b8ce95b2baaaf';
+
+/// See also [RankingClientesReport].
+@ProviderFor(RankingClientesReport)
+final rankingClientesReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      RankingClientesReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      RankingClientesReport.new,
+      name: r'rankingClientesReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$rankingClientesReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$RankingClientesReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$clientesInativosReportHash() =>
+    r'bf2af77ac12de977595de0cb59a8698ca253c7c0';
+
+/// See also [ClientesInativosReport].
+@ProviderFor(ClientesInativosReport)
+final clientesInativosReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      ClientesInativosReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      ClientesInativosReport.new,
+      name: r'clientesInativosReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$clientesInativosReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ClientesInativosReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$clientesAusentesReportHash() =>
+    r'd351a6a75be1b08d06ba856fccb525963a489167';
+
+/// See also [ClientesAusentesReport].
+@ProviderFor(ClientesAusentesReport)
+final clientesAusentesReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      ClientesAusentesReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      ClientesAusentesReport.new,
+      name: r'clientesAusentesReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$clientesAusentesReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ClientesAusentesReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$dreDetalhadoReportHash() =>
+    r'43fab50dc745b7048cf03f82cf88a62c4a14abd1';
+
+abstract class _$DreDetalhadoReport
+    extends BuildlessAutoDisposeAsyncNotifier<Map<String, dynamic>> {
+  late final int? mes;
+  late final int? ano;
+
+  FutureOr<Map<String, dynamic>> build({int? mes, int? ano});
+}
+
+/// See also [DreDetalhadoReport].
+@ProviderFor(DreDetalhadoReport)
+const dreDetalhadoReportProvider = DreDetalhadoReportFamily();
+
+/// See also [DreDetalhadoReport].
+class DreDetalhadoReportFamily
+    extends Family<AsyncValue<Map<String, dynamic>>> {
+  /// See also [DreDetalhadoReport].
+  const DreDetalhadoReportFamily();
+
+  /// See also [DreDetalhadoReport].
+  DreDetalhadoReportProvider call({int? mes, int? ano}) {
+    return DreDetalhadoReportProvider(mes: mes, ano: ano);
+  }
+
+  @override
+  DreDetalhadoReportProvider getProviderOverride(
+    covariant DreDetalhadoReportProvider provider,
+  ) {
+    return call(mes: provider.mes, ano: provider.ano);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'dreDetalhadoReportProvider';
+}
+
+/// See also [DreDetalhadoReport].
+class DreDetalhadoReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          DreDetalhadoReport,
+          Map<String, dynamic>
+        > {
+  /// See also [DreDetalhadoReport].
+  DreDetalhadoReportProvider({int? mes, int? ano})
+    : this._internal(
+        () => DreDetalhadoReport()
+          ..mes = mes
+          ..ano = ano,
+        from: dreDetalhadoReportProvider,
+        name: r'dreDetalhadoReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$dreDetalhadoReportHash,
+        dependencies: DreDetalhadoReportFamily._dependencies,
+        allTransitiveDependencies:
+            DreDetalhadoReportFamily._allTransitiveDependencies,
+        mes: mes,
+        ano: ano,
+      );
+
+  DreDetalhadoReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.mes,
+    required this.ano,
+  }) : super.internal();
+
+  final int? mes;
+  final int? ano;
+
+  @override
+  FutureOr<Map<String, dynamic>> runNotifierBuild(
+    covariant DreDetalhadoReport notifier,
+  ) {
+    return notifier.build(mes: mes, ano: ano);
+  }
+
+  @override
+  Override overrideWith(DreDetalhadoReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: DreDetalhadoReportProvider._internal(
+        () => create()
+          ..mes = mes
+          ..ano = ano,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        mes: mes,
+        ano: ano,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    DreDetalhadoReport,
+    Map<String, dynamic>
+  >
+  createElement() {
+    return _DreDetalhadoReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DreDetalhadoReportProvider &&
+        other.mes == mes &&
+        other.ano == ano;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, mes.hashCode);
+    hash = _SystemHash.combine(hash, ano.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin DreDetalhadoReportRef
+    on AutoDisposeAsyncNotifierProviderRef<Map<String, dynamic>> {
+  /// The parameter `mes` of this provider.
+  int? get mes;
+
+  /// The parameter `ano` of this provider.
+  int? get ano;
+}
+
+class _DreDetalhadoReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          DreDetalhadoReport,
+          Map<String, dynamic>
+        >
+    with DreDetalhadoReportRef {
+  _DreDetalhadoReportProviderElement(super.provider);
+
+  @override
+  int? get mes => (origin as DreDetalhadoReportProvider).mes;
+  @override
+  int? get ano => (origin as DreDetalhadoReportProvider).ano;
+}
+
+String _$projecaoCaixaReportHash() =>
+    r'b02699b00a8c366eda9aa1df3f2740d4853e3b35';
+
+/// See also [ProjecaoCaixaReport].
+@ProviderFor(ProjecaoCaixaReport)
+final projecaoCaixaReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      ProjecaoCaixaReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      ProjecaoCaixaReport.new,
+      name: r'projecaoCaixaReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$projecaoCaixaReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ProjecaoCaixaReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$cancelamentosReportHash() =>
+    r'a4149ac11db2961b7863a4787ddc1ecead718a30';
+
+/// See also [CancelamentosReport].
+@ProviderFor(CancelamentosReport)
+final cancelamentosReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      CancelamentosReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      CancelamentosReport.new,
+      name: r'cancelamentosReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$cancelamentosReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$CancelamentosReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$giroEstoqueReportHash() => r'eb031c03c72b9701b913e4cac792f8d06e335f49';
+
+/// See also [GiroEstoqueReport].
+@ProviderFor(GiroEstoqueReport)
+final giroEstoqueReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      GiroEstoqueReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      GiroEstoqueReport.new,
+      name: r'giroEstoqueReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$giroEstoqueReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$GiroEstoqueReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$rupturaEstoqueReportHash() =>
+    r'188f14410c3281642894c13a67b1d4c85f4b7e6f';
+
+/// See also [RupturaEstoqueReport].
+@ProviderFor(RupturaEstoqueReport)
+final rupturaEstoqueReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      RupturaEstoqueReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      RupturaEstoqueReport.new,
+      name: r'rupturaEstoqueReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$rupturaEstoqueReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$RupturaEstoqueReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

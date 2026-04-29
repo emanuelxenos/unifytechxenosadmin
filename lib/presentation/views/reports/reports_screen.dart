@@ -27,8 +27,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     _ReportItem(title: 'Curva ABC', icon: Icons.auto_graph_rounded, type: 'abc', category: 'Estoque'),
     _ReportItem(title: 'Resumo Financeiro', icon: Icons.account_balance_rounded, type: 'financeiro', category: 'Financeiro'),
     _ReportItem(title: 'Inadimplência', icon: Icons.person_off_rounded, type: 'inadimplencia', category: 'Financeiro'),
+    _ReportItem(title: 'Projeção de Caixa', icon: Icons.query_stats_rounded, type: 'projecao_caixa', category: 'Financeiro'),
     _ReportItem(title: 'DRE Gerencial', icon: Icons.assessment_rounded, type: 'dre', category: 'Estratégico'),
+    _ReportItem(title: 'Ranking Clientes', icon: Icons.groups_rounded, type: 'ranking_clientes', category: 'CRM'),
+    _ReportItem(title: 'Clientes Inativados', icon: Icons.person_off_rounded, type: 'clientes_inativados', category: 'CRM'),
+    _ReportItem(title: 'Clientes Ausentes', icon: Icons.person_search_rounded, type: 'clientes_ausentes', category: 'CRM'),
     _ReportItem(title: 'Comissões', icon: Icons.badge_rounded, type: 'comissoes', category: 'Estratégico'),
+    _ReportItem(title: 'Cancelamentos', icon: Icons.cancel_presentation_rounded, type: 'cancelamentos', category: 'Estratégico'),
+    _ReportItem(title: 'Giro de Estoque', icon: Icons.sync_alt_rounded, type: 'giro_estoque', category: 'Estoque'),
+    _ReportItem(title: 'Ruptura de Estoque', icon: Icons.warning_amber_rounded, type: 'ruptura', category: 'Estoque'),
   ];
 
 
@@ -160,6 +167,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       case 'inadimplencia': return _ReportInadimplenciaView();
       case 'abc': return _ReportCurvaABCView();
       case 'comissoes': return _ReportComissoesView();
+      case 'ranking_clientes': return _ReportRankingClientesView();
+      case 'clientes_inativados': return _ReportClientesInativadosView();
+      case 'clientes_ausentes': return _ReportClientesAusentesView();
+      case 'projecao_caixa': return _ReportProjecaoCaixaView();
+      case 'cancelamentos': return _ReportCancelamentosView();
+      case 'giro_estoque': return _ReportGiroEstoqueView();
+      case 'ruptura': return _ReportRupturaEstoqueView();
       default: return const Center(child: Text('Selecione um relatório'));
     }
   }
@@ -701,7 +715,7 @@ class _ReportDREView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final dataAsync = ref.watch(dreReportProvider());
+    final dataAsync = ref.watch(dreDetalhadoReportProvider());
 
     return Container(
       decoration: AppTheme.glassCard(),
@@ -718,11 +732,13 @@ class _ReportDREView extends ConsumerWidget {
           final double despesas = (data['despesas'] ?? 0).toDouble();
           final double lucroLiquido = (data['lucro_liquido'] ?? 0).toDouble();
           final double margem = (data['margem_percentual'] ?? 0).toDouble();
+          final List despesasDetalhadas = data['despesas_por_categoria'] ?? [];
 
           return SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('DRE Gerencial do Mês', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('DRE Gerencial Detalhado', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 32),
                 _DRELing(label: '(+) RECEITA BRUTA', value: bruto, color: Colors.green),
                 _DRELing(label: '(-) Devoluções/Descontos', value: descontos, color: Colors.redAccent),
@@ -732,6 +748,25 @@ class _ReportDREView extends ConsumerWidget {
                 _DRELing(label: '(=) LUCRO BRUTO', value: lucroBruto, isBold: true, color: Colors.green),
                 const Divider(height: 32),
                 _DRELing(label: '(-) Despesas Operacionais', value: despesas, color: Colors.red),
+                
+                if (despesasDetalhadas.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24, top: 8),
+                    child: Column(
+                      children: despesasDetalhadas.map((d) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(d['categoria'] ?? 'Outros', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text(Formatters.currency((d['valor'] ?? 0).toDouble()), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                ],
+
                 Container(
                   padding: const EdgeInsets.all(20),
                   margin: const EdgeInsets.only(top: 20),
@@ -1063,6 +1098,431 @@ class _ReportComissoesView extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ReportRankingClientesView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(rankingClientesReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Analisando clientes...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Top 20 Clientes (Faturamento)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: data.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, i) {
+                    final c = data[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        child: Text('${i + 1}', style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(c['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${c['total_vendas']} compras realizadas'),
+                      trailing: Text(Formatters.currency((c['valor_total'] ?? 0).toDouble()), 
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green)),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportClientesInativadosView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(clientesInativosReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Buscando inativados...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Clientes Inativados (Status: Inativo)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: data.isEmpty 
+                  ? const EmptyState(icon: Icons.check_circle_outline, title: 'Nenhum cliente inativado', subtitle: 'Todos os seus clientes estão ativos.')
+                  : ListView.separated(
+                      itemCount: data.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, i) {
+                        final c = data[i];
+                        return ListTile(
+                          leading: const CircleAvatar(backgroundColor: Colors.redAccent, child: Icon(Icons.person_off, color: Colors.white)),
+                          title: Text(c['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('Data de cadastro: ${Formatters.date(DateTime.tryParse(c['ultima_compra']?.toString() ?? ''))}'),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('STATUS', style: TextStyle(fontSize: 10, color: Colors.redAccent)),
+                              const Text('INATIVO', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportClientesAusentesView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(clientesAusentesReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Buscando clientes sumidos...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Clientes Ausentes (> 30 dias)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${data.length} clientes encontrados', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: data.isEmpty 
+                  ? const EmptyState(icon: Icons.sentiment_satisfied_alt, title: 'Nenhum cliente ausente!', subtitle: 'Sua retenção está excelente.')
+                  : ListView.separated(
+                      itemCount: data.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) {
+                        final c = data[i];
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Row(
+                            children: [
+                              const CircleAvatar(child: Icon(Icons.person_outline)),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(c['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Text('Última compra: ${Formatters.date(DateTime.tryParse(c['ultima_compra']?.toString() ?? ''))}', style: const TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text('${c['dias_inativo']} dias', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                  Text('Total gasto: ${Formatters.currency((c['total_gasto'] ?? 0).toDouble())}', style: const TextStyle(fontSize: 10)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportProjecaoCaixaView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(projecaoCaixaReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Calculando futuro...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          if (data.isEmpty) return const EmptyState(icon: Icons.query_stats, title: 'Sem dados para projeção');
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Fluxo de Caixa Projetado (30 Dias)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 32),
+              SizedBox(
+                height: 300,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: data.map((e) => (e['saldo'] as num).toDouble()).reduce((a, b) => a > b ? a : b) * 1.2,
+                    barTouchData: BarTouchData(enabled: true),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            int idx = value.toInt();
+                            if (idx >= 0 && idx < data.length && idx % 5 == 0) {
+                              return Text(data[idx]['data'].toString().substring(8, 10), style: const TextStyle(fontSize: 10));
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    barGroups: data.asMap().entries.map((entry) {
+                      final val = (entry.value['saldo'] as num).toDouble();
+                      return BarChartGroupData(
+                        x: entry.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: val,
+                            color: val >= 0 ? Colors.green : Colors.red,
+                            width: 12,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('Resumo da Projeção', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                   _KPICardMini(title: 'A Receber (30d)', value: Formatters.currency(data.fold(0, (a, b) => a + (b['a_receber'] as num).toDouble())), color: Colors.blue),
+                   _KPICardMini(title: 'A Pagar (30d)', value: Formatters.currency(data.fold(0, (a, b) => a + (b['a_pagar'] as num).toDouble())), color: Colors.orange),
+                   _KPICardMini(title: 'Saldo Final', value: Formatters.currency((data.last['saldo'] as num).toDouble()), color: Colors.green),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportCancelamentosView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(cancelamentosReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Buscando cancelamentos...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Auditoria de Cancelamentos', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: data.isEmpty 
+                  ? const EmptyState(icon: Icons.check_circle_outline, title: 'Nenhum cancelamento encontrado')
+                  : ListView.separated(
+                      itemCount: data.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, i) {
+                        final c = data[i];
+                        return ListTile(
+                          title: Row(
+                            children: [
+                              Text('Venda #${c['numero_venda']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const Spacer(),
+                              Text(Formatters.currency((c['valor'] ?? 0).toDouble()), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Data: ${Formatters.date(c['data'])} | Operador: ${c['usuario']}'),
+                              Text('Motivo: ${c['motivo']}', style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.orange)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportGiroEstoqueView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(giroEstoqueReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Calculando giro...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Giro de Estoque (30 dias)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: data.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, i) {
+                    final p = data[i];
+                    final double giro = (p['giro'] ?? 0).toDouble();
+                    return ListTile(
+                      title: Text(p['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('Saídas: ${p['saidas']} | Estoque Atual: ${p['estoque_atual']}'),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                           Text(giro.toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: giro > 1 ? Colors.green : Colors.orange)),
+                           const Text('Índice de Giro', style: TextStyle(fontSize: 10)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportRupturaEstoqueView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(rupturaEstoqueReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Identificando rupturas...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (data) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Produtos em Ruptura (Demanda x Estoque Zero)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.red)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: data.isEmpty 
+                  ? const EmptyState(icon: Icons.check_circle_outline, title: 'Nenhuma ruptura detectada')
+                  : ListView.separated(
+                      itemCount: data.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, i) {
+                        final p = data[i];
+                        return ListTile(
+                          leading: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+                          title: Text(p['nome'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('Média de vendas: ${(p['media_vendas_diaria'] ?? 0).toStringAsFixed(2)}/dia'),
+                          trailing: const Text('ESTOQUE ZERO', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                        );
+                      },
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _KPICardMini extends StatelessWidget {
+  final String title;
+  final String value;
+  final Color color;
+
+  const _KPICardMini({required this.title, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+        ],
       ),
     );
   }

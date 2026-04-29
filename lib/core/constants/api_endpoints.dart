@@ -73,6 +73,14 @@ class ApiEndpoints {
   static const String relatorioInadimplencia = '/api/relatorios/inadimplencia';
   static const String relatorioCurvaABC = '/api/relatorios/curva-abc';
   static const String relatorioComissoes = '/api/relatorios/comissoes';
+  static const String relatorioRankingClientes = '/api/relatorios/clientes/ranking';
+  static const String relatorioClientesInativos = '/api/relatorios/clientes/inativos';
+  static const String relatorioClientesAusentes = '/api/relatorios/clientes/ausentes';
+  static const String relatorioDREDetalhado = '/api/relatorios/dre-detalhado';
+  static const String relatorioProjecaoCaixa = '/api/relatorios/financeiro/projecao';
+  static const String relatorioCancelamentos = '/api/relatorios/vendas/cancelamentos';
+  static const String relatorioGiroEstoque = '/api/relatorios/estoque/giro';
+  static const String relatorioRupturaEstoque = '/api/relatorios/estoque/ruptura';
   static const String relatorioExportPdf = '/api/relatorios/exportar/pdf';
   static const String relatorioExportExcel = '/api/relatorios/exportar/excel';
   static const String relatorioEtiqueta = '/api/relatorios/etiqueta';
