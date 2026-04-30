@@ -196,4 +196,34 @@ class ReportRepository {
     );
     return _extractListData(response.data);
   }
+
+  Future<List<Map<String, dynamic>>> rankingOperadores({int? mes, int? ano}) async {
+    final response = await _api.get(ApiEndpoints.relatorioRankingOperadores, queryParameters: {
+      if (mes != null) 'mes': mes,
+      if (ano != null) 'ano': ano,
+    });
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> auditoriaGeral({String? search}) async {
+    final response = await _api.get(ApiEndpoints.relatorioAuditoriaGeral, queryParameters: {
+      if (search != null) 'search': search,
+    });
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> vendasPorCategoria({int? mes, int? ano}) async {
+    final response = await _api.get(ApiEndpoints.relatorioVendasCategoria, queryParameters: {
+      if (mes != null) 'mes': mes,
+      if (ano != null) 'ano': ano,
+    });
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> contasPagarDetalhado({String? status}) async {
+    final response = await _api.get(ApiEndpoints.relatorioContasPagarDetalhado, queryParameters: {
+      if (status != null) 'status': status,
+    });
+    return _extractListData(response.data);
+  }
 }

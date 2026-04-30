@@ -34,8 +34,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     _ReportItem(title: 'Clientes Ausentes', icon: Icons.person_search_rounded, type: 'clientes_ausentes', category: 'CRM'),
     _ReportItem(title: 'Comissões', icon: Icons.badge_rounded, type: 'comissoes', category: 'Estratégico'),
     _ReportItem(title: 'Cancelamentos', icon: Icons.cancel_presentation_rounded, type: 'cancelamentos', category: 'Estratégico'),
+    _ReportItem(title: 'Ranking Operadores', icon: Icons.person_pin_rounded, type: 'ranking_operadores', category: 'Estratégico'),
+    _ReportItem(title: 'Vendas por Categoria', icon: Icons.category_rounded, type: 'vendas_categoria', category: 'Operacional'),
     _ReportItem(title: 'Giro de Estoque', icon: Icons.sync_alt_rounded, type: 'giro_estoque', category: 'Estoque'),
     _ReportItem(title: 'Ruptura de Estoque', icon: Icons.warning_amber_rounded, type: 'ruptura', category: 'Estoque'),
+    _ReportItem(title: 'Auditoria Geral', icon: Icons.security_rounded, type: 'auditoria_geral', category: 'Auditoria'),
+    _ReportItem(title: 'Contas Pagar Det.', icon: Icons.receipt_long_rounded, type: 'contas_pagar_det', category: 'Financeiro'),
   ];
 
 
@@ -174,6 +178,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       case 'cancelamentos': return _ReportCancelamentosView();
       case 'giro_estoque': return _ReportGiroEstoqueView();
       case 'ruptura': return _ReportRupturaEstoqueView();
+      case 'ranking_operadores': return _ReportRankingOperadoresView();
+      case 'auditoria_geral': return _ReportAuditoriaGeralView();
+      case 'vendas_categoria': return _ReportVendasCategoriaView();
+      case 'contas_pagar_det': return _ReportContasPagarDetView();
       default: return const Center(child: Text('Selecione um relatório'));
     }
   }
@@ -1497,6 +1505,291 @@ class _ReportRupturaEstoqueView extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ReportRankingOperadoresView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(rankingOperadoresReportProvider());
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Analisando performance...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (list) {
+          if (list.isEmpty) return const EmptyState(icon: Icons.person_off_rounded, title: 'Sem dados', subtitle: 'Nenhuma venda registrada para os operadores no período.');
+          
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Ranking de Performance por Operador', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    final op = list[index];
+                    final color = index == 0 ? Colors.amber : (index == 1 ? Colors.grey : (index == 2 ? Colors.brown : Colors.blueGrey));
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      color: Colors.white.withValues(alpha: 0.03),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: color.withValues(alpha: 0.2),
+                          child: Text('${index + 1}', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                        ),
+                        title: Text(op['nome'] ?? 'Operador', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('${op['total_vendas']} vendas | Ticket Médio: ${Formatters.currency((op['ticket_medio'] ?? 0).toDouble())}'),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(Formatters.currency((op['valor_total'] ?? 0).toDouble()), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+                            Text('Descontos: ${Formatters.currency((op['total_descontos'] ?? 0).toDouble())}', style: const TextStyle(fontSize: 10, color: Colors.white38)),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportAuditoriaGeralView extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_ReportAuditoriaGeralView> createState() => _ReportAuditoriaGeralViewState();
+}
+
+class _ReportAuditoriaGeralViewState extends ConsumerState<_ReportAuditoriaGeralView> {
+  final _searchController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(auditoriaGeralReportProvider(search: _searchController.text));
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Log de Auditoria do Sistema', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              SizedBox(
+                width: 300,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Pesquisar ação, tabela ou usuário...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onSubmitted: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Recuperando logs...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (list) {
+                if (list.isEmpty) return const EmptyState(icon: Icons.history_rounded, title: 'Nenhum log', subtitle: 'Nenhuma atividade registrada com estes filtros.');
+                
+                return ListView.separated(
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
+                  itemBuilder: (context, index) {
+                    final item = list[index];
+                    final date = DateTime.parse(item['data']);
+                    final isDanger = item['acao'] == 'DELETE' || item['tabela'] == 'usuario';
+                    
+                    return ListTile(
+                      dense: true,
+                      leading: Icon(
+                        item['acao'] == 'INSERT' ? Icons.add_circle_outline : (item['acao'] == 'UPDATE' ? Icons.edit_note : Icons.remove_circle_outline),
+                        color: item['acao'] == 'INSERT' ? Colors.green : (item['acao'] == 'UPDATE' ? Colors.blue : Colors.red),
+                      ),
+                      title: Row(
+                        children: [
+                          Text(item['tabela'].toString().toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryColor)),
+                          const SizedBox(width: 8),
+                          Text(item['acao'], style: TextStyle(fontSize: 10, color: isDanger ? Colors.redAccent : Colors.white70)),
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Usuário: ${item['usuario']}'),
+                          const SizedBox(height: 4),
+                          Text('De: ${item['valores_antigos']}', style: const TextStyle(fontSize: 9, color: Colors.white24, overflow: TextOverflow.ellipsis)),
+                          Text('Para: ${item['valores_novos']}', style: const TextStyle(fontSize: 9, color: Colors.blueGrey, overflow: TextOverflow.ellipsis)),
+                        ],
+                      ),
+                      trailing: Text(
+                        '${date.day}/${date.month} ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 10, color: Colors.white38),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportVendasCategoriaView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(vendasCategoriaReportProvider());
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: dataAsync.when(
+        loading: () => const LoadingOverlay(message: 'Calculando proporções...'),
+        error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+        data: (list) {
+          if (list.isEmpty) return const EmptyState(icon: Icons.category_rounded, title: 'Sem vendas', subtitle: 'Nenhuma venda categorizada no período.');
+          
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Distribuição de Vendas por Categoria', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 32),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    final cat = list[index];
+                    final perc = (cat['percentual'] ?? 0).toDouble();
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(cat['categoria'] ?? 'Outros', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(Formatters.currency((cat['valor_total'] ?? 0).toDouble()), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: perc / 100,
+                              minHeight: 12,
+                              backgroundColor: Colors.white10,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                index == 0 ? AppTheme.primaryColor : AppTheme.primaryColor.withValues(alpha: 0.5)
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('${perc.toStringAsFixed(1)}% do faturamento total', style: const TextStyle(fontSize: 10, color: Colors.white38)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReportContasPagarDetView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(contasPagarDetalhadoReportProvider(status: 'aberta'));
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Detalhamento de Contas a Pagar', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 24),
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Consultando compromissos...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (list) {
+                if (list.isEmpty) return const EmptyState(icon: Icons.check_circle_outline, title: 'Tudo em dia!', subtitle: 'Não há contas a pagar pendentes.');
+                
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    child: DataTable(
+                      headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                      columns: const [
+                        DataColumn(label: Text('VENCIMENTO')),
+                        DataColumn(label: Text('FORNECEDOR')),
+                        DataColumn(label: Text('DESCRIÇÃO')),
+                        DataColumn(label: Text('VALOR ORIGINAL'), numeric: true),
+                        DataColumn(label: Text('STATUS')),
+                      ],
+                      rows: list.map((item) {
+                        final venc = DateTime.parse(item['data_vencimento']);
+                        final isLate = venc.isBefore(DateTime.now()) && item['status'] == 'aberta';
+                        
+                        return DataRow(
+                          cells: [
+                            DataCell(Text('${venc.day}/${venc.month}/${venc.year}', style: TextStyle(color: isLate ? Colors.redAccent : Colors.white70, fontWeight: isLate ? FontWeight.bold : FontWeight.normal))),
+                            DataCell(Text(item['fornecedor'] ?? 'N/A')),
+                            DataCell(Text(item['descricao'] ?? '-')),
+                            DataCell(Text(Formatters.currency((item['valor_original'] ?? 0).toDouble()))),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isLate ? Colors.red.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(isLate ? 'ATRASADO' : 'PENDENTE', style: TextStyle(fontSize: 10, color: isLate ? Colors.red : Colors.orange)),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

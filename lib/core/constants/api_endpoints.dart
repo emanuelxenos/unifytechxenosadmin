@@ -88,6 +88,10 @@ class ApiEndpoints {
   static const String relatorioSugestaoCompra = '/api/relatorios/sugestao-compra';
   static const String relatorioPerformanceProduto = '/api/relatorios/performance-produto';
   static const String relatorioAuditoriaEstoque = '/api/relatorios/auditoria-estoque';
+  static const String relatorioRankingOperadores = '/api/relatorios/vendas/ranking-operadores';
+  static const String relatorioVendasCategoria = '/api/relatorios/vendas/categoria';
+  static const String relatorioAuditoriaGeral = '/api/relatorios/auditoria-geral';
+  static const String relatorioContasPagarDetalhado = '/api/relatorios/financeiro/contas-pagar-detalhado';
 
   // Config (Admin)
   static const String config = '/api/config';

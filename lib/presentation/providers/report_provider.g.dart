@@ -1067,5 +1067,632 @@ final rupturaEstoqueReportProvider =
 
 typedef _$RupturaEstoqueReport =
     AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$rankingOperadoresReportHash() =>
+    r'531233671e8d3ef581d1329ea9a488783aaf0d91';
+
+abstract class _$RankingOperadoresReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final int? mes;
+  late final int? ano;
+
+  FutureOr<List<Map<String, dynamic>>> build({int? mes, int? ano});
+}
+
+/// See also [RankingOperadoresReport].
+@ProviderFor(RankingOperadoresReport)
+const rankingOperadoresReportProvider = RankingOperadoresReportFamily();
+
+/// See also [RankingOperadoresReport].
+class RankingOperadoresReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [RankingOperadoresReport].
+  const RankingOperadoresReportFamily();
+
+  /// See also [RankingOperadoresReport].
+  RankingOperadoresReportProvider call({int? mes, int? ano}) {
+    return RankingOperadoresReportProvider(mes: mes, ano: ano);
+  }
+
+  @override
+  RankingOperadoresReportProvider getProviderOverride(
+    covariant RankingOperadoresReportProvider provider,
+  ) {
+    return call(mes: provider.mes, ano: provider.ano);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'rankingOperadoresReportProvider';
+}
+
+/// See also [RankingOperadoresReport].
+class RankingOperadoresReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          RankingOperadoresReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [RankingOperadoresReport].
+  RankingOperadoresReportProvider({int? mes, int? ano})
+    : this._internal(
+        () => RankingOperadoresReport()
+          ..mes = mes
+          ..ano = ano,
+        from: rankingOperadoresReportProvider,
+        name: r'rankingOperadoresReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$rankingOperadoresReportHash,
+        dependencies: RankingOperadoresReportFamily._dependencies,
+        allTransitiveDependencies:
+            RankingOperadoresReportFamily._allTransitiveDependencies,
+        mes: mes,
+        ano: ano,
+      );
+
+  RankingOperadoresReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.mes,
+    required this.ano,
+  }) : super.internal();
+
+  final int? mes;
+  final int? ano;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant RankingOperadoresReport notifier,
+  ) {
+    return notifier.build(mes: mes, ano: ano);
+  }
+
+  @override
+  Override overrideWith(RankingOperadoresReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: RankingOperadoresReportProvider._internal(
+        () => create()
+          ..mes = mes
+          ..ano = ano,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        mes: mes,
+        ano: ano,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    RankingOperadoresReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _RankingOperadoresReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RankingOperadoresReportProvider &&
+        other.mes == mes &&
+        other.ano == ano;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, mes.hashCode);
+    hash = _SystemHash.combine(hash, ano.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin RankingOperadoresReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `mes` of this provider.
+  int? get mes;
+
+  /// The parameter `ano` of this provider.
+  int? get ano;
+}
+
+class _RankingOperadoresReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          RankingOperadoresReport,
+          List<Map<String, dynamic>>
+        >
+    with RankingOperadoresReportRef {
+  _RankingOperadoresReportProviderElement(super.provider);
+
+  @override
+  int? get mes => (origin as RankingOperadoresReportProvider).mes;
+  @override
+  int? get ano => (origin as RankingOperadoresReportProvider).ano;
+}
+
+String _$auditoriaGeralReportHash() =>
+    r'a453b445359125751db220703e7d993bad35de6a';
+
+abstract class _$AuditoriaGeralReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final String? search;
+
+  FutureOr<List<Map<String, dynamic>>> build({String? search});
+}
+
+/// See also [AuditoriaGeralReport].
+@ProviderFor(AuditoriaGeralReport)
+const auditoriaGeralReportProvider = AuditoriaGeralReportFamily();
+
+/// See also [AuditoriaGeralReport].
+class AuditoriaGeralReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [AuditoriaGeralReport].
+  const AuditoriaGeralReportFamily();
+
+  /// See also [AuditoriaGeralReport].
+  AuditoriaGeralReportProvider call({String? search}) {
+    return AuditoriaGeralReportProvider(search: search);
+  }
+
+  @override
+  AuditoriaGeralReportProvider getProviderOverride(
+    covariant AuditoriaGeralReportProvider provider,
+  ) {
+    return call(search: provider.search);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'auditoriaGeralReportProvider';
+}
+
+/// See also [AuditoriaGeralReport].
+class AuditoriaGeralReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          AuditoriaGeralReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [AuditoriaGeralReport].
+  AuditoriaGeralReportProvider({String? search})
+    : this._internal(
+        () => AuditoriaGeralReport()..search = search,
+        from: auditoriaGeralReportProvider,
+        name: r'auditoriaGeralReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$auditoriaGeralReportHash,
+        dependencies: AuditoriaGeralReportFamily._dependencies,
+        allTransitiveDependencies:
+            AuditoriaGeralReportFamily._allTransitiveDependencies,
+        search: search,
+      );
+
+  AuditoriaGeralReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.search,
+  }) : super.internal();
+
+  final String? search;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant AuditoriaGeralReport notifier,
+  ) {
+    return notifier.build(search: search);
+  }
+
+  @override
+  Override overrideWith(AuditoriaGeralReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: AuditoriaGeralReportProvider._internal(
+        () => create()..search = search,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        search: search,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    AuditoriaGeralReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _AuditoriaGeralReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AuditoriaGeralReportProvider && other.search == search;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, search.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin AuditoriaGeralReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `search` of this provider.
+  String? get search;
+}
+
+class _AuditoriaGeralReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          AuditoriaGeralReport,
+          List<Map<String, dynamic>>
+        >
+    with AuditoriaGeralReportRef {
+  _AuditoriaGeralReportProviderElement(super.provider);
+
+  @override
+  String? get search => (origin as AuditoriaGeralReportProvider).search;
+}
+
+String _$vendasCategoriaReportHash() =>
+    r'847da56e8e1b6d5793d3d2cebd11916fbc6e3be3';
+
+abstract class _$VendasCategoriaReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final int? mes;
+  late final int? ano;
+
+  FutureOr<List<Map<String, dynamic>>> build({int? mes, int? ano});
+}
+
+/// See also [VendasCategoriaReport].
+@ProviderFor(VendasCategoriaReport)
+const vendasCategoriaReportProvider = VendasCategoriaReportFamily();
+
+/// See also [VendasCategoriaReport].
+class VendasCategoriaReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [VendasCategoriaReport].
+  const VendasCategoriaReportFamily();
+
+  /// See also [VendasCategoriaReport].
+  VendasCategoriaReportProvider call({int? mes, int? ano}) {
+    return VendasCategoriaReportProvider(mes: mes, ano: ano);
+  }
+
+  @override
+  VendasCategoriaReportProvider getProviderOverride(
+    covariant VendasCategoriaReportProvider provider,
+  ) {
+    return call(mes: provider.mes, ano: provider.ano);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'vendasCategoriaReportProvider';
+}
+
+/// See also [VendasCategoriaReport].
+class VendasCategoriaReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          VendasCategoriaReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [VendasCategoriaReport].
+  VendasCategoriaReportProvider({int? mes, int? ano})
+    : this._internal(
+        () => VendasCategoriaReport()
+          ..mes = mes
+          ..ano = ano,
+        from: vendasCategoriaReportProvider,
+        name: r'vendasCategoriaReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$vendasCategoriaReportHash,
+        dependencies: VendasCategoriaReportFamily._dependencies,
+        allTransitiveDependencies:
+            VendasCategoriaReportFamily._allTransitiveDependencies,
+        mes: mes,
+        ano: ano,
+      );
+
+  VendasCategoriaReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.mes,
+    required this.ano,
+  }) : super.internal();
+
+  final int? mes;
+  final int? ano;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant VendasCategoriaReport notifier,
+  ) {
+    return notifier.build(mes: mes, ano: ano);
+  }
+
+  @override
+  Override overrideWith(VendasCategoriaReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: VendasCategoriaReportProvider._internal(
+        () => create()
+          ..mes = mes
+          ..ano = ano,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        mes: mes,
+        ano: ano,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    VendasCategoriaReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _VendasCategoriaReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VendasCategoriaReportProvider &&
+        other.mes == mes &&
+        other.ano == ano;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, mes.hashCode);
+    hash = _SystemHash.combine(hash, ano.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin VendasCategoriaReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `mes` of this provider.
+  int? get mes;
+
+  /// The parameter `ano` of this provider.
+  int? get ano;
+}
+
+class _VendasCategoriaReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          VendasCategoriaReport,
+          List<Map<String, dynamic>>
+        >
+    with VendasCategoriaReportRef {
+  _VendasCategoriaReportProviderElement(super.provider);
+
+  @override
+  int? get mes => (origin as VendasCategoriaReportProvider).mes;
+  @override
+  int? get ano => (origin as VendasCategoriaReportProvider).ano;
+}
+
+String _$contasPagarDetalhadoReportHash() =>
+    r'44be40561274b0c3a6ab7263dfe88e939b1ac439';
+
+abstract class _$ContasPagarDetalhadoReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final String? status;
+
+  FutureOr<List<Map<String, dynamic>>> build({String? status});
+}
+
+/// See also [ContasPagarDetalhadoReport].
+@ProviderFor(ContasPagarDetalhadoReport)
+const contasPagarDetalhadoReportProvider = ContasPagarDetalhadoReportFamily();
+
+/// See also [ContasPagarDetalhadoReport].
+class ContasPagarDetalhadoReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [ContasPagarDetalhadoReport].
+  const ContasPagarDetalhadoReportFamily();
+
+  /// See also [ContasPagarDetalhadoReport].
+  ContasPagarDetalhadoReportProvider call({String? status}) {
+    return ContasPagarDetalhadoReportProvider(status: status);
+  }
+
+  @override
+  ContasPagarDetalhadoReportProvider getProviderOverride(
+    covariant ContasPagarDetalhadoReportProvider provider,
+  ) {
+    return call(status: provider.status);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'contasPagarDetalhadoReportProvider';
+}
+
+/// See also [ContasPagarDetalhadoReport].
+class ContasPagarDetalhadoReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          ContasPagarDetalhadoReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [ContasPagarDetalhadoReport].
+  ContasPagarDetalhadoReportProvider({String? status})
+    : this._internal(
+        () => ContasPagarDetalhadoReport()..status = status,
+        from: contasPagarDetalhadoReportProvider,
+        name: r'contasPagarDetalhadoReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$contasPagarDetalhadoReportHash,
+        dependencies: ContasPagarDetalhadoReportFamily._dependencies,
+        allTransitiveDependencies:
+            ContasPagarDetalhadoReportFamily._allTransitiveDependencies,
+        status: status,
+      );
+
+  ContasPagarDetalhadoReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.status,
+  }) : super.internal();
+
+  final String? status;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant ContasPagarDetalhadoReport notifier,
+  ) {
+    return notifier.build(status: status);
+  }
+
+  @override
+  Override overrideWith(ContasPagarDetalhadoReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ContasPagarDetalhadoReportProvider._internal(
+        () => create()..status = status,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        status: status,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    ContasPagarDetalhadoReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _ContasPagarDetalhadoReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ContasPagarDetalhadoReportProvider &&
+        other.status == status;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, status.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ContasPagarDetalhadoReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `status` of this provider.
+  String? get status;
+}
+
+class _ContasPagarDetalhadoReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          ContasPagarDetalhadoReport,
+          List<Map<String, dynamic>>
+        >
+    with ContasPagarDetalhadoReportRef {
+  _ContasPagarDetalhadoReportProviderElement(super.provider);
+
+  @override
+  String? get status => (origin as ContasPagarDetalhadoReportProvider).status;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
