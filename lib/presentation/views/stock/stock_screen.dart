@@ -22,6 +22,7 @@ import 'package:unifytechxenosadmin/presentation/widgets/shared/lotes_produto_di
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/novo_inventario_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/performance_produto_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/widgets/sugestao_compra_dialog.dart';
+import 'package:unifytechxenosadmin/services/api_service.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -601,13 +602,37 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                                           onTap: () => _showProductPerformanceDialog(p),
                                           borderRadius: BorderRadius.circular(4),
                                           child: Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                                            child: Text(
-                                              p.nome,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                                color: AppTheme.primaryColor,
-                                              ),
+                                            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  child: Container(
+                                                    width: 32,
+                                                    height: 32,
+                                                    color: Colors.white.withValues(alpha: 0.05),
+                                                    child: p.fotoPrincipalUrl != null
+                                                        ? Image.network(
+                                                            '${ref.read(apiServiceProvider).baseUrl}${p.fotoPrincipalUrl}',
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 16, color: Colors.white24),
+                                                          )
+                                                        : const Icon(Icons.image_outlined, size: 16, color: Colors.white24),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Flexible(
+                                                  child: Text(
+                                                    p.nome,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w500,
+                                                      color: AppTheme.primaryColor,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
