@@ -12,22 +12,14 @@ class SystemParametersScreen extends ConsumerStatefulWidget {
   ConsumerState<SystemParametersScreen> createState() => _SystemParametersScreenState();
 }
 
-class _SystemParametersScreenState extends ConsumerState<SystemParametersScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _SystemParametersScreenState extends ConsumerState<SystemParametersScreen> {
   final _comissaoController = TextEditingController();
   final _ticketAlvoController = TextEditingController();
   bool _hasChanges = false;
   bool _isInitialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _comissaoController.dispose();
     _ticketAlvoController.dispose();
     super.dispose();
@@ -56,16 +48,6 @@ class _SystemParametersScreenState extends ConsumerState<SystemParametersScreen>
         title: const Text('Parâmetros do Sistema'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: AppTheme.primaryColor,
-          tabs: const [
-            Tab(text: 'Vendas & Metas'),
-            Tab(text: 'Estoque'),
-            Tab(text: 'Financeiro'),
-          ],
-        ),
         actions: [
           if (_hasChanges)
             Padding(
@@ -100,94 +82,82 @@ class _SystemParametersScreenState extends ConsumerState<SystemParametersScreen>
           ),
         ),
         data: (params) {
-          // Inicialização única ao montar ou quando o provider já tem dados (inclusive cache)
           if (!_isInitialized) {
             _comissaoController.text = params.comissaoPadrao.toStringAsFixed(2);
             _ticketAlvoController.text = params.ticketMedioAlvo.toStringAsFixed(2);
             _isInitialized = true;
           }
           
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildVendasTab(theme),
-              _buildPlaceholderTab('Configurações de Estoque', Icons.inventory_2_rounded),
-              _buildPlaceholderTab('Configurações Financeiras', Icons.account_balance_wallet_rounded),
-            ],
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle('Vendas e Comissões'),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: AppTheme.glassCard(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildInput(
+                        label: 'Comissão Padrão Operador (%)',
+                        controller: _comissaoController,
+                        icon: Icons.percent_rounded,
+                        hint: 'Ex: 1.00',
+                        onChanged: (_) => setState(() => _hasChanges = true),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 14, color: Colors.white54),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Percentual padrão para cálculo de comissões nos relatórios.',
+                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildSectionTitle('Metas Financeiras (BI)'),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: AppTheme.glassCard(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildInput(
+                        label: 'Meta de Ticket Médio (R\$)',
+                        controller: _ticketAlvoController,
+                        icon: Icons.track_changes_rounded,
+                        hint: 'Ex: 50.00',
+                        onChanged: (_) => setState(() => _hasChanges = true),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 14, color: Colors.white54),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Valor usado como meta de desempenho no Dashboard.',
+                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildVendasTab(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Comissões e Premiações'),
-          const SizedBox(height: 16),
-          Container(
-            decoration: AppTheme.glassCard(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _buildInput(
-                  label: 'Comissão Padrão Operador (%)',
-                  controller: _comissaoController,
-                  icon: Icons.percent_rounded,
-                  hint: 'Ex: 1.00',
-                  onChanged: (_) => setState(() => _hasChanges = true),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.info_outline, size: 14, color: Colors.white54),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Este percentual será usado para calcular a comissão nos relatórios de desempenho por operador.',
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          _buildSectionTitle('Metas de Desempenho (BI)'),
-          const SizedBox(height: 16),
-          Container(
-            decoration: AppTheme.glassCard(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _buildInput(
-                  label: 'Meta de Ticket Médio (R\$)',
-                  controller: _ticketAlvoController,
-                  icon: Icons.track_changes_rounded,
-                  hint: 'Ex: 50.00',
-                  onChanged: (_) => setState(() => _hasChanges = true),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.info_outline, size: 14, color: Colors.white54),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Valor usado como referência nos gráficos de Dashboard e Relatórios de Vendas.',
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -237,29 +207,7 @@ class _SystemParametersScreenState extends ConsumerState<SystemParametersScreen>
     );
   }
 
-  Widget _buildPlaceholderTab(String title, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: Colors.white12),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white24),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Novos parâmetros serão adicionados em breve.',
-            style: TextStyle(color: Colors.white10),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _save() async {
-    // Tratar vírgula como ponto para garantir o parsing correto
     final comissaoText = _comissaoController.text.replaceAll(',', '.');
     final ticketText = _ticketAlvoController.text.replaceAll(',', '.');
 
