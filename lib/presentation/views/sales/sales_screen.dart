@@ -384,6 +384,14 @@ class _CaixaSessionsViewState extends ConsumerState<_CaixaSessionsView> {
                 _fim = end;
               }),
             ),
+            const SizedBox(width: 12),
+            IconButton.outlined(
+              onPressed: () => ref.read(caixaSessionsProvider(
+                inicio: _inicio.toString().split(' ')[0],
+                fim: _fim.toString().split(' ')[0],
+              ).notifier).refresh(),
+              icon: const Icon(Icons.refresh, size: 20),
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -404,22 +412,65 @@ class _CaixaSessionsViewState extends ConsumerState<_CaixaSessionsView> {
                   separatorBuilder: (_, __) => const Divider(height: 32),
                   itemBuilder: (context, index) {
                     final s = sessoes[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: s.status == 'fechado' ? Colors.blueGrey : Colors.green,
-                        child: Icon(s.status == 'fechado' ? Icons.lock : Icons.lock_open, color: Colors.white, size: 20),
-                      ),
-                      title: Text('Sessão #${s.codigoSessao}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('Abertura: ${Formatters.dateTime(s.dataAbertura)}'),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(Formatters.currency(s.totalVendas), style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text(s.status.toUpperCase(), style: TextStyle(fontSize: 10, color: s.status == 'fechado' ? Colors.grey : Colors.green)),
-                        ],
-                      ),
+                    return InkWell(
                       onTap: () => _showSessionInfo(context, s),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: (s.status == 'fechado' ? Colors.blueGrey : Colors.green).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                s.status == 'fechado' ? Icons.lock_outline : Icons.lock_open_rounded,
+                                color: s.status == 'fechado' ? Colors.blueGrey : Colors.green,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sessão #${s.codigoSessao}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                  Text(
+                                    'Abertura: ${Formatters.dateTime(s.dataAbertura)}',
+                                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  Formatters.currency(s.totalVendas),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                if (s.status == 'fechado') ...[
+                                  const StatusChip(label: 'FECHADO', color: Colors.blueGrey),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Final: ${Formatters.currency(s.saldoFinal)}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[400],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  )
+                                ] else
+                                  const StatusChip(label: 'ABERTO', color: AppTheme.accentGreen),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 );
@@ -435,7 +486,13 @@ class _CaixaSessionsViewState extends ConsumerState<_CaixaSessionsView> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Sessão ${s.codigoSessao}'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Sessão ${s.codigoSessao}'),
+            StatusChip.fromStatus(s.status),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -487,6 +544,14 @@ class _CaixaMovementsViewState extends ConsumerState<_CaixaMovementsView> {
                 _inicio = start;
                 _fim = end;
               }),
+            ),
+            const SizedBox(width: 12),
+            IconButton.outlined(
+              onPressed: () => ref.read(caixaMovementsProvider(
+                inicio: _inicio.toString().split(' ')[0],
+                fim: _fim.toString().split(' ')[0],
+              ).notifier).refresh(),
+              icon: const Icon(Icons.refresh, size: 20),
             ),
           ],
         ),

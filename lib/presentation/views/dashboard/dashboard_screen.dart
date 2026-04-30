@@ -366,7 +366,7 @@ class DashboardScreen extends ConsumerWidget {
             DataColumn(label: Text('Status')),
             DataColumn(label: Text('Valor'), numeric: true),
           ],
-          rows: recent.map((v) {
+          rows: recent.map<DataRow>((v) {
             return DataRow(cells: [
               DataCell(Text(v.numeroVenda, style: theme.textTheme.bodyLarge)),
               DataCell(Text(Formatters.time(v.dataVenda))),

@@ -27,6 +27,9 @@ class CaixaRepository {
     if (data is List) {
       return data.map((e) => SessaoCaixa.fromJson(e as Map<String, dynamic>)).toList();
     }
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List).map((e) => SessaoCaixa.fromJson(e as Map<String, dynamic>)).toList();
+    }
     return [];
   }
 
@@ -42,6 +45,9 @@ class CaixaRepository {
     final data = response.data;
     if (data is List) {
       return data.map((e) => CaixaMovimentacao.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List).map((e) => CaixaMovimentacao.fromJson(e as Map<String, dynamic>)).toList();
     }
     return [];
   }
