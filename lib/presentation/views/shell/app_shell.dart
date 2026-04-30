@@ -170,6 +170,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                               ),
                               const SizedBox(height: 8),
                               _NavItem(
+                                icon: Icons.tune_rounded,
+                                label: 'Parâmetros',
+                                isActive: currentPath.startsWith('/parametros'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/parametros'),
+                              ),
+                              _NavItem(
                                 icon: Icons.settings_rounded,
                                 label: 'Configurações',
                                 isActive: currentPath.startsWith('/configuracoes'),
