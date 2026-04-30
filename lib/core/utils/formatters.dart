@@ -15,17 +15,18 @@ class Formatters {
   static final _timeFormat = DateFormat('HH:mm');
   static final _dateApiFormat = DateFormat('yyyy-MM-dd');
 
-  static String currency(double value) => _currencyFormat.format(value);
+  static String currency(num value) => _currencyFormat.format(value);
 
-  static String number(double value, {int decimals = 2}) {
+  static String number(num value, {int decimals = 2}) {
     return value.toStringAsFixed(decimals).replaceAll('.', ',');
   }
 
-  static String quantity(double value) {
-    if (value == value.truncateToDouble()) {
-      return value.toInt().toString();
+  static String quantity(num value) {
+    final doubleValue = value.toDouble();
+    if (doubleValue == doubleValue.truncateToDouble()) {
+      return doubleValue.toInt().toString();
     }
-    return _numberFormat.format(value);
+    return _numberFormat.format(doubleValue);
   }
 
   static String date(DateTime? dt) {
@@ -85,7 +86,7 @@ class Formatters {
     return phone;
   }
 
-  static String percentage(double value) => '${number(value)}%';
+  static String percentage(num value) => '${number(value)}%';
 
   static String statusVenda(String status) {
     switch (status.toLowerCase()) {
