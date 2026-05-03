@@ -365,5 +365,24 @@ class _CaixaMovementsProviderElement
   String? get fim => (origin as CaixaMovementsProvider).fim;
 }
 
+String _$physicalTerminalsHash() => r'c88c807da79b6e11ad9416337aa6b39e6dd44f4b';
+
+/// See also [PhysicalTerminals].
+@ProviderFor(PhysicalTerminals)
+final physicalTerminalsProvider =
+    AutoDisposeAsyncNotifierProvider<
+      PhysicalTerminals,
+      List<CaixaFisico>
+    >.internal(
+      PhysicalTerminals.new,
+      name: r'physicalTerminalsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$physicalTerminalsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$PhysicalTerminals = AutoDisposeAsyncNotifier<List<CaixaFisico>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

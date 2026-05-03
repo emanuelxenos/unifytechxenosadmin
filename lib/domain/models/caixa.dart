@@ -6,6 +6,10 @@ class CaixaFisico {
   final String? descricao;
   final String? localizacao;
   final String? setor;
+  final String? impressoraModelo;
+  final String? impressoraPorta;
+  final String? balancaModelo;
+  final String? balancaPorta;
   final bool ativo;
   final DateTime dataCadastro;
   final DateTime? dataUltimoUso;
@@ -18,6 +22,10 @@ class CaixaFisico {
     this.descricao,
     this.localizacao,
     this.setor,
+    this.impressoraModelo,
+    this.impressoraPorta,
+    this.balancaModelo,
+    this.balancaPorta,
     this.ativo = true,
     required this.dataCadastro,
     this.dataUltimoUso,
@@ -31,6 +39,10 @@ class CaixaFisico {
         descricao: json['descricao'] as String?,
         localizacao: json['localizacao'] as String?,
         setor: json['setor'] as String?,
+        impressoraModelo: json['impressora_modelo'] as String?,
+        impressoraPorta: json['impressora_porta'] as String?,
+        balancaModelo: json['balanca_modelo'] as String?,
+        balancaPorta: json['balanca_porta'] as String?,
         ativo: json['ativo'] as bool? ?? true,
         dataCadastro: DateTime.parse(json['data_cadastro'] as String),
         dataUltimoUso: json['data_ultimo_uso'] != null

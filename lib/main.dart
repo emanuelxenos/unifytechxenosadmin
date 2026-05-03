@@ -21,6 +21,7 @@ import 'package:unifytechxenosadmin/presentation/views/settings/settings_screen.
 import 'package:unifytechxenosadmin/presentation/views/customers/customers_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/system_parameters_screen.dart';
+import 'package:unifytechxenosadmin/presentation/views/settings/terminals_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -134,6 +135,10 @@ class UnifyTechAdminApp extends ConsumerWidget {
             GoRoute(
               path: '/parametros',
               builder: (context, state) => const SystemParametersScreen(),
+            ),
+            GoRoute(
+              path: '/terminais',
+              builder: (context, state) => const TerminalsScreen(),
             ),
           ],
         ),

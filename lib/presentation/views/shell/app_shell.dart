@@ -142,6 +142,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                                 onTap: () => context.go('/vendas'),
                               ),
                               _NavItem(
+                                icon: Icons.computer_rounded,
+                                label: 'Terminais',
+                                isActive: currentPath.startsWith('/terminais'),
+                                isExpanded: _isExpanded,
+                                onTap: () => context.go('/terminais'),
+                              ),
+                              _NavItem(
                                 icon: Icons.local_shipping_rounded,
                                 label: 'Compras',
                                 isActive: currentPath.startsWith('/compras'),

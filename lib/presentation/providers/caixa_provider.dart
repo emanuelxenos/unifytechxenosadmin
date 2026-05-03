@@ -31,6 +31,49 @@ class CaixaMovements extends _$CaixaMovements {
 }
 
 @riverpod
+class PhysicalTerminals extends _$PhysicalTerminals {
+  @override
+  Future<List<CaixaFisico>> build() async {
+    return ref.read(caixaRepositoryProvider).listarCaixasFisicos();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => build());
+  }
+
+  Future<bool> criar(Map<String, dynamic> data) async {
+    try {
+      await ref.read(caixaRepositoryProvider).criarCaixaFisico(data);
+      await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> atualizar(int id, Map<String, dynamic> data) async {
+    try {
+      await ref.read(caixaRepositoryProvider).atualizarCaixaFisico(id, data);
+      await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    try {
+      await ref.read(caixaRepositoryProvider).excluirCaixaFisico(id);
+      await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+@riverpod
 FutureOr<CaixaStatusResponse> caixaStatus(CaixaStatusRef ref) {
   return ref.read(caixaRepositoryProvider).status();
 }

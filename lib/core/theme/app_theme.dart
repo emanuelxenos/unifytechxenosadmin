@@ -63,8 +63,8 @@ class AppTheme {
         ),
       ];
 
-  static BoxDecoration glassCard({Color? borderColor}) => BoxDecoration(
-        color: const Color(0xFF1C2039).withValues(alpha: 0.8),
+  static BoxDecoration glassCard({Color? borderColor, Color? backgroundColor}) => BoxDecoration(
+        color: backgroundColor ?? const Color(0xFF1C2039).withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(radiusLg),
         border: Border.all(
           color: borderColor ?? const Color(0xFF2A2E4A).withValues(alpha: 0.6),

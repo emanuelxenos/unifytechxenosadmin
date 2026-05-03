@@ -56,4 +56,26 @@ class CaixaRepository {
     final response = await _api.get(ApiEndpoints.caixaStatus);
     return CaixaStatusResponse.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<List<CaixaFisico>> listarCaixasFisicos() async {
+    final response = await _api.get(ApiEndpoints.caixaFisicos);
+    final data = response.data['data'];
+    if (data is List) {
+      return data.map((e) => CaixaFisico.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
+
+  Future<CaixaFisico> criarCaixaFisico(Map<String, dynamic> data) async {
+    final response = await _api.post(ApiEndpoints.caixaFisicos, data: data);
+    return CaixaFisico.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> atualizarCaixaFisico(int id, Map<String, dynamic> data) async {
+    await _api.put('${ApiEndpoints.caixaFisicos}/$id', data: data);
+  }
+
+  Future<void> excluirCaixaFisico(int id) async {
+    await _api.delete('${ApiEndpoints.caixaFisicos}/$id');
+  }
 }
