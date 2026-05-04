@@ -44,7 +44,7 @@ class PhysicalTerminals extends _$PhysicalTerminals {
   Future<List<CaixaFisico>> build() async {
     final showInactive = ref.watch(terminalsShowInactiveProvider);
     return ref.read(caixaRepositoryProvider).listarCaixasFisicos(
-      status: showInactive ? 'todos' : 'ativos',
+      status: showInactive ? 'inativos' : 'ativos',
     );
   }
 
