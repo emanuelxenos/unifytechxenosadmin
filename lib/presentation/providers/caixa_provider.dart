@@ -31,15 +31,25 @@ class CaixaMovements extends _$CaixaMovements {
 }
 
 @riverpod
+class TerminalsShowInactive extends _$TerminalsShowInactive {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+}
+
+@riverpod
 class PhysicalTerminals extends _$PhysicalTerminals {
   @override
   Future<List<CaixaFisico>> build() async {
-    return ref.read(caixaRepositoryProvider).listarCaixasFisicos();
+    final showInactive = ref.watch(terminalsShowInactiveProvider);
+    return ref.read(caixaRepositoryProvider).listarCaixasFisicos(
+      status: showInactive ? 'inativos' : 'ativos',
+    );
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build());
+    ref.invalidateSelf();
   }
 
   Future<bool> criar(Map<String, dynamic> data) async {

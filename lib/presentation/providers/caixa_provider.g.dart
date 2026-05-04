@@ -365,7 +365,24 @@ class _CaixaMovementsProviderElement
   String? get fim => (origin as CaixaMovementsProvider).fim;
 }
 
-String _$physicalTerminalsHash() => r'c88c807da79b6e11ad9416337aa6b39e6dd44f4b';
+String _$terminalsShowInactiveHash() =>
+    r'00e41037bb799c884225239fc21763b726e52ec6';
+
+/// See also [TerminalsShowInactive].
+@ProviderFor(TerminalsShowInactive)
+final terminalsShowInactiveProvider =
+    AutoDisposeNotifierProvider<TerminalsShowInactive, bool>.internal(
+      TerminalsShowInactive.new,
+      name: r'terminalsShowInactiveProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$terminalsShowInactiveHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$TerminalsShowInactive = AutoDisposeNotifier<bool>;
+String _$physicalTerminalsHash() => r'432bbb22187955ae24e549168aab7ef3c27436e9';
 
 /// See also [PhysicalTerminals].
 @ProviderFor(PhysicalTerminals)

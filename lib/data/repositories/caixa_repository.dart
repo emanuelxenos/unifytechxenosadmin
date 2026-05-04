@@ -57,8 +57,11 @@ class CaixaRepository {
     return CaixaStatusResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<List<CaixaFisico>> listarCaixasFisicos() async {
-    final response = await _api.get(ApiEndpoints.caixaFisicos);
+  Future<List<CaixaFisico>> listarCaixasFisicos({String status = 'ativos'}) async {
+    final response = await _api.get(
+      ApiEndpoints.caixaFisicos,
+      queryParameters: {'status': status},
+    );
     final data = response.data['data'];
     if (data is List) {
       return data.map((e) => CaixaFisico.fromJson(e as Map<String, dynamic>)).toList();

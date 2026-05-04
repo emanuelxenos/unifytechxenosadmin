@@ -152,6 +152,21 @@ class _TerminalsScreenState extends ConsumerState<TerminalsScreen> {
                   ],
                 ),
                 const Spacer(),
+                TextButton.icon(
+                  onPressed: () => ref.read(terminalsShowInactiveProvider.notifier).toggle(),
+                  icon: Icon(
+                    ref.watch(terminalsShowInactiveProvider) 
+                      ? Icons.visibility_off_rounded 
+                      : Icons.visibility_rounded,
+                    size: 20,
+                  ),
+                  label: Text(
+                    ref.watch(terminalsShowInactiveProvider) 
+                      ? 'Ocultar Inativos' 
+                      : 'Mostrar Inativos'
+                  ),
+                ),
+                const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: () => _showTerminalForm(context),
                   icon: const Icon(Icons.add_rounded),
