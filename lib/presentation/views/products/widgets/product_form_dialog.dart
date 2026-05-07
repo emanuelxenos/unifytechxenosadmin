@@ -254,12 +254,11 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
       final res = await ref.read(productsProvider.notifier).lookupExternal(ean);
       if (res != null) {
         setState(() {
-          print('📝 Preenchendo campos: Nome=${res.nome}, Marca=${res.marca}');
-          _nomeCtrl.text = res.nome;
-          _marcaCtrl.text = res.marca;
-          if (res.ncm.isNotEmpty) _ncmCtrl.text = res.ncm;
-          if (res.cest.isNotEmpty) _cestCtrl.text = res.cest;
-          if (res.fotoUrl.isNotEmpty) {
+          if (_nomeCtrl.text.isEmpty && res.nome.isNotEmpty) _nomeCtrl.text = res.nome;
+          if (_marcaCtrl.text.isEmpty && res.marca.isNotEmpty) _marcaCtrl.text = res.marca;
+          if (_ncmCtrl.text.isEmpty && res.ncm.isNotEmpty) _ncmCtrl.text = res.ncm;
+          if (_cestCtrl.text.isEmpty && res.cest.isNotEmpty) _cestCtrl.text = res.cest;
+          if (_fotoUrl == null && res.fotoUrl.isNotEmpty) {
             _fotoUrl = res.fotoUrl;
           }
         });

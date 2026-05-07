@@ -163,11 +163,8 @@ class Products extends _$Products {
 
   Future<ProdutoLookupResponse?> lookupExternal(String ean) async {
     try {
-      final res = await ref.read(productRepositoryProvider).lookupExternal(ean);
-      print('🔍 DEBUG LOOKUP: Nome=${res.nome}, Foto=${res.fotoUrl}');
-      return res;
+      return await ref.read(productRepositoryProvider).lookupExternal(ean);
     } catch (e) {
-      print('❌ DEBUG LOOKUP ERROR: $e');
       return null;
     }
   }
