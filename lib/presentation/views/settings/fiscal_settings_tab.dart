@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/presentation/providers/empresa_provider.dart';
+import 'package:unifytechxenosadmin/domain/models/company.dart';
 
 class FiscalSettingsTab extends ConsumerStatefulWidget {
   const FiscalSettingsTab({super.key});
@@ -16,6 +17,7 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
   final _formKey = GlobalKey<FormState>();
   
   final _inscricaoMunicipalController = TextEditingController();
+  final _inscricaoEstadualController = TextEditingController();
   final _cscTokenController = TextEditingController();
   final _cscIdController = TextEditingController();
   final _certificadoSenhaController = TextEditingController();
@@ -34,6 +36,7 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
   @override
   void dispose() {
     _inscricaoMunicipalController.dispose();
+    _inscricaoEstadualController.dispose();
     _cscTokenController.dispose();
     _cscIdController.dispose();
     _certificadoSenhaController.dispose();
@@ -76,6 +79,7 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
     try {
       final fiscalData = {
         'inscricao_municipal': _inscricaoMunicipalController.text,
+        'inscricao_estadual': _inscricaoEstadualController.text,
         'crt': _crt,
         'csc_token': _cscTokenController.text,
         'csc_id': _cscIdController.text,
@@ -98,25 +102,29 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
     }
   }
 
+  Widget _buildTextField({required TextEditingController controller, required String label, required IconData icon}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final empresaAsync = ref.watch(empresaStateProvider);
 
-    // Se os dados já estiverem disponíveis e os campos vazios, preenchemos uma única vez
-    empresaAsync.whenData((empresa) {
-      if (_inscricaoMunicipalController.text.isEmpty && empresa.inscricaoMunicipal != null) {
-        _inscricaoMunicipalController.text = empresa.inscricaoMunicipal!;
-      }
-      // ... (os outros campos serão preenchidos pelo listen ou aqui também)
-    });
-
     // Escutar mudanças no estado da empresa para preencher os controllers
     ref.listen<AsyncValue<Empresa>>(empresaStateProvider, (previous, next) {
       next.whenData((empresa) {
-        // Só preenche se os campos estiverem vazios para não sobrescrever o que o usuário está digitando
         if (_inscricaoMunicipalController.text.isEmpty) {
           _inscricaoMunicipalController.text = empresa.inscricaoMunicipal ?? '';
+        }
+        if (_inscricaoEstadualController.text.isEmpty) {
+          _inscricaoEstadualController.text = empresa.inscricaoEstadual ?? '';
         }
         if (_cscTokenController.text.isEmpty) {
           _cscTokenController.text = empresa.cscToken ?? '';
@@ -320,12 +328,24 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
               ),
               
               const SizedBox(height: 24),
-              TextFormField(
-                controller: _inscricaoMunicipalController,
-                decoration: const InputDecoration(
-                  labelText: 'Inscrição Municipal (Opcional)',
-                  prefixIcon: Icon(Icons.location_city_rounded),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _inscricaoEstadualController,
+                      label: 'Inscrição Estadual',
+                      icon: Icons.business_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _inscricaoMunicipalController,
+                      label: 'Inscrição Municipal',
+                      icon: Icons.location_city_rounded,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
