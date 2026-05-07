@@ -325,6 +325,7 @@ class CriarProdutoRequest {
       localizacao: localizacao ?? this.localizacao,
       dataVencimento: dataVencimento ?? this.dataVencimento,
       fotoPrincipalUrl: fotoPrincipalUrl ?? this.fotoPrincipalUrl,
+    );
   }
 }
 
