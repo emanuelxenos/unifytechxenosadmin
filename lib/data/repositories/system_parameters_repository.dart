@@ -15,7 +15,8 @@ class SystemParametersRepository {
 
   Future<SystemParameters> getParameters() async {
     final response = await _api.get('/api/empresa/config');
-    final data = response.data['data'] as Map<String, dynamic>;
+    // O backend retorna os dados diretamente no corpo da resposta
+    final data = response.data as Map<String, dynamic>;
     return SystemParameters.fromJson(data);
   }
 
