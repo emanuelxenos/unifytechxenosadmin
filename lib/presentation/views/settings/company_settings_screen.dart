@@ -245,17 +245,6 @@ class _CompanySettingsScreenState extends ConsumerState<CompanySettingsScreen> w
                       Expanded(child: _buildTextField('Inscrição Municipal', _imCtrl)),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _regimeTributario,
-                    decoration: const InputDecoration(labelText: 'Regime Tributário'),
-                    items: const [
-                      DropdownMenuItem(value: 'SIMPLES', child: Text('Simples Nacional')),
-                      DropdownMenuItem(value: 'LUCRO_PRESUMIDO', child: Text('Lucro Presumido')),
-                      DropdownMenuItem(value: 'LUCRO_REAL', child: Text('Lucro Real')),
-                    ],
-                    onChanged: (v) => setState(() => _regimeTributario = v!),
-                  ),
                 ]),
                 const SizedBox(height: 24),
 
