@@ -253,18 +253,22 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     try {
       final res = await ref.read(productsProvider.notifier).lookupExternal(ean);
       if (res != null) {
-        if (_nomeCtrl.text.isEmpty) _nomeCtrl.text = res.nome;
-        if (_marcaCtrl.text.isEmpty) _marcaCtrl.text = res.marca;
-        if (_ncmCtrl.text.isEmpty && res.ncm.isNotEmpty) _ncmCtrl.text = res.ncm;
-        if (_cestCtrl.text.isEmpty && res.cest.isNotEmpty) _cestCtrl.text = res.cest;
-        if (_fotoUrl == null && res.fotoUrl.isNotEmpty) {
-          _fotoUrl = res.fotoUrl;
-        }
+        setState(() {
+          if (_nomeCtrl.text.isEmpty) _nomeCtrl.text = res.nome;
+          if (_marcaCtrl.text.isEmpty) _marcaCtrl.text = res.marca;
+          if (_ncmCtrl.text.isEmpty && res.ncm.isNotEmpty) _ncmCtrl.text = res.ncm;
+          if (_cestCtrl.text.isEmpty && res.cest.isNotEmpty) _cestCtrl.text = res.cest;
+          if (_fotoUrl == null && res.fotoUrl.isNotEmpty) {
+            _fotoUrl = res.fotoUrl;
+          }
+        });
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Dados importados via ${res.fonte}!'),
               backgroundColor: AppTheme.accentGreen,
+              duration: const Duration(seconds: 2),
             ),
           );
         }
