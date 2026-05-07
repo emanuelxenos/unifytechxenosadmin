@@ -160,6 +160,14 @@ class Products extends _$Products {
       return (false, ApiService.extractError(e));
     }
   }
+
+  Future<ProdutoLookupResponse?> lookupExternal(String ean) async {
+    try {
+      return await ref.read(productRepositoryProvider).lookupExternal(ean);
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 @riverpod

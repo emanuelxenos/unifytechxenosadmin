@@ -325,6 +325,36 @@ class CriarProdutoRequest {
       localizacao: localizacao ?? this.localizacao,
       dataVencimento: dataVencimento ?? this.dataVencimento,
       fotoPrincipalUrl: fotoPrincipalUrl ?? this.fotoPrincipalUrl,
-    );
   }
+}
+
+class ProdutoLookupResponse {
+  final String nome;
+  final String marca;
+  final String ncm;
+  final String cest;
+  final String fotoUrl;
+  final double preco;
+  final String fonte;
+
+  ProdutoLookupResponse({
+    required this.nome,
+    required this.marca,
+    required this.ncm,
+    required this.cest,
+    required this.fotoUrl,
+    required this.preco,
+    required this.fonte,
+  });
+
+  factory ProdutoLookupResponse.fromJson(Map<String, dynamic> json) =>
+      ProdutoLookupResponse(
+        nome: json['nome'] as String? ?? '',
+        marca: json['marca'] as String? ?? '',
+        ncm: json['ncm'] as String? ?? '',
+        cest: json['cest'] as String? ?? '',
+        fotoUrl: json['foto_url'] as String? ?? '',
+        preco: (json['preco'] as num?)?.toDouble() ?? 0.0,
+        fonte: json['fonte'] as String? ?? '',
+      );
 }

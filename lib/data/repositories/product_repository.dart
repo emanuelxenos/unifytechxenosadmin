@@ -116,4 +116,10 @@ class ProductRepository {
       data: {'updates': updates},
     );
   }
+
+  Future<ProdutoLookupResponse> lookupExternal(String ean) async {
+    final response = await _api.get(ApiEndpoints.produtoLookup(ean));
+    final data = _extractData(response.data);
+    return ProdutoLookupResponse.fromJson(data as Map<String, dynamic>);
+  }
 }

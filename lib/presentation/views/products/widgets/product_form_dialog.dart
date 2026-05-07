@@ -59,6 +59,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   Uint8List? _selectedImageBytes;
   String? _selectedImageName;
   bool _uploading = false;
+  bool _lookingUp = false;
 
   // Intelligence
   double _margemLucro = 0;
@@ -240,6 +241,47 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     if (mounted) {
       Navigator.pop(context);
       widget.onResult(success, message);
+    }
+  }
+
+  Future<void> _lookupExternal() async {
+    final ean = _codigoBarrasCtrl.text.trim();
+    if (ean.isEmpty) return;
+
+    setState(() => _lookingUp = true);
+
+    try {
+      final res = await ref.read(productsProvider.notifier).lookupExternal(ean);
+      if (res != null) {
+        if (_nomeCtrl.text.isEmpty) _nomeCtrl.text = res.nome;
+        if (_marcaCtrl.text.isEmpty) _marcaCtrl.text = res.marca;
+        if (_ncmCtrl.text.isEmpty && res.ncm.isNotEmpty) _ncmCtrl.text = res.ncm;
+        if (_cestCtrl.text.isEmpty && res.cest.isNotEmpty) _cestCtrl.text = res.cest;
+        if (_fotoUrl == null && res.fotoUrl.isNotEmpty) {
+          _fotoUrl = res.fotoUrl;
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Dados importados via ${res.fonte}!'),
+              backgroundColor: AppTheme.accentGreen,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produto não encontrado em bases externas.'),
+              backgroundColor: AppTheme.accentOrange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+       // Silent error
+    } finally {
+      if (mounted) setState(() => _lookingUp = false);
     }
   }
 
@@ -581,10 +623,21 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                     Expanded(
                       child: TextFormField(
                         controller: _codigoBarrasCtrl,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Código de Barras',
-                          prefixIcon: Icon(Icons.qr_code_rounded),
+                          prefixIcon: const Icon(Icons.qr_code_rounded),
+                          suffixIcon: _lookingUp 
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                              )
+                            : IconButton(
+                                icon: const Icon(Icons.search_rounded, color: AppTheme.primaryColor),
+                                tooltip: 'Consultar base externa',
+                                onPressed: _lookupExternal,
+                              ),
                         ),
+                        onFieldSubmitted: (_) => _lookupExternal(),
                       ),
                     ),
                     const SizedBox(width: 12),
