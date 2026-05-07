@@ -52,4 +52,16 @@ class EmpresaRepository {
 
     throw Exception('URL do logotipo não retornada pelo servidor');
   }
+
+  Future<void> atualizarFiscal(Map<String, dynamic> fiscalData) async {
+    await _api.put('/api/empresa/fiscal', data: fiscalData);
+  }
+
+  Future<void> uploadCertificado(String filePath) async {
+    final formData = FormData.fromMap({
+      'certificado': await MultipartFile.fromFile(filePath),
+    });
+
+    await _api.post('/api/empresa/certificado', data: formData);
+  }
 }

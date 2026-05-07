@@ -14,6 +14,7 @@ import 'package:unifytechxenosadmin/domain/models/report.dart';
 import 'package:unifytechxenosadmin/data/repositories/user_repository.dart';
 import 'package:unifytechxenosadmin/domain/models/company.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/server_settings_tab.dart';
+import 'package:unifytechxenosadmin/presentation/views/settings/fiscal_settings_tab.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -28,7 +29,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -71,6 +72,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                   Tab(text: 'Usuários'),
                   Tab(text: 'Backup'),
                   Tab(text: 'Sistema'),
+                  Tab(text: 'Fiscal'),
                 ],
               ),
             ),
@@ -84,6 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                   _UsersSettingsTab(controller: _userTableController),
                   const _BackupSettingsTab(),
                   _SystemSettingsTab(),
+                  const FiscalSettingsTab(),
                 ],
               ),
             ),

@@ -18,4 +18,20 @@ class EmpresaState extends _$EmpresaState {
       return empresa;
     });
   }
+
+  Future<void> atualizarFiscal(Map<String, dynamic> fiscalData) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(empresaRepositoryProvider).atualizarFiscal(fiscalData);
+      return ref.read(empresaRepositoryProvider).buscar();
+    });
+  }
+
+  Future<void> uploadCertificado(String filePath) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(empresaRepositoryProvider).uploadCertificado(filePath);
+      return ref.read(empresaRepositoryProvider).buscar();
+    });
+  }
 }

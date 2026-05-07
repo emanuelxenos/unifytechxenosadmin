@@ -6,7 +6,7 @@ part of 'empresa_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$empresaStateHash() => r'5fe211c8f8087a5cce2d6097e63de91426e72c58';
+String _$empresaStateHash() => r'92200f9b2f5dbb12352aa2f89adf1b60bf38b8c8';
 
 /// See also [EmpresaState].
 @ProviderFor(EmpresaState)

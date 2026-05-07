@@ -27,6 +27,12 @@ class Empresa {
   final bool ativo;
   final DateTime dataCadastro;
   final DateTime? dataAtualizacao;
+  final int crt;
+  final String? cscToken;
+  final String? cscId;
+  final String ufEmissao;
+  final String? certificadoSenha;
+  final int ambiente;
 
   Empresa({
     required this.idEmpresa,
@@ -57,6 +63,12 @@ class Empresa {
     this.ativo = true,
     required this.dataCadastro,
     this.dataAtualizacao,
+    this.crt = 1,
+    this.cscToken,
+    this.cscId,
+    this.ufEmissao = 'PE',
+    this.certificadoSenha,
+    this.ambiente = 2,
   });
 
   factory Empresa.fromJson(Map<String, dynamic> json) => Empresa(
@@ -90,6 +102,12 @@ class Empresa {
         dataAtualizacao: json['data_atualizacao'] != null
             ? DateTime.parse(json['data_atualizacao'] as String)
             : null,
+        crt: json['crt'] as int? ?? 1,
+        cscToken: json['csc_token'] as String?,
+        cscId: json['csc_id'] as String?,
+        ufEmissao: json['uf_emissao'] as String? ?? 'PE',
+        certificadoSenha: json['certificado_senha'] as String?,
+        ambiente: json['ambiente'] as int? ?? 2,
       );
 
   Map<String, dynamic> toJson() => {
@@ -119,6 +137,12 @@ class Empresa {
         'cor_secundaria': corSecundaria,
         'observacoes': observacoes,
         'ativo': ativo,
+        'crt': crt,
+        'csc_token': cscToken,
+        'csc_id': cscId,
+        'uf_emissao': ufEmissao,
+        'certificado_senha': certificadoSenha,
+        'ambiente': ambiente,
       };
 }
 

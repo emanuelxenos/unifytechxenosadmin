@@ -36,6 +36,16 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   late TextEditingController _estoqueMinCtrl;
   late TextEditingController _localizacaoCtrl;
   
+  // Fiscal Controllers
+  late TextEditingController _ncmCtrl;
+  late TextEditingController _cestCtrl;
+  late TextEditingController _cfopPadraoCtrl;
+  late TextEditingController _csosnPadraoCtrl;
+  late TextEditingController _cstPadraoCtrl;
+  late TextEditingController _icmsAliquotaCtrl;
+  late TextEditingController _pisAliquotaCtrl;
+  late TextEditingController _cofinsAliquotaCtrl;
+  
   DateTime? _dataVencimento;
   DateTime? _dataInicioPromocao;
   DateTime? _dataFimPromocao;
@@ -44,6 +54,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   int? _selectedCategoriaId;
   String _unidadeVenda = 'UN';
   bool _controlarEstoque = true;
+  int _origem = 0; // 0-Nacional
   String? _fotoUrl;
   Uint8List? _selectedImageBytes;
   String? _selectedImageName;
@@ -81,7 +92,18 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _selectedCategoriaId = p?.categoriaId;
     _unidadeVenda = p?.unidadeVenda ?? 'UN';
     _controlarEstoque = p?.controlarEstoque ?? true;
+    _origem = p?.origem ?? 0;
     _fotoUrl = p?.fotoPrincipalUrl;
+
+    // Fiscal Init
+    _ncmCtrl = TextEditingController(text: p?.ncm ?? '');
+    _cestCtrl = TextEditingController(text: p?.cest ?? '');
+    _cfopPadraoCtrl = TextEditingController(text: p?.cfopPadrao ?? '5102');
+    _csosnPadraoCtrl = TextEditingController(text: p?.csosnPadrao ?? '102');
+    _cstPadraoCtrl = TextEditingController(text: p?.cstPadrao ?? '00');
+    _icmsAliquotaCtrl = TextEditingController(text: p?.icmsAliquota?.toString() ?? '0');
+    _pisAliquotaCtrl = TextEditingController(text: p?.pisAliquota?.toString() ?? '0');
+    _cofinsAliquotaCtrl = TextEditingController(text: p?.cofinsAliquota?.toString() ?? '0');
 
     _calculateIntelligence();
 
@@ -121,6 +143,14 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _precoPromocionalCtrl.dispose();
     _estoqueMinCtrl.dispose();
     _localizacaoCtrl.dispose();
+    _ncmCtrl.dispose();
+    _cestCtrl.dispose();
+    _cfopPadraoCtrl.dispose();
+    _csosnPadraoCtrl.dispose();
+    _cstPadraoCtrl.dispose();
+    _icmsAliquotaCtrl.dispose();
+    _pisAliquotaCtrl.dispose();
+    _cofinsAliquotaCtrl.dispose();
     super.dispose();
   }
 
@@ -163,6 +193,15 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
       localizacao: _localizacaoCtrl.text.trim().isEmpty ? null : _localizacaoCtrl.text.trim(),
       dataVencimento: _dataVencimento,
       fotoPrincipalUrl: _fotoUrl,
+      ncm: _ncmCtrl.text.trim().isEmpty ? null : _ncmCtrl.text.trim(),
+      origem: _origem,
+      cest: _cestCtrl.text.trim().isEmpty ? null : _cestCtrl.text.trim(),
+      cfopPadrao: _cfopPadraoCtrl.text.trim().isEmpty ? null : _cfopPadraoCtrl.text.trim(),
+      csosnPadrao: _csosnPadraoCtrl.text.trim().isEmpty ? null : _csosnPadraoCtrl.text.trim(),
+      cstPadrao: _cstPadraoCtrl.text.trim().isEmpty ? null : _cstPadraoCtrl.text.trim(),
+      icmsAliquota: double.tryParse(_icmsAliquotaCtrl.text) ?? 0,
+      pisAliquota: double.tryParse(_pisAliquotaCtrl.text) ?? 0,
+      cofinsAliquota: double.tryParse(_cofinsAliquotaCtrl.text) ?? 0,
     );
   }
 
@@ -664,6 +703,127 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   activeColor: AppTheme.primaryColor,
                   contentPadding: EdgeInsets.zero,
                 ),
+                const SizedBox(height: 24),
+                // ─── Informações Fiscais ───
+                Row(
+                  children: [
+                    const Icon(Icons.gavel_rounded, color: AppTheme.primaryColor, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Informações Fiscais',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _ncmCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'NCM (8 dígitos)',
+                          hintText: 'Ex: 02013000',
+                          prefixIcon: Icon(Icons.description_outlined),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _cestCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'CEST',
+                          hintText: 'Ex: 1700100',
+                          prefixIcon: Icon(Icons.inventory_rounded),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  value: _origem,
+                  decoration: const InputDecoration(
+                    labelText: 'Origem da Mercadoria',
+                    prefixIcon: Icon(Icons.language_rounded),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 0, child: Text('0 - Nacional')),
+                    DropdownMenuItem(value: 1, child: Text('1 - Estrangeira - Importação direta')),
+                    DropdownMenuItem(value: 2, child: Text('2 - Estrangeira - Adquirida no mercado interno')),
+                  ],
+                  onChanged: (v) => setState(() => _origem = v!),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _cfopPadraoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'CFOP Padrão',
+                          hintText: 'Ex: 5102',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _csosnPadraoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'CSOSN Padrão',
+                          hintText: 'Ex: 102',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _cstPadraoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'CST Padrão',
+                          hintText: 'Ex: 00',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text('Alíquotas Padrão (%)', style: theme.textTheme.labelMedium),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _icmsAliquotaCtrl,
+                        decoration: const InputDecoration(labelText: 'ICMS'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _pisAliquotaCtrl,
+                        decoration: const InputDecoration(labelText: 'PIS'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _cofinsAliquotaCtrl,
+                        decoration: const InputDecoration(labelText: 'COFINS'),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
