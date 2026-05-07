@@ -29,7 +29,6 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
   }
 
   @override
@@ -41,20 +40,6 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
     super.dispose();
   }
 
-  Future<void> _loadInitialData() async {
-    final empresaAsync = ref.read(empresaStateProvider);
-    empresaAsync.whenData((empresa) {
-      _inscricaoMunicipalController.text = empresa.inscricaoMunicipal ?? '';
-      _cscTokenController.text = empresa.cscToken ?? '';
-      _cscIdController.text = empresa.cscId ?? '';
-      _certificadoSenhaController.text = empresa.certificadoSenha ?? '';
-      setState(() {
-        _crt = empresa.crt;
-        _ambiente = empresa.ambiente;
-        _ufEmissao = empresa.ufEmissao;
-      });
-    });
-  }
 
   Future<void> _pickCertificado() async {
     try {
@@ -116,6 +101,40 @@ class _FiscalSettingsTabState extends ConsumerState<FiscalSettingsTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final empresaAsync = ref.watch(empresaStateProvider);
+
+    // Se os dados já estiverem disponíveis e os campos vazios, preenchemos uma única vez
+    empresaAsync.whenData((empresa) {
+      if (_inscricaoMunicipalController.text.isEmpty && empresa.inscricaoMunicipal != null) {
+        _inscricaoMunicipalController.text = empresa.inscricaoMunicipal!;
+      }
+      // ... (os outros campos serão preenchidos pelo listen ou aqui também)
+    });
+
+    // Escutar mudanças no estado da empresa para preencher os controllers
+    ref.listen<AsyncValue<Empresa>>(empresaStateProvider, (previous, next) {
+      next.whenData((empresa) {
+        // Só preenche se os campos estiverem vazios para não sobrescrever o que o usuário está digitando
+        if (_inscricaoMunicipalController.text.isEmpty) {
+          _inscricaoMunicipalController.text = empresa.inscricaoMunicipal ?? '';
+        }
+        if (_cscTokenController.text.isEmpty) {
+          _cscTokenController.text = empresa.cscToken ?? '';
+        }
+        if (_cscIdController.text.isEmpty) {
+          _cscIdController.text = empresa.cscId ?? '';
+        }
+        if (_certificadoSenhaController.text.isEmpty) {
+          _certificadoSenhaController.text = empresa.certificadoSenha ?? '';
+        }
+        
+        setState(() {
+          _crt = empresa.crt;
+          _ambiente = empresa.ambiente;
+          _ufEmissao = empresa.ufEmissao;
+        });
+      });
+    });
 
     return Container(
       decoration: AppTheme.glassCard(),

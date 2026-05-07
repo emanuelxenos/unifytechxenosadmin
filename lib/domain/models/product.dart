@@ -23,6 +23,14 @@ class Produto {
   final DateTime? dataFimPromocao;
   final double? margemLucro;
   final String? ncm;
+  final int origem;
+  final String? cest;
+  final String? cfopPadrao;
+  final String? csosnPadrao;
+  final String? cstPadrao;
+  final double icmsAliquota;
+  final double pisAliquota;
+  final double cofinsAliquota;
   final DateTime dataCadastro;
   final DateTime? dataUltimaCompra;
   final DateTime? dataUltimaVenda;
@@ -56,6 +64,14 @@ class Produto {
     this.dataFimPromocao,
     this.margemLucro,
     this.ncm,
+    this.origem = 0,
+    this.cest,
+    this.cfopPadrao,
+    this.csosnPadrao,
+    this.cstPadrao,
+    this.icmsAliquota = 0,
+    this.pisAliquota = 0,
+    this.cofinsAliquota = 0,
     required this.dataCadastro,
     this.dataUltimaCompra,
     this.dataUltimaVenda,
@@ -111,6 +127,14 @@ class Produto {
             : null,
         margemLucro: (json['margem_lucro'] as num?)?.toDouble(),
         ncm: json['ncm'] as String?,
+        origem: json['origem'] as int? ?? 0,
+        cest: json['cest'] as String?,
+        cfopPadrao: json['cfop_padrao'] as String?,
+        csosnPadrao: json['csosn_padrao'] as String?,
+        cstPadrao: json['cst_padrao'] as String?,
+        icmsAliquota: (json['icms_aliquota'] as num?)?.toDouble() ?? 0.0,
+        pisAliquota: (json['pis_aliquota'] as num?)?.toDouble() ?? 0.0,
+        cofinsAliquota: (json['cofins_aliquota'] as num?)?.toDouble() ?? 0.0,
         dataCadastro: DateTime.parse(json['data_cadastro'] as String),
         dataUltimaCompra: json['data_ultima_compra'] != null
             ? DateTime.parse(json['data_ultima_compra'] as String)
@@ -139,6 +163,15 @@ class Produto {
         'estoque_minimo': estoqueMinimo,
         'preco_custo': precoCusto,
         'preco_venda': precoVenda,
+        'ncm': ncm,
+        'origem': origem,
+        'cest': cest,
+        'cfop_padrao': cfopPadrao,
+        'csosn_padrao': csosnPadrao,
+        'cst_padrao': cstPadrao,
+        'icms_aliquota': icmsAliquota,
+        'pis_aliquota': pisAliquota,
+        'cofins_aliquota': cofinsAliquota,
         'marca': marca,
         'localizacao': localizacao,
         'data_vencimento': dataVencimento?.toUtc().toIso8601String(),
@@ -161,6 +194,15 @@ class CriarProdutoRequest {
   final DateTime? dataInicioPromocao;
   final DateTime? dataFimPromocao;
   final double? margemLucro;
+  final String? ncm;
+  final int origem;
+  final String? cest;
+  final String? cfopPadrao;
+  final String? csosnPadrao;
+  final String? cstPadrao;
+  final double icmsAliquota;
+  final double pisAliquota;
+  final double cofinsAliquota;
   final String? marca;
   final String? localizacao;
   final DateTime? dataVencimento;
@@ -181,6 +223,15 @@ class CriarProdutoRequest {
     this.dataInicioPromocao,
     this.dataFimPromocao,
     this.margemLucro,
+    this.ncm,
+    this.origem = 0,
+    this.cest,
+    this.cfopPadrao,
+    this.csosnPadrao,
+    this.cstPadrao,
+    this.icmsAliquota = 0,
+    this.pisAliquota = 0,
+    this.cofinsAliquota = 0,
     this.marca,
     this.localizacao,
     this.dataVencimento,
@@ -202,6 +253,15 @@ class CriarProdutoRequest {
         'data_inicio_promocao': dataInicioPromocao?.toUtc().toIso8601String(),
         'data_fim_promocao': dataFimPromocao?.toUtc().toIso8601String(),
         'margem_lucro': margemLucro,
+        'ncm': ncm,
+        'origem': origem,
+        'cest': cest,
+        'cfop_padrao': cfopPadrao,
+        'csosn_padrao': csosnPadrao,
+        'cst_padrao': cstPadrao,
+        'icms_aliquota': icmsAliquota,
+        'pis_aliquota': pisAliquota,
+        'cofins_aliquota': cofinsAliquota,
         'marca': marca,
         'localizacao': localizacao,
         'data_vencimento': dataVencimento?.toUtc().toIso8601String(),
@@ -221,6 +281,15 @@ class CriarProdutoRequest {
     DateTime? dataInicioPromocao,
     DateTime? dataFimPromocao,
     double? margemLucro,
+    String? ncm,
+    int? origem,
+    String? cest,
+    String? cfopPadrao,
+    String? csosnPadrao,
+    String? cstPadrao,
+    double? icmsAliquota,
+    double? pisAliquota,
+    double? cofinsAliquota,
     double? estoqueMinimo,
     bool? controlarEstoque,
     String? marca,
@@ -241,6 +310,15 @@ class CriarProdutoRequest {
       dataInicioPromocao: dataInicioPromocao ?? this.dataInicioPromocao,
       dataFimPromocao: dataFimPromocao ?? this.dataFimPromocao,
       margemLucro: margemLucro ?? this.margemLucro,
+      ncm: ncm ?? this.ncm,
+      origem: origem ?? this.origem,
+      cest: cest ?? this.cest,
+      cfopPadrao: cfopPadrao ?? this.cfopPadrao,
+      csosnPadrao: csosnPadrao ?? this.csosnPadrao,
+      cstPadrao: cstPadrao ?? this.cstPadrao,
+      icmsAliquota: icmsAliquota ?? this.icmsAliquota,
+      pisAliquota: pisAliquota ?? this.pisAliquota,
+      cofinsAliquota: cofinsAliquota ?? this.cofinsAliquota,
       estoqueMinimo: estoqueMinimo ?? this.estoqueMinimo,
       controlarEstoque: controlarEstoque ?? this.controlarEstoque,
       marca: marca ?? this.marca,
