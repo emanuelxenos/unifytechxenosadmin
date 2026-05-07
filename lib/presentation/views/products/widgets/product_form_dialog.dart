@@ -346,7 +346,11 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                   )
                                 : (_fotoUrl != null
                                     ? DecorationImage(
-                                        image: NetworkImage('${ref.read(apiServiceProvider).baseUrl}$_fotoUrl'),
+                                        image: NetworkImage(
+                                          _fotoUrl!.startsWith('http') 
+                                              ? _fotoUrl! 
+                                              : '${ref.read(apiServiceProvider).baseUrl}$_fotoUrl'
+                                        ),
                                         fit: BoxFit.cover,
                                       )
                                     : null),
