@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -1298,64 +1300,137 @@ class _ReportProjecaoCaixaView extends ConsumerWidget {
         data: (data) {
           if (data.isEmpty) return const EmptyState(icon: Icons.query_stats, title: 'Sem dados para projeção');
 
+          final double minSaldo = data.map((e) => (e['saldo'] as num).toDouble()).reduce((a, b) => a < b ? a : b);
+          final double maxSaldo = data.map((e) => (e['saldo'] as num).toDouble()).reduce((a, b) => a > b ? a : b);
+          final double range = (maxSaldo - minSaldo).abs();
+          final double padding = range > 0 ? range * 0.2 : 1000;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Fluxo de Caixa Projetado (30 Dias)', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tendência de Fluxo de Caixa', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      const Text('Projeção acumulada para os próximos 30 dias', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                  _KPICardMini(
+                    title: 'Saldo Final Previsto', 
+                    value: Formatters.currency((data.last['saldo'] as num).toDouble()), 
+                    color: (data.last['saldo'] as num) >= 0 ? Colors.green : Colors.red
+                  ),
+                ],
+              ),
               const SizedBox(height: 32),
-              SizedBox(
-                height: 300,
-                child: BarChart(
-                  BarChartData(
-                    alignment: BarChartAlignment.spaceAround,
-                    maxY: data.map((e) => (e['saldo'] as num).toDouble()).reduce((a, b) => a > b ? a : b) * 1.2,
-                    barTouchData: BarTouchData(enabled: true),
-                    titlesData: FlTitlesData(
-                      show: true,
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (value, meta) {
-                            int idx = value.toInt();
-                            if (idx >= 0 && idx < data.length && idx % 5 == 0) {
-                              return Text(data[idx]['data'].toString().substring(8, 10), style: const TextStyle(fontSize: 10));
-                            }
-                            return const Text('');
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 20, top: 20),
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: true,
+                        horizontalInterval: padding > 0 ? padding : 1000,
+                        getDrawingHorizontalLine: (value) => FlLine(color: theme.dividerColor.withValues(alpha: 0.1), strokeWidth: 1),
+                        getDrawingVerticalLine: (value) => FlLine(color: theme.dividerColor.withValues(alpha: 0.1), strokeWidth: 1),
+                      ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            interval: 5,
+                            getTitlesWidget: (value, meta) {
+                              int idx = value.toInt();
+                              if (idx >= 0 && idx < data.length) {
+                                String date = data[idx]['data'].toString();
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(date.substring(8, 10) + '/' + date.substring(5, 7), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                );
+                              }
+                              return const Text('');
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 60,
+                            getTitlesWidget: (value, meta) {
+                              return Text(Formatters.compactCurrency(value), style: const TextStyle(fontSize: 10, color: Colors.grey));
+                            },
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      minX: 0,
+                      maxX: (data.length - 1).toDouble(),
+                      minY: minSaldo - padding,
+                      maxY: maxSaldo + padding,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['saldo'] as num).toDouble())).toList(),
+                          isCurved: true,
+                          color: AppTheme.primaryColor,
+                          barWidth: 4,
+                          isStrokeCapRound: true,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [AppTheme.primaryColor.withValues(alpha: 0.3), AppTheme.primaryColor.withValues(alpha: 0.0)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ],
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipColor: (spot) => theme.cardColor,
+                          getTooltipItems: (touchedSpots) {
+                            return touchedSpots.map((spot) {
+                              final item = data[spot.x.toInt()];
+                              return LineTooltipItem(
+                                '${Formatters.date(item['data'])}\n',
+                                theme.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.bold),
+                                children: [
+                                  TextSpan(
+                                    text: 'Saldo: ${Formatters.currency(spot.y)}\n',
+                                    style: TextStyle(color: spot.y >= 0 ? Colors.green : Colors.red, fontWeight: FontWeight.bold),
+                                  ),
+                                  TextSpan(
+                                    text: '(+) Rec: ${Formatters.currency((item['a_receber'] as num).toDouble())}\n',
+                                    style: const TextStyle(color: Colors.blue, fontSize: 10),
+                                  ),
+                                  TextSpan(
+                                    text: '(-) Pag: ${Formatters.currency((item['a_pagar'] as num).toDouble())}',
+                                    style: const TextStyle(color: Colors.orange, fontSize: 10),
+                                  ),
+                                ],
+                              );
+                            }).toList();
                           },
                         ),
                       ),
-                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
-                    gridData: const FlGridData(show: false),
-                    borderData: FlBorderData(show: false),
-                    barGroups: data.asMap().entries.map((entry) {
-                      final val = (entry.value['saldo'] as num).toDouble();
-                      return BarChartGroupData(
-                        x: entry.key,
-                        barRods: [
-                          BarChartRodData(
-                            toY: val,
-                            color: val >= 0 ? Colors.green : Colors.red,
-                            width: 12,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      );
-                    }).toList(),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Resumo da Projeção', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                   _KPICardMini(title: 'A Receber (30d)', value: Formatters.currency(data.fold(0, (a, b) => a + (b['a_receber'] as num).toDouble())), color: Colors.blue),
-                   _KPICardMini(title: 'A Pagar (30d)', value: Formatters.currency(data.fold(0, (a, b) => a + (b['a_pagar'] as num).toDouble())), color: Colors.orange),
-                   _KPICardMini(title: 'Saldo Final', value: Formatters.currency((data.last['saldo'] as num).toDouble()), color: Colors.green),
+                   _KPICardMini(title: 'Total a Receber', value: Formatters.currency(data.fold(0.0, (a, b) => a + (b['a_receber'] as num).toDouble())), color: Colors.blue),
+                   _KPICardMini(title: 'Total a Pagar', value: Formatters.currency(data.fold(0.0, (a, b) => a + (b['a_pagar'] as num).toDouble())), color: Colors.orange),
                 ],
               ),
             ],
@@ -1576,6 +1651,55 @@ class _ReportAuditoriaGeralView extends ConsumerStatefulWidget {
 
 class _ReportAuditoriaGeralViewState extends ConsumerState<_ReportAuditoriaGeralView> {
   final _searchController = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  String _formatAuditData(dynamic data) {
+    if (data == null || data == 'null' || data == '{}' || data == '[]') return 'N/A';
+    
+    try {
+      // Se já for um objeto/lista
+      if (data is Map || data is List) {
+        return _formatValue(data);
+      }
+      
+      // Se for string, tenta decodificar
+      final String strData = data.toString();
+      if (strData.startsWith('{') || strData.startsWith('[')) {
+        final decoded = json.decode(strData);
+        return _formatValue(decoded);
+      }
+      return strData;
+    } catch (_) {
+      return data.toString();
+    }
+  }
+
+  String _formatValue(dynamic val) {
+    if (val is Map) {
+      return val.entries
+          .where((e) => e.value != null)
+          .map((e) => '${e.key}: ${e.value}')
+          .join(' | ');
+    }
+    if (val is List) {
+      return val.map((e) => _formatValue(e)).join('; ');
+    }
+    return val.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1593,15 +1717,25 @@ class _ReportAuditoriaGeralViewState extends ConsumerState<_ReportAuditoriaGeral
             children: [
               Text('Log de Auditoria do Sistema', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               SizedBox(
-                width: 300,
+                width: 350,
                 child: TextField(
                   controller: _searchController,
+                  onChanged: _onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Pesquisar ação, tabela ou usuário...',
+                    hintText: 'Ação, tabela ou usuário...',
                     prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty 
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                        )
+                      : null,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
-                  onSubmitted: (_) => setState(() {}),
                 ),
               ),
             ],
@@ -1625,8 +1759,8 @@ class _ReportAuditoriaGeralViewState extends ConsumerState<_ReportAuditoriaGeral
                     return ListTile(
                       dense: true,
                       leading: Icon(
-                        item['acao'] == 'INSERT' ? Icons.add_circle_outline : (item['acao'] == 'UPDATE' ? Icons.edit_note : Icons.remove_circle_outline),
-                        color: item['acao'] == 'INSERT' ? Colors.green : (item['acao'] == 'UPDATE' ? Colors.blue : Colors.red),
+                        item['acao'] == 'INSERT' ? Icons.add_circle_outline : (item['acao'] == 'UPDATE' || item['acao'].contains('UPDATE') ? Icons.edit_note : Icons.remove_circle_outline),
+                        color: item['acao'] == 'INSERT' ? Colors.green : (item['acao'] == 'UPDATE' || item['acao'].contains('UPDATE') ? Colors.blue : Colors.red),
                       ),
                       title: Row(
                         children: [
@@ -1640,8 +1774,24 @@ class _ReportAuditoriaGeralViewState extends ConsumerState<_ReportAuditoriaGeral
                         children: [
                           Text('Usuário: ${item['usuario']}'),
                           const SizedBox(height: 4),
-                          Text('De: ${item['valores_antigos']}', style: const TextStyle(fontSize: 9, color: Colors.white24, overflow: TextOverflow.ellipsis)),
-                          Text('Para: ${item['valores_novos']}', style: const TextStyle(fontSize: 9, color: Colors.blueGrey, overflow: TextOverflow.ellipsis)),
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 10),
+                              children: [
+                                const TextSpan(text: 'De: ', style: TextStyle(color: Colors.white38)),
+                                TextSpan(text: _formatAuditData(item['valores_antigos']), style: const TextStyle(color: Colors.white60)),
+                              ],
+                            ),
+                          ),
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 10),
+                              children: [
+                                const TextSpan(text: 'Para: ', style: TextStyle(color: Colors.blueGrey)),
+                                TextSpan(text: _formatAuditData(item['valores_novos']), style: const TextStyle(color: Colors.blue)),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                       trailing: Text(
@@ -1659,6 +1809,7 @@ class _ReportAuditoriaGeralViewState extends ConsumerState<_ReportAuditoriaGeral
     );
   }
 }
+
 
 class _ReportVendasCategoriaView extends ConsumerWidget {
   @override

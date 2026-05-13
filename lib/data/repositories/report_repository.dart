@@ -16,11 +16,11 @@ class ReportRepository {
   ReportRepository(this._api);
 
   Map<String, dynamic> _extractMapData(dynamic responseData) {
-    if (responseData is Map<String, dynamic>) {
-      if (responseData.containsKey('data') && responseData['data'] is Map<String, dynamic>) {
-        return responseData['data'] as Map<String, dynamic>;
+    if (responseData is Map) {
+      if (responseData.containsKey('data') && responseData['data'] is Map) {
+        return Map<String, dynamic>.from(responseData['data']);
       }
-      return responseData;
+      return Map<String, dynamic>.from(responseData);
     }
     return {};
   }
@@ -28,10 +28,12 @@ class ReportRepository {
   List<Map<String, dynamic>> _extractListData(dynamic responseData) {
     if (responseData is Map && responseData.containsKey('data')) {
       final list = responseData['data'];
-      if (list is List) return list.cast<Map<String, dynamic>>();
+      if (list is List) {
+        return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+      }
     }
     if (responseData is List) {
-      return responseData.cast<Map<String, dynamic>>();
+      return responseData.map((item) => Map<String, dynamic>.from(item as Map)).toList();
     }
     return [];
   }

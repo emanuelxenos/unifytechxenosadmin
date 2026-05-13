@@ -17,6 +17,14 @@ class Formatters {
 
   static String currency(num value) => _currencyFormat.format(value);
 
+  static String compactCurrency(num value) {
+    return NumberFormat.compactCurrency(
+      locale: 'pt_BR',
+      symbol: 'R\$',
+      decimalDigits: 1,
+    ).format(value);
+  }
+
   static String number(num value, {int decimals = 2}) {
     return value.toStringAsFixed(decimals).replaceAll('.', ',');
   }
@@ -29,9 +37,20 @@ class Formatters {
     return _numberFormat.format(doubleValue);
   }
 
-  static String date(DateTime? dt) {
+  static String date(dynamic dt) {
     if (dt == null) return '-';
-    return _dateFormat.format(dt);
+    if (dt is String) {
+      try {
+        final parsed = DateTime.parse(dt);
+        return _dateFormat.format(parsed);
+      } catch (_) {
+        return dt;
+      }
+    }
+    if (dt is DateTime) {
+      return _dateFormat.format(dt);
+    }
+    return '-';
   }
 
   static String dateTime(DateTime? dt) {
