@@ -1694,5 +1694,198 @@ class _ContasPagarDetalhadoReportProviderElement
   String? get status => (origin as ContasPagarDetalhadoReportProvider).status;
 }
 
+String _$produtosMargemReportHash() =>
+    r'330760f23322e4759ecc882dae8a9ba76f1a8795';
+
+/// See also [ProdutosMargemReport].
+@ProviderFor(ProdutosMargemReport)
+final produtosMargemReportProvider =
+    AutoDisposeAsyncNotifierProvider<
+      ProdutosMargemReport,
+      List<Map<String, dynamic>>
+    >.internal(
+      ProdutosMargemReport.new,
+      name: r'produtosMargemReportProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$produtosMargemReportHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ProdutosMargemReport =
+    AutoDisposeAsyncNotifier<List<Map<String, dynamic>>>;
+String _$vendasFluxoHorarioReportHash() =>
+    r'4dbf8af1aee8ab861e60d12de432d3a59d1ba9e9';
+
+abstract class _$VendasFluxoHorarioReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final String? dataInicio;
+  late final String? dataFim;
+
+  FutureOr<List<Map<String, dynamic>>> build({
+    String? dataInicio,
+    String? dataFim,
+  });
+}
+
+/// See also [VendasFluxoHorarioReport].
+@ProviderFor(VendasFluxoHorarioReport)
+const vendasFluxoHorarioReportProvider = VendasFluxoHorarioReportFamily();
+
+/// See also [VendasFluxoHorarioReport].
+class VendasFluxoHorarioReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [VendasFluxoHorarioReport].
+  const VendasFluxoHorarioReportFamily();
+
+  /// See also [VendasFluxoHorarioReport].
+  VendasFluxoHorarioReportProvider call({String? dataInicio, String? dataFim}) {
+    return VendasFluxoHorarioReportProvider(
+      dataInicio: dataInicio,
+      dataFim: dataFim,
+    );
+  }
+
+  @override
+  VendasFluxoHorarioReportProvider getProviderOverride(
+    covariant VendasFluxoHorarioReportProvider provider,
+  ) {
+    return call(dataInicio: provider.dataInicio, dataFim: provider.dataFim);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'vendasFluxoHorarioReportProvider';
+}
+
+/// See also [VendasFluxoHorarioReport].
+class VendasFluxoHorarioReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          VendasFluxoHorarioReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [VendasFluxoHorarioReport].
+  VendasFluxoHorarioReportProvider({String? dataInicio, String? dataFim})
+    : this._internal(
+        () => VendasFluxoHorarioReport()
+          ..dataInicio = dataInicio
+          ..dataFim = dataFim,
+        from: vendasFluxoHorarioReportProvider,
+        name: r'vendasFluxoHorarioReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$vendasFluxoHorarioReportHash,
+        dependencies: VendasFluxoHorarioReportFamily._dependencies,
+        allTransitiveDependencies:
+            VendasFluxoHorarioReportFamily._allTransitiveDependencies,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      );
+
+  VendasFluxoHorarioReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.dataInicio,
+    required this.dataFim,
+  }) : super.internal();
+
+  final String? dataInicio;
+  final String? dataFim;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant VendasFluxoHorarioReport notifier,
+  ) {
+    return notifier.build(dataInicio: dataInicio, dataFim: dataFim);
+  }
+
+  @override
+  Override overrideWith(VendasFluxoHorarioReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: VendasFluxoHorarioReportProvider._internal(
+        () => create()
+          ..dataInicio = dataInicio
+          ..dataFim = dataFim,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    VendasFluxoHorarioReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _VendasFluxoHorarioReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VendasFluxoHorarioReportProvider &&
+        other.dataInicio == dataInicio &&
+        other.dataFim == dataFim;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, dataInicio.hashCode);
+    hash = _SystemHash.combine(hash, dataFim.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin VendasFluxoHorarioReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `dataInicio` of this provider.
+  String? get dataInicio;
+
+  /// The parameter `dataFim` of this provider.
+  String? get dataFim;
+}
+
+class _VendasFluxoHorarioReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          VendasFluxoHorarioReport,
+          List<Map<String, dynamic>>
+        >
+    with VendasFluxoHorarioReportRef {
+  _VendasFluxoHorarioReportProviderElement(super.provider);
+
+  @override
+  String? get dataInicio =>
+      (origin as VendasFluxoHorarioReportProvider).dataInicio;
+  @override
+  String? get dataFim => (origin as VendasFluxoHorarioReportProvider).dataFim;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

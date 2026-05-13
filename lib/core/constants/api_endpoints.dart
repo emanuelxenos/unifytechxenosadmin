@@ -51,6 +51,8 @@ class ApiEndpoints {
   static const String estoqueInventarios = '/api/estoque/inventarios';
   static const String estoqueLocalizacoes = '/api/estoque/localizacoes';
   static String estoqueLotePorProduto(int id) => '/api/estoque/lotes/$id';
+  static const String estoquePerda = '/api/estoque/perda';
+
 
   // Compras
   static const String compras = '/api/compras';
@@ -94,6 +96,9 @@ class ApiEndpoints {
   static const String relatorioVendasCategoria = '/api/relatorios/vendas/categoria';
   static const String relatorioAuditoriaGeral = '/api/relatorios/auditoria-geral';
   static const String relatorioContasPagarDetalhado = '/api/relatorios/financeiro/contas-pagar-detalhado';
+  static const String relatorioProdutosMargem = '/api/relatorios/produtos/margem';
+  static const String relatorioVendasFluxoHorario = '/api/relatorios/vendas/fluxo-horario';
+
 
   // Config (Admin)
   static const String config = '/api/config';

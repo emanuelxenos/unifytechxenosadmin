@@ -110,4 +110,9 @@ class StockRepository {
     }
     return [];
   }
+
+  Future<void> registrarPerda(AjusteEstoqueRequest request) async {
+    await _api.post(ApiEndpoints.estoquePerda, data: request.toJson());
+  }
 }
+

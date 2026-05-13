@@ -22,6 +22,8 @@ import 'package:unifytechxenosadmin/presentation/views/customers/customers_scree
 import 'package:unifytechxenosadmin/presentation/views/stock/inventory_counting_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/system_parameters_screen.dart';
 import 'package:unifytechxenosadmin/presentation/views/settings/terminals_screen.dart';
+import 'package:unifytechxenosadmin/presentation/views/stock/loss_registration_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,8 +112,13 @@ class UnifyTechAdminApp extends ConsumerWidget {
                     return InventoryCountingScreen(inventoryId: id);
                   },
                 ),
+                GoRoute(
+                  path: 'perda',
+                  builder: (context, state) => const LossRegistrationScreen(),
+                ),
               ],
             ),
+
             GoRoute(
               path: '/vendas',
               builder: (context, state) => const SalesScreen(),

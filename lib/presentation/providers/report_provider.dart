@@ -290,3 +290,30 @@ class ContasPagarDetalhadoReport extends _$ContasPagarDetalhadoReport {
     state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).contasPagarDetalhado(status: status));
   }
 }
+
+@riverpod
+class ProdutosMargemReport extends _$ProdutosMargemReport {
+  @override
+  Future<List<Map<String, dynamic>>> build() async {
+    return ref.read(reportRepositoryProvider).produtosMargem();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).produtosMargem());
+  }
+}
+
+@riverpod
+class VendasFluxoHorarioReport extends _$VendasFluxoHorarioReport {
+  @override
+  Future<List<Map<String, dynamic>>> build({String? dataInicio, String? dataFim}) async {
+    return ref.read(reportRepositoryProvider).vendasFluxoHorario(dataInicio: dataInicio, dataFim: dataFim);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).vendasFluxoHorario(dataInicio: dataInicio, dataFim: dataFim));
+  }
+}
+

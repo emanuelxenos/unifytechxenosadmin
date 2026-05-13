@@ -228,4 +228,18 @@ class ReportRepository {
     });
     return _extractListData(response.data);
   }
+
+  Future<List<Map<String, dynamic>>> produtosMargem() async {
+    final response = await _api.get(ApiEndpoints.relatorioProdutosMargem);
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> vendasFluxoHorario({String? dataInicio, String? dataFim}) async {
+    final response = await _api.get(ApiEndpoints.relatorioVendasFluxoHorario, queryParameters: {
+      if (dataInicio != null) 'data_inicio': dataInicio,
+      if (dataFim != null) 'data_fim': dataFim,
+    });
+    return _extractListData(response.data);
+  }
 }
+

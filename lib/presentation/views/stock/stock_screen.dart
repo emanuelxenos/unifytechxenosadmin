@@ -287,7 +287,19 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             ],
           ),
         ),
+        OutlinedButton.icon(
+          onPressed: () => context.push('/estoque/perda'),
+          icon: const Icon(Icons.warning_amber_rounded, size: 18),
+          label: const Text('Registrar Perda'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.orangeAccent,
+            side: const BorderSide(color: Colors.orangeAccent),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+        const SizedBox(width: 16),
         if (_isExporting)
+
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),

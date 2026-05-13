@@ -42,7 +42,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     _ReportItem(title: 'Ruptura de Estoque', icon: Icons.warning_amber_rounded, type: 'ruptura', category: 'Estoque'),
     _ReportItem(title: 'Auditoria Geral', icon: Icons.security_rounded, type: 'auditoria_geral', category: 'Auditoria'),
     _ReportItem(title: 'Contas Pagar Det.', icon: Icons.receipt_long_rounded, type: 'contas_pagar_det', category: 'Financeiro'),
+    _ReportItem(title: 'Produtos por Margem', icon: Icons.trending_up_rounded, type: 'produtos_margem', category: 'Estratégico'),
+    _ReportItem(title: 'Fluxo por Horário', icon: Icons.access_time_filled_rounded, type: 'fluxo_horario', category: 'Estratégico'),
   ];
+
 
 
   String _getTipoRelatorioAtivo() {
@@ -184,10 +187,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       case 'auditoria_geral': return _ReportAuditoriaGeralView();
       case 'vendas_categoria': return _ReportVendasCategoriaView();
       case 'contas_pagar_det': return _ReportContasPagarDetView();
+      case 'produtos_margem': return _ReportMargemLucroView();
+      case 'fluxo_horario': return _ReportFluxoHorarioView();
       default: return const Center(child: Text('Selecione um relatório'));
     }
   }
 }
+
 
 class _ReportItem {
   final String title;
@@ -1971,3 +1977,209 @@ class _KPICardMini extends StatelessWidget {
     );
   }
 }
+
+class _ReportMargemLucroView extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(produtosMargemReportProvider);
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Ranking de Rentabilidade por Produto', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('Produtos ordenados pela maior margem de lucro percentual', style: theme.textTheme.bodySmall),
+          const SizedBox(height: 24),
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Calculando margens...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (list) {
+                if (list.isEmpty) return const EmptyState(icon: Icons.trending_up_rounded, title: 'Sem dados', subtitle: 'Não há produtos com preço de custo e venda definidos.');
+                
+                return ListView.separated(
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
+                  itemBuilder: (context, index) {
+                    final item = list[index];
+                    final margem = (item['margem_percentual'] as num).toDouble();
+                    
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getMargemColor(margem).withOpacity(0.1),
+                        child: Text('${index + 1}', style: TextStyle(color: _getMargemColor(margem), fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(item['nome'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('Custo: ${Formatters.currency(item['preco_custo'])} | Venda: ${Formatters.currency(item['preco_venda'])}'),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('${margem.toStringAsFixed(1)}%', style: TextStyle(color: _getMargemColor(margem), fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('Lucro: ${Formatters.currency(item['lucro_absoluto'])}', style: const TextStyle(fontSize: 10, color: Colors.white38)),
+                        ],
+                      ),
+
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getMargemColor(double margem) {
+    if (margem >= 50) return Colors.greenAccent;
+    if (margem >= 30) return Colors.blueAccent;
+    if (margem >= 15) return Colors.orangeAccent;
+    return Colors.redAccent;
+  }
+}
+
+class _ReportFluxoHorarioView extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_ReportFluxoHorarioView> createState() => _ReportFluxoHorarioViewState();
+}
+
+class _ReportFluxoHorarioViewState extends ConsumerState<_ReportFluxoHorarioView> {
+  DateTime _dataInicio = DateTime.now().subtract(const Duration(days: 7));
+  DateTime _dataFim = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(vendasFluxoHorarioReportProvider(
+      dataInicio: Formatters.dateForApi(_dataInicio),
+      dataFim: Formatters.dateForApi(_dataFim),
+    ));
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Fluxo de Vendas por Horário', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('Identifique picos de movimento para otimizar a equipe', style: theme.textTheme.bodySmall),
+                ],
+              ),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(start: _dataInicio, end: _dataFim),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                    builder: (context, child) => Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.dark(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: const Color(0xFF1E1E1E),
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    ),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _dataInicio = picked.start;
+                      _dataFim = picked.end;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.date_range_rounded, size: 18),
+                label: Text('${Formatters.date(_dataInicio)} - ${Formatters.date(_dataFim)}'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white10),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Analisando histórico...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (list) {
+                if (list.isEmpty) return const EmptyState(icon: Icons.access_time_rounded, title: 'Sem dados', subtitle: 'Nenhuma venda registrada no período.');
+                
+                return LineChart(
+                  LineChartData(
+                    gridData: const FlGridData(show: true, drawVerticalLine: false),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 2,
+                          getTitlesWidget: (value, meta) => Text('${value.toInt()}h', style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (spot) => const Color(0xFF2C2C2C).withOpacity(0.9),
+                        tooltipRoundedRadius: 8,
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            return LineTooltipItem(
+                              '${spot.x.toInt()}h: ${spot.y.toInt()} vendas',
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                    lineBarsData: [
+
+                      LineChartBarData(
+                        spots: list.map((e) => FlSpot((e['hora'] as num).toDouble(), (e['total_vendas'] as num).toDouble())).toList(),
+                        isCurved: true,
+                        color: AppTheme.primaryColor,
+                        barWidth: 4,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Center(child: Text('Horário do Dia (24h)', style: TextStyle(color: Colors.white38, fontSize: 10))),
+        ],
+      ),
+    );
+  }
+}
+
