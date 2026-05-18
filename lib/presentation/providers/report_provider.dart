@@ -317,3 +317,30 @@ class VendasFluxoHorarioReport extends _$VendasFluxoHorarioReport {
   }
 }
 
+@riverpod
+class VendasMeiosPagamentoReport extends _$VendasMeiosPagamentoReport {
+  @override
+  Future<List<Map<String, dynamic>>> build({String? dataInicio, String? dataFim}) async {
+    return ref.read(reportRepositoryProvider).vendasMeiosPagamento(dataInicio: dataInicio, dataFim: dataFim);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).vendasMeiosPagamento(dataInicio: dataInicio, dataFim: dataFim));
+  }
+}
+
+@riverpod
+class ComprasVendasReport extends _$ComprasVendasReport {
+  @override
+  Future<List<Map<String, dynamic>>> build({String? dataInicio, String? dataFim}) async {
+    return ref.read(reportRepositoryProvider).comprasVsVendas(dataInicio: dataInicio, dataFim: dataFim);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(reportRepositoryProvider).comprasVsVendas(dataInicio: dataInicio, dataFim: dataFim));
+  }
+}
+
+

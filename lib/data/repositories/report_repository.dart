@@ -241,5 +241,22 @@ class ReportRepository {
     });
     return _extractListData(response.data);
   }
+
+  Future<List<Map<String, dynamic>>> vendasMeiosPagamento({String? dataInicio, String? dataFim}) async {
+    final response = await _api.get(ApiEndpoints.relatorioMeiosPagamento, queryParameters: {
+      if (dataInicio != null) 'data_inicio': dataInicio,
+      if (dataFim != null) 'data_fim': dataFim,
+    });
+    return _extractListData(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> comprasVsVendas({String? dataInicio, String? dataFim}) async {
+    final response = await _api.get(ApiEndpoints.relatorioComprasVendas, queryParameters: {
+      if (dataInicio != null) 'data_inicio': dataInicio,
+      if (dataFim != null) 'data_fim': dataFim,
+    });
+    return _extractListData(response.data);
+  }
 }
+
 

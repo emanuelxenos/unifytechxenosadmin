@@ -42,8 +42,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     _ReportItem(title: 'Ruptura de Estoque', icon: Icons.warning_amber_rounded, type: 'ruptura', category: 'Estoque'),
     _ReportItem(title: 'Auditoria Geral', icon: Icons.security_rounded, type: 'auditoria_geral', category: 'Auditoria'),
     _ReportItem(title: 'Contas Pagar Det.', icon: Icons.receipt_long_rounded, type: 'contas_pagar_det', category: 'Financeiro'),
+    _ReportItem(title: 'Meios de Pagamento', icon: Icons.pie_chart_rounded, type: 'meios_pagamento', category: 'Financeiro'),
     _ReportItem(title: 'Produtos por Margem', icon: Icons.trending_up_rounded, type: 'produtos_margem', category: 'Estratégico'),
     _ReportItem(title: 'Fluxo por Horário', icon: Icons.access_time_filled_rounded, type: 'fluxo_horario', category: 'Estratégico'),
+    _ReportItem(title: 'Compras vs Vendas', icon: Icons.swap_vert_rounded, type: 'compras_vendas', category: 'Estratégico'),
   ];
 
 
@@ -187,8 +189,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       case 'auditoria_geral': return _ReportAuditoriaGeralView();
       case 'vendas_categoria': return _ReportVendasCategoriaView();
       case 'contas_pagar_det': return _ReportContasPagarDetView();
+      case 'meios_pagamento': return _ReportMeiosPagamentoView();
       case 'produtos_margem': return _ReportMargemLucroView();
       case 'fluxo_horario': return _ReportFluxoHorarioView();
+      case 'compras_vendas': return _ReportComprasVendasView();
       default: return const Center(child: Text('Selecione um relatório'));
     }
   }
@@ -2182,4 +2186,537 @@ class _ReportFluxoHorarioViewState extends ConsumerState<_ReportFluxoHorarioView
     );
   }
 }
+
+class _ReportMeiosPagamentoView extends ConsumerStatefulWidget {
+  const _ReportMeiosPagamentoView();
+  @override
+  ConsumerState<_ReportMeiosPagamentoView> createState() => _ReportMeiosPagamentoViewState();
+}
+
+class _ReportMeiosPagamentoViewState extends ConsumerState<_ReportMeiosPagamentoView> {
+  DateTime _dataInicio = DateTime.now().subtract(const Duration(days: 30));
+  DateTime _dataFim = DateTime.now();
+  int _touchedIndex = -1;
+
+  Color _getPaymentMethodColor(String name) {
+    final cleanName = name.trim().toLowerCase();
+    if (cleanName.contains('pix')) return const Color(0xFF00D2B4);
+    if (cleanName.contains('crédito') || cleanName.contains('credito')) return const Color(0xFF9F8FEF);
+    if (cleanName.contains('débito') || cleanName.contains('debito')) return const Color(0xFF42A5F5);
+    if (cleanName.contains('dinheiro') || cleanName.contains('espécie')) return const Color(0xFF66BB6A);
+    if (cleanName.contains('crediário') || cleanName.contains('prazo')) return const Color(0xFFFFCA28);
+    if (cleanName.contains('vale') || cleanName.contains('ticket')) return const Color(0xFFFF7043);
+    return const Color(0xFFAB47BC);
+  }
+
+  IconData _getPaymentMethodIcon(String name) {
+    final cleanName = name.trim().toLowerCase();
+    if (cleanName.contains('pix')) return Icons.qr_code_scanner_rounded;
+    if (cleanName.contains('crédito') || cleanName.contains('credito')) return Icons.credit_card_rounded;
+    if (cleanName.contains('débito') || cleanName.contains('debito')) return Icons.credit_card_outlined;
+    if (cleanName.contains('dinheiro') || cleanName.contains('espécie')) return Icons.attach_money_rounded;
+    if (cleanName.contains('crediário') || cleanName.contains('prazo')) return Icons.calendar_today_rounded;
+    return Icons.payment_rounded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(vendasMeiosPagamentoReportProvider(
+      dataInicio: Formatters.dateForApi(_dataInicio),
+      dataFim: Formatters.dateForApi(_dataFim),
+    ));
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('💳 Vendas por Meio de Pagamento', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Análise do volume e fatia de participação por método de entrada', style: theme.textTheme.bodySmall),
+                ],
+              ),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(start: _dataInicio, end: _dataFim),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                    builder: (context, child) => Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Color(0xFF1E1E1E),
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    ),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _dataInicio = picked.start;
+                      _dataFim = picked.end;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.date_range_rounded, size: 18),
+                label: Text('${Formatters.date(_dataInicio)} - ${Formatters.date(_dataFim)}'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white10),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Agrupando recebimentos...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (list) {
+                if (list.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.pie_chart_outline_rounded,
+                    title: 'Sem dados de vendas',
+                    subtitle: 'Nenhum pagamento registrado no período selecionado.',
+                  );
+                }
+
+                final double totalPeriodo = list.fold(0.0, (sum, item) => sum + (item['valor_total'] as num).toDouble());
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Center(
+                        child: SizedBox(
+                          height: 280,
+                          child: PieChart(
+                            PieChartData(
+                              pieTouchData: PieTouchData(
+                                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                  setState(() {
+                                    if (!event.isInterestedForInteractions ||
+                                        pieTouchResponse == null ||
+                                        pieTouchResponse.touchedSection == null) {
+                                      _touchedIndex = -1;
+                                      return;
+                                    }
+                                    _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                                  });
+                                },
+                              ),
+                              borderData: FlBorderData(show: false),
+                              sectionsSpace: 4,
+                              centerSpaceRadius: 60,
+                              sections: List.generate(list.length, (i) {
+                                final item = list[i];
+                                final isTouched = i == _touchedIndex;
+                                final double value = (item['valor_total'] as num).toDouble();
+                                final double percent = (item['percentual'] as num).toDouble();
+                                final String name = item['forma_pagamento'] ?? 'Outros';
+                                final color = _getPaymentMethodColor(name);
+                                final double radius = isTouched ? 65.0 : 55.0;
+
+                                return PieChartSectionData(
+                                  color: color,
+                                  value: value,
+                                  title: percent >= 8 ? '${percent.toStringAsFixed(1)}%' : '',
+                                  radius: radius,
+                                  titleStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 32),
+                    Expanded(
+                      flex: 6,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Faturamento no Período: ${Formatters.currency(totalPeriodo)}',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: list.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
+                              itemBuilder: (context, i) {
+                                final item = list[i];
+                                final String name = item['forma_pagamento'] ?? 'Outros';
+                                final double value = (item['valor_total'] as num).toDouble();
+                                final double percent = (item['percentual'] as num).toDouble();
+                                final int count = (item['total_vendas'] as num).toInt();
+                                final color = _getPaymentMethodColor(name);
+                                final isSelected = i == _touchedIndex;
+
+                                return Container(
+                                  color: isSelected ? Colors.white.withOpacity(0.05) : Colors.transparent,
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: color.withOpacity(0.15),
+                                      child: Icon(_getPaymentMethodIcon(name), color: color, size: 20),
+                                    ),
+                                    title: Text(
+                                      name,
+                                      style: TextStyle(
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    subtitle: Text('$count transações', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                                    trailing: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(Formatters.currency(value), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                        Text('${percent.toStringAsFixed(1)}%', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportComprasVendasView extends ConsumerStatefulWidget {
+  const _ReportComprasVendasView();
+  @override
+  ConsumerState<_ReportComprasVendasView> createState() => _ReportComprasVendasViewState();
+}
+
+class _ReportComprasVendasViewState extends ConsumerState<_ReportComprasVendasView> {
+  DateTime _dataInicio = DateTime.now().subtract(const Duration(days: 30));
+  DateTime _dataFim = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dataAsync = ref.watch(comprasVendasReportProvider(
+      dataInicio: Formatters.dateForApi(_dataInicio),
+      dataFim: Formatters.dateForApi(_dataFim),
+    ));
+
+    return Container(
+      decoration: AppTheme.glassCard(),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('📈 Balanço: Compras vs. Vendas', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('Comparativo de saídas com fornecedores vs. faturamento bruto no período', style: theme.textTheme.bodySmall),
+                ],
+              ),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final picked = await showDateRangePicker(
+                    context: context,
+                    initialDateRange: DateTimeRange(start: _dataInicio, end: _dataFim),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                    builder: (context, child) => Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Color(0xFF1E1E1E),
+                          onSurface: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    ),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _dataInicio = picked.start;
+                      _dataFim = picked.end;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.date_range_rounded, size: 18),
+                label: Text('${Formatters.date(_dataInicio)} - ${Formatters.date(_dataFim)}'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white10),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: dataAsync.when(
+              loading: () => const LoadingOverlay(message: 'Consolidando balanço financeiro...'),
+              error: (e, _) => EmptyState(icon: Icons.error_outline, title: 'Erro', subtitle: '$e'),
+              data: (list) {
+                if (list.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.analytics_outlined,
+                    title: 'Balanço Vazio',
+                    subtitle: 'Sem movimentações de compras ou vendas no período.',
+                  );
+                }
+
+                double totalVendas = 0;
+                double totalCompras = 0;
+                for (final item in list) {
+                  totalVendas += (item['total_vendas'] as num).toDouble();
+                  totalCompras += (item['total_compras'] as num).toDouble();
+                }
+                final double saldoLiquido = totalVendas - totalCompras;
+
+                final List<FlSpot> spotsVendas = [];
+                final List<FlSpot> spotsCompras = [];
+                
+                for (int i = 0; i < list.length; i++) {
+                  final double v = (list[i]['total_vendas'] as num).toDouble();
+                  final double c = (list[i]['total_compras'] as num).toDouble();
+                  spotsVendas.add(FlSpot(i.toDouble(), v));
+                  spotsCompras.add(FlSpot(i.toDouble(), c));
+                }
+
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          _KPICard(
+                            title: 'Faturamento (Entradas)',
+                            value: Formatters.currency(totalVendas),
+                            icon: Icons.trending_up_rounded,
+                            color: Colors.greenAccent,
+                          ),
+                          _KPICard(
+                            title: 'Compras (Saídas)',
+                            value: Formatters.currency(totalCompras),
+                            icon: Icons.trending_down_rounded,
+                            color: Colors.orangeAccent,
+                          ),
+                          _KPICard(
+                            title: 'Saldo Líquido',
+                            value: Formatters.currency(saldoLiquido),
+                            icon: Icons.account_balance_wallet_rounded,
+                            color: saldoLiquido >= 0 ? Colors.cyanAccent : Colors.redAccent,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Text('Análise do Fluxo Diário', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Container(
+                        height: 280,
+                        padding: const EdgeInsets.only(top: 20, right: 20, bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: LineChart(
+                          LineChartData(
+                            gridData: const FlGridData(show: true, drawVerticalLine: false),
+                            titlesData: FlTitlesData(
+                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 46,
+                                  getTitlesWidget: (val, meta) => Text(
+                                    val >= 1000 ? '${(val / 1000).toStringAsFixed(1)}k' : val.toInt().toString(),
+                                    style: const TextStyle(color: Colors.white30, fontSize: 10),
+                                  ),
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 22,
+                                  getTitlesWidget: (val, meta) {
+                                    final int idx = val.toInt();
+                                    if (idx >= 0 && idx < list.length) {
+                                      if (list.length <= 10 || idx % (list.length ~/ 5 + 1) == 0) {
+                                        final parts = (list[idx]['data'] as String).split('-');
+                                        if (parts.length == 3) {
+                                          return Text('${parts[2]}/${parts[1]}', style: const TextStyle(color: Colors.white38, fontSize: 10));
+                                        }
+                                      }
+                                    }
+                                    return const Text('');
+                                  },
+                                ),
+                              ),
+                            ),
+                            borderData: FlBorderData(show: false),
+                            lineTouchData: LineTouchData(
+                              touchTooltipData: LineTouchTooltipData(
+                                getTooltipColor: (spot) => const Color(0xFF2C2C2C).withOpacity(0.9),
+                                tooltipRoundedRadius: 8,
+                                getTooltipItems: (touchedSpots) {
+                                  return touchedSpots.map((spot) {
+                                    final int idx = spot.x.toInt();
+                                    final date = list[idx]['data'] as String;
+                                    final parts = date.split('-');
+                                    final formattedDate = parts.length == 3 ? '${parts[2]}/${parts[1]}' : date;
+                                    
+                                    final isSales = spot.barIndex == 0;
+                                    final type = isSales ? 'Vendas' : 'Compras';
+                                    final color = isSales ? Colors.greenAccent : Colors.orangeAccent;
+                                    
+                                    return LineTooltipItem(
+                                      '$formattedDate - $type:\n${Formatters.currency(spot.y)}',
+                                      TextStyle(
+                                        color: color,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    );
+                                  }).toList();
+                                },
+                              ),
+                            ),
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: spotsVendas,
+                                isCurved: true,
+                                color: Colors.greenAccent,
+                                barWidth: 3,
+                                isStrokeCapRound: true,
+                                dotData: const FlDotData(show: false),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: Colors.greenAccent.withOpacity(0.05),
+                                ),
+                              ),
+                              LineChartBarData(
+                                spots: spotsCompras,
+                                isCurved: true,
+                                color: Colors.orangeAccent,
+                                barWidth: 3,
+                                isStrokeCapRound: true,
+                                dotData: const FlDotData(show: false),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: Colors.orangeAccent.withOpacity(0.05),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(width: 12, height: 12, decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle)),
+                          const SizedBox(width: 6),
+                          const Text('Vendas (Faturamento)', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                          const SizedBox(width: 24),
+                          Container(width: 12, height: 12, decoration: const BoxDecoration(color: Colors.orangeAccent, shape: BoxShape.circle)),
+                          const SizedBox(width: 6),
+                          const Text('Compras (Fornecedores)', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Text('📄 Detalhamento por Dia', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DataTable(
+                          headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                          columns: const [
+                            DataColumn(label: Text('DATA')),
+                            DataColumn(label: Text('VENDAS (ENTRADAS)'), numeric: true),
+                            DataColumn(label: Text('COMPRAS (SAÍDAS)'), numeric: true),
+                            DataColumn(label: Text('SALDO LÍQUIDO'), numeric: true),
+                          ],
+                          rows: list.reversed.map((item) {
+                            final date = item['data'] as String;
+                            final parts = date.split('-');
+                            final formattedDate = parts.length == 3 ? '${parts[2]}/${parts[1]}' : date;
+                            final double v = (item['total_vendas'] as num).toDouble();
+                            final double c = (item['total_compras'] as num).toDouble();
+                            final double diff = v - c;
+
+                            return DataRow(
+                              cells: [
+                                DataCell(Text(formattedDate, style: const TextStyle(fontWeight: FontWeight.w600))),
+                                DataCell(Text(Formatters.currency(v), style: const TextStyle(color: Colors.greenAccent))),
+                                DataCell(Text(Formatters.currency(c), style: const TextStyle(color: Colors.orangeAccent))),
+                                DataCell(
+                                  Text(
+                                    Formatters.currency(diff),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: diff >= 0 ? Colors.cyanAccent : Colors.redAccent,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 

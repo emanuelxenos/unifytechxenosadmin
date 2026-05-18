@@ -98,6 +98,9 @@ class ApiEndpoints {
   static const String relatorioContasPagarDetalhado = '/api/relatorios/financeiro/contas-pagar-detalhado';
   static const String relatorioProdutosMargem = '/api/relatorios/produtos/margem';
   static const String relatorioVendasFluxoHorario = '/api/relatorios/vendas/fluxo-horario';
+  static const String relatorioMeiosPagamento = '/api/relatorios/vendas/meios-pagamento';
+  static const String relatorioComprasVendas = '/api/relatorios/financeiro/compras-vendas';
+
 
 
   // Config (Admin)

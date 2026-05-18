@@ -1887,5 +1887,351 @@ class _VendasFluxoHorarioReportProviderElement
   String? get dataFim => (origin as VendasFluxoHorarioReportProvider).dataFim;
 }
 
+String _$vendasMeiosPagamentoReportHash() =>
+    r'710772a9a1cbe1f53b0afa00438da92442da4e4f';
+
+abstract class _$VendasMeiosPagamentoReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final String? dataInicio;
+  late final String? dataFim;
+
+  FutureOr<List<Map<String, dynamic>>> build({
+    String? dataInicio,
+    String? dataFim,
+  });
+}
+
+/// See also [VendasMeiosPagamentoReport].
+@ProviderFor(VendasMeiosPagamentoReport)
+const vendasMeiosPagamentoReportProvider = VendasMeiosPagamentoReportFamily();
+
+/// See also [VendasMeiosPagamentoReport].
+class VendasMeiosPagamentoReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [VendasMeiosPagamentoReport].
+  const VendasMeiosPagamentoReportFamily();
+
+  /// See also [VendasMeiosPagamentoReport].
+  VendasMeiosPagamentoReportProvider call({
+    String? dataInicio,
+    String? dataFim,
+  }) {
+    return VendasMeiosPagamentoReportProvider(
+      dataInicio: dataInicio,
+      dataFim: dataFim,
+    );
+  }
+
+  @override
+  VendasMeiosPagamentoReportProvider getProviderOverride(
+    covariant VendasMeiosPagamentoReportProvider provider,
+  ) {
+    return call(dataInicio: provider.dataInicio, dataFim: provider.dataFim);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'vendasMeiosPagamentoReportProvider';
+}
+
+/// See also [VendasMeiosPagamentoReport].
+class VendasMeiosPagamentoReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          VendasMeiosPagamentoReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [VendasMeiosPagamentoReport].
+  VendasMeiosPagamentoReportProvider({String? dataInicio, String? dataFim})
+    : this._internal(
+        () => VendasMeiosPagamentoReport()
+          ..dataInicio = dataInicio
+          ..dataFim = dataFim,
+        from: vendasMeiosPagamentoReportProvider,
+        name: r'vendasMeiosPagamentoReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$vendasMeiosPagamentoReportHash,
+        dependencies: VendasMeiosPagamentoReportFamily._dependencies,
+        allTransitiveDependencies:
+            VendasMeiosPagamentoReportFamily._allTransitiveDependencies,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      );
+
+  VendasMeiosPagamentoReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.dataInicio,
+    required this.dataFim,
+  }) : super.internal();
+
+  final String? dataInicio;
+  final String? dataFim;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant VendasMeiosPagamentoReport notifier,
+  ) {
+    return notifier.build(dataInicio: dataInicio, dataFim: dataFim);
+  }
+
+  @override
+  Override overrideWith(VendasMeiosPagamentoReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: VendasMeiosPagamentoReportProvider._internal(
+        () => create()
+          ..dataInicio = dataInicio
+          ..dataFim = dataFim,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    VendasMeiosPagamentoReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _VendasMeiosPagamentoReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VendasMeiosPagamentoReportProvider &&
+        other.dataInicio == dataInicio &&
+        other.dataFim == dataFim;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, dataInicio.hashCode);
+    hash = _SystemHash.combine(hash, dataFim.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin VendasMeiosPagamentoReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `dataInicio` of this provider.
+  String? get dataInicio;
+
+  /// The parameter `dataFim` of this provider.
+  String? get dataFim;
+}
+
+class _VendasMeiosPagamentoReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          VendasMeiosPagamentoReport,
+          List<Map<String, dynamic>>
+        >
+    with VendasMeiosPagamentoReportRef {
+  _VendasMeiosPagamentoReportProviderElement(super.provider);
+
+  @override
+  String? get dataInicio =>
+      (origin as VendasMeiosPagamentoReportProvider).dataInicio;
+  @override
+  String? get dataFim => (origin as VendasMeiosPagamentoReportProvider).dataFim;
+}
+
+String _$comprasVendasReportHash() =>
+    r'866071fc4ec270d5c8ecdd48841a1cff1b3bcfed';
+
+abstract class _$ComprasVendasReport
+    extends BuildlessAutoDisposeAsyncNotifier<List<Map<String, dynamic>>> {
+  late final String? dataInicio;
+  late final String? dataFim;
+
+  FutureOr<List<Map<String, dynamic>>> build({
+    String? dataInicio,
+    String? dataFim,
+  });
+}
+
+/// See also [ComprasVendasReport].
+@ProviderFor(ComprasVendasReport)
+const comprasVendasReportProvider = ComprasVendasReportFamily();
+
+/// See also [ComprasVendasReport].
+class ComprasVendasReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [ComprasVendasReport].
+  const ComprasVendasReportFamily();
+
+  /// See also [ComprasVendasReport].
+  ComprasVendasReportProvider call({String? dataInicio, String? dataFim}) {
+    return ComprasVendasReportProvider(
+      dataInicio: dataInicio,
+      dataFim: dataFim,
+    );
+  }
+
+  @override
+  ComprasVendasReportProvider getProviderOverride(
+    covariant ComprasVendasReportProvider provider,
+  ) {
+    return call(dataInicio: provider.dataInicio, dataFim: provider.dataFim);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'comprasVendasReportProvider';
+}
+
+/// See also [ComprasVendasReport].
+class ComprasVendasReportProvider
+    extends
+        AutoDisposeAsyncNotifierProviderImpl<
+          ComprasVendasReport,
+          List<Map<String, dynamic>>
+        > {
+  /// See also [ComprasVendasReport].
+  ComprasVendasReportProvider({String? dataInicio, String? dataFim})
+    : this._internal(
+        () => ComprasVendasReport()
+          ..dataInicio = dataInicio
+          ..dataFim = dataFim,
+        from: comprasVendasReportProvider,
+        name: r'comprasVendasReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$comprasVendasReportHash,
+        dependencies: ComprasVendasReportFamily._dependencies,
+        allTransitiveDependencies:
+            ComprasVendasReportFamily._allTransitiveDependencies,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      );
+
+  ComprasVendasReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.dataInicio,
+    required this.dataFim,
+  }) : super.internal();
+
+  final String? dataInicio;
+  final String? dataFim;
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> runNotifierBuild(
+    covariant ComprasVendasReport notifier,
+  ) {
+    return notifier.build(dataInicio: dataInicio, dataFim: dataFim);
+  }
+
+  @override
+  Override overrideWith(ComprasVendasReport Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ComprasVendasReportProvider._internal(
+        () => create()
+          ..dataInicio = dataInicio
+          ..dataFim = dataFim,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<
+    ComprasVendasReport,
+    List<Map<String, dynamic>>
+  >
+  createElement() {
+    return _ComprasVendasReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ComprasVendasReportProvider &&
+        other.dataInicio == dataInicio &&
+        other.dataFim == dataFim;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, dataInicio.hashCode);
+    hash = _SystemHash.combine(hash, dataFim.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ComprasVendasReportRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `dataInicio` of this provider.
+  String? get dataInicio;
+
+  /// The parameter `dataFim` of this provider.
+  String? get dataFim;
+}
+
+class _ComprasVendasReportProviderElement
+    extends
+        AutoDisposeAsyncNotifierProviderElement<
+          ComprasVendasReport,
+          List<Map<String, dynamic>>
+        >
+    with ComprasVendasReportRef {
+  _ComprasVendasReportProviderElement(super.provider);
+
+  @override
+  String? get dataInicio => (origin as ComprasVendasReportProvider).dataInicio;
+  @override
+  String? get dataFim => (origin as ComprasVendasReportProvider).dataFim;
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
