@@ -32,35 +32,21 @@ class PurchasesHelpDialog extends StatefulWidget {
 class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
   int _selectedCategoryIndex = 0;
   String _searchQuery = "";
-  final TextEditingController _searchController = TextEditingController();
-
-  final List<_HelpCategory> _categories = const [
+  final TextEditingController _searchController = TextEditingController();  final List<_HelpCategory> _categories = const [
     _HelpCategory(
-      title: 'Fluxo de Compras',
-      icon: Icons.shopping_cart_rounded,
+      title: 'Lançamento de Compras',
+      icon: Icons.add_shopping_cart_rounded,
       items: [
         _HelpItem(
-          title: 'Pedidos de Compra',
-          categoryName: 'Fluxo de Compras',
-          finalidade: 'Registrar intenções de compra, cotações e orçamentos junto aos fornecedores.',
-          utilidade: 'Garante o planejamento da reposição de estoque, permitindo conferir preços cotados antes da chegada física da mercadoria e evitando compras duplicadas.',
+          title: 'Registrar Nova Compra',
+          categoryName: 'Lançamento de Compras',
+          finalidade: 'Registrar a entrada manual de novos suprimentos e notas fiscais de compras no ERP.',
+          utilidade: 'Permite selecionar o fornecedor parceiro, inserir o número da nota fiscal e adicionar produtos de forma dinâmica — especificando a quantidade, preço de custo bruto unitário, lote, validade e local de estocagem.',
           indicadores: [
-            'Código identificador do pedido',
-            'Status do pedido (Pendente, Aprovado, Recebido, Cancelado)',
-            'Fornecedor associado e data de emissão',
-            'Valor total estimado do pedido e lista de itens cotados'
-          ],
-        ),
-        _HelpItem(
-          title: 'Entrada de Mercadorias (XML)',
-          categoryName: 'Fluxo de Compras',
-          finalidade: 'Dar entrada física de produtos no estoque através da importação de Notas Fiscais (NF-e/XML).',
-          utilidade: 'Automatiza o processo de recebimento de cargas. O sistema lê o XML da nota, atualiza o saldo físico dos produtos no estoque, recalcula o preço médio de custo e vincula as faturas financeiras automaticamente.',
-          indicadores: [
-            'Número da Nota Fiscal (NF-e) e Série',
-            'Chave de Acesso da Nota (44 dígitos)',
-            'Valor Total da Nota Fiscal',
-            'Divergência entre quantidade pedida e recebida'
+            'Seleção do Fornecedor e inserção do Nº da Nota Fiscal',
+            'Preço de Custo Unitário e Quantidade comprada',
+            'Cadastro de Lote, Validade e Localização de armazenamento',
+            'Soma e atualização automática do valor total dos itens no carrinho'
           ],
         ),
       ],
@@ -72,55 +58,25 @@ class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
         _HelpItem(
           title: 'Cadastro de Fornecedores',
           categoryName: 'Fornecedores',
-          finalidade: 'Centralizar os dados cadastrais, contatos, termos de logística e finanças de cada parceiro comercial.',
-          utilidade: 'Essencial para a equipe de compras negociar prazos e entregas. Permite consultar telefones rápidos, limites de crédito acordados e e-mails de faturamento de forma imediata.',
+          finalidade: 'Manter a ficha cadastral completa, canais de contato e termos financeiros dos fornecedores.',
+          utilidade: 'Organiza em abas interativas todos os dados cadastrais (Razão Social, CNPJ mascarado), contatos rápidos de entrega, prazos acordados de pagamento (ex: 30 dias) e limite de crédito comercial.',
           indicadores: [
-            'Razão Social, Nome Fantasia e CNPJ',
-            'Limite de Crédito Disponível para compras a prazo',
-            'Prazos acordados de Entrega (lead time) e de Pagamento',
-            'Contatos comerciais diretos (telefone e e-mail)'
+            'Dados cadastrais com máscaras automáticas (CNPJ, Telefones, CEP)',
+            'Limite de Crédito comercial (usando máscara monetária pt_BR)',
+            'Prazos acordados de entrega e de pagamento com validação de número',
+            'Visualização rápida em abas de leitura pelo ícone Teal de olho'
           ],
         ),
         _HelpItem(
           title: 'Histórico de Compras',
           categoryName: 'Fornecedores',
-          finalidade: 'Consultar compras passadas realizadas com cada fornecedor.',
-          utilidade: 'Ajuda a monitorar a pontualidade de entrega do fornecedor, auditar flutuações de preços de custo ao longo do tempo e renegociar contratos de fornecimento.',
+          finalidade: 'Consultar todas as compras anteriores registradas no sistema.',
+          utilidade: 'Permite rastrear pedidos passados, datas de lançamento, notas fiscais vinculadas, valores totais e aplicar filtros de período ou busca textual por fornecedor.',
           indicadores: [
-            'Valor acumulado de compras por fornecedor',
-            'Data da última compra física realizada',
-            'Variação percentual histórica do custo das mercadorias',
-            'Índice de devoluções ou itens avariados recebidos'
-          ],
-        ),
-      ],
-    ),
-    _HelpCategory(
-      title: 'Financeiro & Impostos',
-      icon: Icons.account_balance_wallet_rounded,
-      items: [
-        _HelpItem(
-          title: 'Integração de Contas a Pagar',
-          categoryName: 'Financeiro & Impostos',
-          finalidade: 'Gerar faturas financeiras a pagar automaticamente a partir das entradas de notas.',
-          utilidade: 'Evita falhas manuais e esquecimentos de pagamento. O sistema gera os desdobramentos de parcelas com base nos prazos de pagamento informados (ex: 30/60 dias).',
-          indicadores: [
-            'Datas de vencimento projetadas das parcelas',
-            'Valor de cada duplicata e conta de origem',
-            'Status de integração financeira no contas a pagar',
-            'Banco ou forma de liquidação definida no XML'
-          ],
-        ),
-        _HelpItem(
-          title: 'Custo de Aquisição & Tributos',
-          categoryName: 'Financeiro & Impostos',
-          finalidade: 'Mapear o custo real de entrada dos itens descontando tributos recuperáveis.',
-          utilidade: 'Fundamental para a correta precificação de venda. Permite apurar o custo real adicionando frete (FOB), IPI, ST e deduzindo créditos de ICMS/PIS/COFINS.',
-          indicadores: [
-            'Preço de compra unitário bruto',
-            'Créditos tributários calculados (ICMS, PIS, COFINS)',
-            'Custos adicionais aplicados (frete, seguros, embalagens)',
-            'Preço de custo líquido final para precificação'
+            'Volume financeiro total das compras registradas',
+            'Data de lançamento e número do documento fiscal',
+            'Status de entrega e identificação do fornecedor parceiro',
+            'Consultas consolidadas com gráficos na aba de Estatísticas'
           ],
         ),
       ],
@@ -129,13 +85,11 @@ class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
 
   Color _getCategoryColor(String cat) {
     switch (cat.toLowerCase()) {
-      case 'fluxo de compras': return Colors.teal;
+      case 'lançamento de compras': return Colors.teal;
       case 'fornecedores': return Colors.amber;
-      case 'financeiro & impostos': return Colors.green;
       default: return Colors.grey;
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
