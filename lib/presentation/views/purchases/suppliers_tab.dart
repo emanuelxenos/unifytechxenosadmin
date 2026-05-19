@@ -282,11 +282,26 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isEditing = widget.supplier != null;
     return AlertDialog(
-      title: Text(isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Icon(
+            isEditing ? Icons.edit_outlined : Icons.add_business_rounded,
+            color: AppTheme.primaryColor,
+            size: 26,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor',
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
       content: SizedBox(
-        width: 450,
+        width: 480,
         child: Form(
           key: _formKey,
           child: Column(
@@ -294,30 +309,69 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
             children: [
               TextFormField(
                 controller: _razaoSocialCtrl,
-                decoration: const InputDecoration(labelText: 'Razão Social *'),
-                validator: (v) => v!.isEmpty ? 'Obrigatório' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Razão Social *',
+                  prefixIcon: Icon(Icons.business_rounded, size: 20),
+                  hintText: 'Ex: UnifyTech Distribuidores Ltda',
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'A Razão Social é obrigatória';
+                  if (v.trim().length < 3) return 'Deve ter pelo menos 3 caracteres';
+                  return null;
+                },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _cnpjCtrl,
-                decoration: const InputDecoration(labelText: 'CNPJ', hintText: '00.000.000/0000-00'),
+                decoration: const InputDecoration(
+                  labelText: 'CNPJ',
+                  prefixIcon: Icon(Icons.badge_rounded, size: 20),
+                  hintText: '00.000.000/0000-00',
+                ),
                 inputFormatters: [_cnpjFormatter],
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final clean = _cnpjFormatter.getUnmaskedText();
+                  if (clean.length != 14) return 'CNPJ incompleto (deve conter 14 dígitos)';
+                  return null;
+                },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _telefoneCtrl,
-                      decoration: const InputDecoration(labelText: 'Telefone', hintText: '(00) 00000-0000'),
+                      decoration: const InputDecoration(
+                        labelText: 'Telefone',
+                        prefixIcon: Icon(Icons.phone_rounded, size: 20),
+                        hintText: '(00) 00000-0000',
+                      ),
                       inputFormatters: [_phoneFormatter],
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        final clean = _phoneFormatter.getUnmaskedText();
+                        if (clean.length < 10) return 'Telefone incompleto';
+                        return null;
+                      },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: TextFormField(
                       controller: _emailCtrl,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_rounded, size: 20),
+                        hintText: 'contato@fornecedor.com',
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        final email = v.trim();
+                        if (!email.contains('@') || !email.contains('.')) return 'Email inválido';
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -333,7 +387,13 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
         ),
         ElevatedButton(
           onPressed: _saving ? null : _save,
-          child: _saving ? const CircularProgressIndicator() : Text(isEditing ? 'Salvar' : 'Cadastrar'),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Text(isEditing ? 'Salvar' : 'Cadastrar'),
         ),
       ],
     );
@@ -353,21 +413,38 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
     final bool success;
     final String message;
 
-    if (widget.supplier != null) {
-      final result = await ref.read(suppliersProvider.notifier).atualizar(widget.supplier!.idFornecedor, req);
-      success = result.$1;
-      message = result.$2;
-    } else {
-      final result = await ref.read(suppliersProvider.notifier).criar(req);
-      success = result.$1;
-      message = result.$2;
-    }
-    
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: success ? AppTheme.accentGreen : AppTheme.accentRed),
-      );
+    try {
+      if (widget.supplier != null) {
+        final result = await ref.read(suppliersProvider.notifier).atualizar(widget.supplier!.idFornecedor, req);
+        success = result.$1;
+        message = result.$2;
+      } else {
+        final result = await ref.read(suppliersProvider.notifier).criar(req);
+        success = result.$1;
+        message = result.$2;
+      }
+      
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: success ? AppTheme.accentGreen : AppTheme.accentRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro: $e'),
+            backgroundColor: AppTheme.accentRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 }
