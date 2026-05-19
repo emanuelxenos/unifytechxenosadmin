@@ -10,6 +10,7 @@ import 'package:unifytechxenosadmin/domain/models/pagination.dart';
 part 'purchase_provider.g.dart';
 
 class PurchaseFilters {
+  final int? fornecedorId;
   final String? status;
   final String? notaFiscal;
   final DateTime? dataInicio;
@@ -18,6 +19,7 @@ class PurchaseFilters {
   final int limit;
 
   const PurchaseFilters({
+    this.fornecedorId,
     this.status,
     this.notaFiscal,
     this.dataInicio,
@@ -27,6 +29,8 @@ class PurchaseFilters {
   });
 
   PurchaseFilters copyWith({
+    int? fornecedorId,
+    bool clearFornecedor = false,
     String? status,
     String? notaFiscal,
     DateTime? dataInicio,
@@ -35,6 +39,7 @@ class PurchaseFilters {
     int? limit,
   }) {
     return PurchaseFilters(
+      fornecedorId: clearFornecedor ? null : (fornecedorId ?? this.fornecedorId),
       status: status ?? this.status,
       notaFiscal: notaFiscal ?? this.notaFiscal,
       dataInicio: dataInicio ?? this.dataInicio,
@@ -55,6 +60,7 @@ class Purchases extends _$Purchases {
 
   Future<PaginatedResponse<Compra>> _fetch(PurchaseFilters filters) async {
     return ref.read(purchaseRepositoryProvider).listar(
+      fornecedorId: filters.fornecedorId,
       status: filters.status,
       notaFiscal: filters.notaFiscal,
       dataInicio: filters.dataInicio,
@@ -110,10 +116,39 @@ Future<List<Compra>> supplierHistory(SupplierHistoryRef ref, int supplierId) asy
 }
 
 @riverpod
+class SupplierHistoryState extends _$SupplierHistoryState {
+  @override
+  PurchaseFilters build(int supplierId) {
+    return const PurchaseFilters(limit: 10);
+  }
+
+  void setPage(int page) => state = state.copyWith(page: page);
+  void setLimit(int limit) => state = state.copyWith(limit: limit, page: 1);
+}
+
+@riverpod
+FutureOr<PaginatedResponse<Compra>> paginatedSupplierHistory(
+  PaginatedSupplierHistoryRef ref,
+  int supplierId,
+) {
+  final filters = ref.watch(supplierHistoryStateProvider(supplierId));
+  return ref.read(purchaseRepositoryProvider).listar(
+        fornecedorId: supplierId,
+        page: filters.page,
+        limit: filters.limit,
+      );
+}
+
+@riverpod
 class PurchaseFilterState extends _$PurchaseFilterState {
   @override
   PurchaseFilters build() => const PurchaseFilters();
 
+  void setFornecedorId(int? id) => state = state.copyWith(
+    fornecedorId: id,
+    clearFornecedor: id == null,
+    page: 1,
+  );
   void setStatus(String? status) => state = state.copyWith(status: status, page: 1);
   void setNotaFiscal(String? nf) => state = state.copyWith(notaFiscal: nf, page: 1);
   void setRange(DateTimeRange? range) => state = state.copyWith(

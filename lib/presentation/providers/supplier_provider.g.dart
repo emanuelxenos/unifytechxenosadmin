@@ -24,6 +24,26 @@ final filteredSuppliersProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FilteredSuppliersRef = AutoDisposeProviderRef<List<Fornecedor>>;
+String _$paginatedFilteredSuppliersHash() =>
+    r'70ed7e368b2be10d48cba4ad50c087c30ff6af72';
+
+/// See also [paginatedFilteredSuppliers].
+@ProviderFor(paginatedFilteredSuppliers)
+final paginatedFilteredSuppliersProvider =
+    AutoDisposeProvider<List<Fornecedor>>.internal(
+      paginatedFilteredSuppliers,
+      name: r'paginatedFilteredSuppliersProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$paginatedFilteredSuppliersHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef PaginatedFilteredSuppliersRef =
+    AutoDisposeProviderRef<List<Fornecedor>>;
 String _$suppliersHash() => r'6f5a043d3271594fefbc3d27a122184d2d74c917';
 
 /// See also [Suppliers].
@@ -40,6 +60,27 @@ final suppliersProvider =
     );
 
 typedef _$Suppliers = AutoDisposeAsyncNotifier<List<Fornecedor>>;
+String _$supplierPaginationStateHash() =>
+    r'05209273c0b4a103727d0dd842d763a03984215b';
+
+/// See also [SupplierPaginationState].
+@ProviderFor(SupplierPaginationState)
+final supplierPaginationStateProvider =
+    AutoDisposeNotifierProvider<
+      SupplierPaginationState,
+      SupplierPaginationFilters
+    >.internal(
+      SupplierPaginationState.new,
+      name: r'supplierPaginationStateProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$supplierPaginationStateHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$SupplierPaginationState =
+    AutoDisposeNotifier<SupplierPaginationFilters>;
 String _$supplierSearchHash() => r'42a42e5db305969a5a8e29ef05453d74d5ef5b12';
 
 /// See also [SupplierSearch].

@@ -24,6 +24,8 @@ class SuppliersTab extends ConsumerWidget {
     final theme = Theme.of(context);
     final suppliersAsync = ref.watch(suppliersProvider);
     final filtered = ref.watch(filteredSuppliersProvider);
+    final paginatedFiltered = ref.watch(paginatedFilteredSuppliersProvider);
+    final pagination = ref.watch(supplierPaginationStateProvider);
 
     return Column(
       children: [
@@ -34,7 +36,10 @@ class SuppliersTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: TextField(
-                  onChanged: (v) => ref.read(supplierSearchProvider.notifier).setQuery(v),
+                  onChanged: (v) {
+                    ref.read(supplierSearchProvider.notifier).setQuery(v);
+                    ref.read(supplierPaginationStateProvider.notifier).setPage(1);
+                  },
                   decoration: const InputDecoration(
                     hintText: 'Buscar fornecedor por nome ou CNPJ...',
                     prefixIcon: Icon(Icons.search_rounded),
@@ -45,7 +50,10 @@ class SuppliersTab extends ConsumerWidget {
               FilterChip(
                 label: const Text('Mostrar Inativos'),
                 selected: ref.watch(supplierInactivesProvider),
-                onSelected: (v) => ref.read(supplierInactivesProvider.notifier).set(v),
+                onSelected: (v) {
+                  ref.read(supplierInactivesProvider.notifier).set(v);
+                  ref.read(supplierPaginationStateProvider.notifier).setPage(1);
+                },
                 selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                 checkmarkColor: AppTheme.primaryColor,
               ),
@@ -82,52 +90,114 @@ class SuppliersTab extends ConsumerWidget {
                     subtitle: 'Cadastre fornecedores para registrar compras.',
                   );
                 }
-                return SingleChildScrollView(
-                  child: DataTable(
-                    showCheckboxColumn: false,
-                    columns: const [
-                      DataColumn(label: Text('RAZÃO SOCIAL')),
-                      DataColumn(label: Text('CNPJ')),
-                      DataColumn(label: Text('TELEFONE')),
-                      DataColumn(label: Text('CIDADE')),
-                      DataColumn(label: Text('STATUS')),
-                      DataColumn(label: Text('AÇÕES')),
-                    ],
-                    rows: filtered.map((s) => DataRow(
-                      cells: [
-                        DataCell(Text(s.razaoSocial)),
-                        DataCell(Text(s.cnpj ?? '-')),
-                        DataCell(Text(s.telefone ?? '-')),
-                        DataCell(Text(s.cidade ?? '-')),
-                        DataCell(StatusChip.fromStatus(s.ativo ? 'ativo' : 'inativo')),
-                        DataCell(
+                return Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: DataTable(
+                          showCheckboxColumn: false,
+                          columns: const [
+                            DataColumn(label: Text('RAZÃO SOCIAL')),
+                            DataColumn(label: Text('CNPJ')),
+                            DataColumn(label: Text('TELEFONE')),
+                            DataColumn(label: Text('CIDADE')),
+                            DataColumn(label: Text('STATUS')),
+                            DataColumn(label: Text('AÇÕES')),
+                          ],
+                          rows: paginatedFiltered.map((s) => DataRow(
+                            cells: [
+                              DataCell(Text(s.razaoSocial)),
+                              DataCell(Text(s.cnpj ?? '-')),
+                              DataCell(Text(s.telefone ?? '-')),
+                              DataCell(Text(s.cidade ?? '-')),
+                              DataCell(StatusChip.fromStatus(s.ativo ? 'ativo' : 'inativo')),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.analytics_outlined, size: 18, color: AppTheme.accentBlue),
+                                      tooltip: 'Análises e Histórico',
+                                      onPressed: () {
+                                        ref.read(selectedSupplierAnalyticsProvider.notifier).select(s.idFornecedor);
+                                        DefaultTabController.of(context).animateTo(2);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 18),
+                                      tooltip: 'Editar',
+                                      onPressed: () => _showSupplierForm(context, supplier: s),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.accentRed),
+                                      tooltip: 'Inativar',
+                                      onPressed: () => _confirmInactivate(context, ref, s),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )).toList(),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.analytics_outlined, size: 18, color: AppTheme.accentBlue),
-                                tooltip: 'Análises e Histórico',
-                                onPressed: () {
-                                  ref.read(selectedSupplierAnalyticsProvider.notifier).select(s.idFornecedor);
-                                  DefaultTabController.of(context).animateTo(2);
+                              Text('Itens por página:', style: theme.textTheme.bodyMedium),
+                              const SizedBox(width: 8),
+                              DropdownButton<int>(
+                                value: pagination.limit,
+                                underline: const SizedBox(),
+                                items: [5, 10, 20, 50].map((limit) => DropdownMenuItem(
+                                  value: limit,
+                                  child: Text('$limit'),
+                                )).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    ref.read(supplierPaginationStateProvider.notifier).setLimit(val);
+                                  }
                                 },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 18),
-                                tooltip: 'Editar',
-                                onPressed: () => _showSupplierForm(context, supplier: s),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.accentRed),
-                                tooltip: 'Inativar',
-                                onPressed: () => _confirmInactivate(context, ref, s),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    )).toList(),
-                  ),
+                          Text(
+                            'Mostrando ${filtered.isEmpty ? 0 : (pagination.page - 1) * pagination.limit + 1} - '
+                            '${(pagination.page - 1) * pagination.limit + paginatedFiltered.length} de '
+                            '${filtered.length}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left_rounded),
+                                onPressed: pagination.page > 1
+                                    ? () => ref.read(supplierPaginationStateProvider.notifier).setPage(pagination.page - 1)
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Pág. ${pagination.page}',
+                                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right_rounded),
+                                onPressed: filtered.length > pagination.page * pagination.limit
+                                    ? () => ref.read(supplierPaginationStateProvider.notifier).setPage(pagination.page + 1)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

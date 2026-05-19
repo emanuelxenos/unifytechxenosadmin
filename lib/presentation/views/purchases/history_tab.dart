@@ -9,6 +9,8 @@ import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_detail_dialog.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/receive_purchase_dialog.dart';
 
+import 'package:unifytechxenosadmin/presentation/providers/supplier_provider.dart';
+
 class HistoryTab extends ConsumerWidget {
   const HistoryTab({super.key});
 
@@ -17,6 +19,7 @@ class HistoryTab extends ConsumerWidget {
     final theme = Theme.of(context);
     final purchasesAsync = ref.watch(purchasesProvider);
     final filters = ref.watch(purchaseFilterStateProvider);
+    final suppliersAsync = ref.watch(suppliersProvider);
 
     return Column(
       children: [
@@ -27,13 +30,34 @@ class HistoryTab extends ConsumerWidget {
             children: [
               // Search NF
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: TextField(
                   onChanged: (v) => ref.read(purchaseFilterStateProvider.notifier).setNotaFiscal(v),
                   decoration: const InputDecoration(
                     hintText: 'Buscar por nota fiscal...',
                     prefixIcon: Icon(Icons.search_rounded),
                   ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Supplier Filter
+              Expanded(
+                flex: 3,
+                child: suppliersAsync.when(
+                  data: (suppliers) => DropdownButtonFormField<int?>(
+                    value: filters.fornecedorId,
+                    decoration: const InputDecoration(labelText: 'Fornecedor'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Todos os Fornecedores')),
+                      ...suppliers.map((s) => DropdownMenuItem(
+                        value: s.idFornecedor,
+                        child: Text(s.razaoSocial, overflow: TextOverflow.ellipsis),
+                      )),
+                    ],
+                    onChanged: (v) => ref.read(purchaseFilterStateProvider.notifier).setFornecedorId(v),
+                  ),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => const Text('Erro ao carregar'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -83,7 +107,7 @@ class HistoryTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              if (filters.status != null || filters.notaFiscal != null || filters.dataInicio != null)
+              if (filters.status != null || filters.notaFiscal != null || filters.dataInicio != null || filters.fornecedorId != null)
                 IconButton(
                   onPressed: () => ref.read(purchaseFilterStateProvider.notifier).clear(),
                   icon: const Icon(Icons.filter_list_off_rounded, color: AppTheme.accentRed),

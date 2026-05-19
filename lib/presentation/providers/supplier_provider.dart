@@ -71,6 +71,42 @@ List<Fornecedor> filteredSuppliers(FilteredSuppliersRef ref) {
   );
 }
 
+class SupplierPaginationFilters {
+  final int page;
+  final int limit;
+
+  const SupplierPaginationFilters({this.page = 1, this.limit = 10});
+
+  SupplierPaginationFilters copyWith({int? page, int? limit}) {
+    return SupplierPaginationFilters(
+      page: page ?? this.page,
+      limit: limit ?? this.limit,
+    );
+  }
+}
+
+@riverpod
+class SupplierPaginationState extends _$SupplierPaginationState {
+  @override
+  SupplierPaginationFilters build() => const SupplierPaginationFilters();
+
+  void setPage(int page) => state = state.copyWith(page: page);
+  void setLimit(int limit) => state = state.copyWith(limit: limit, page: 1);
+  void reset() => state = const SupplierPaginationFilters();
+}
+
+@riverpod
+List<Fornecedor> paginatedFilteredSuppliers(PaginatedFilteredSuppliersRef ref) {
+  final filtered = ref.watch(filteredSuppliersProvider);
+  final filters = ref.watch(supplierPaginationStateProvider);
+  
+  final start = (filters.page - 1) * filters.limit;
+  if (start >= filtered.length) return [];
+  
+  final end = start + filters.limit;
+  return filtered.sublist(start, end > filtered.length ? filtered.length : end);
+}
+
 @riverpod
 class SupplierSearch extends _$SupplierSearch {
   @override
