@@ -105,6 +105,14 @@ class SuppliersTab extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
+                                icon: const Icon(Icons.analytics_outlined, size: 18, color: AppTheme.accentBlue),
+                                tooltip: 'Análises e Histórico',
+                                onPressed: () {
+                                  ref.read(selectedSupplierAnalyticsProvider.notifier).select(s.idFornecedor);
+                                  DefaultTabController.of(context).animateTo(2);
+                                },
+                              ),
+                              IconButton(
                                 icon: const Icon(Icons.edit_outlined, size: 18),
                                 tooltip: 'Editar',
                                 onPressed: () => _showSupplierForm(context, supplier: s),

@@ -7,21 +7,16 @@ import 'package:unifytechxenosadmin/presentation/providers/purchase_provider.dar
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 import 'package:unifytechxenosadmin/domain/models/supplier.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
+import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_detail_dialog.dart';
 
-class SupplierAnalyticsTab extends ConsumerStatefulWidget {
+class SupplierAnalyticsTab extends ConsumerWidget {
   const SupplierAnalyticsTab({super.key});
 
   @override
-  ConsumerState<SupplierAnalyticsTab> createState() => _SupplierAnalyticsTabState();
-}
-
-class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
-  int? _selectedSupplierId;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final suppliersAsync = ref.watch(suppliersProvider);
+    final selectedSupplierId = ref.watch(selectedSupplierAnalyticsProvider);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,8 +41,8 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                       suppliersAsync.when(
                         data: (suppliers) => SearchAnchor(
                           builder: (context, controller) {
-                            final selectedSupplier = suppliers.any((s) => s.idFornecedor == _selectedSupplierId)
-                                ? suppliers.firstWhere((s) => s.idFornecedor == _selectedSupplierId)
+                            final selectedSupplier = suppliers.any((s) => s.idFornecedor == selectedSupplierId)
+                                ? suppliers.firstWhere((s) => s.idFornecedor == selectedSupplierId)
                                 : null;
 
                             return SearchBar(
@@ -61,7 +56,7 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                               leading: const Icon(Icons.search),
                               trailing: selectedSupplier != null ? [
                                 IconButton(
-                                  onPressed: () => setState(() => _selectedSupplierId = null),
+                                  onPressed: () => ref.read(selectedSupplierAnalyticsProvider.notifier).select(null),
                                   icon: const Icon(Icons.clear),
                                 ),
                               ] : null,
@@ -77,10 +72,8 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                                   title: Text(s.razaoSocial),
                                   subtitle: Text(s.cnpj ?? 'Sem CNPJ'),
                                   onTap: () {
-                                    setState(() {
-                                      _selectedSupplierId = s.idFornecedor;
-                                      controller.closeView(s.razaoSocial);
-                                    });
+                                    ref.read(selectedSupplierAnalyticsProvider.notifier).select(s.idFornecedor);
+                                    controller.closeView(s.razaoSocial);
                                   },
                                 ));
                           },
@@ -91,14 +84,13 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                     ],
                   ),
                 ),
-                // REMOVED: redundant close button since search bar has it
               ],
             ),
           ),
         ),
 
         // Results
-        if (_selectedSupplierId == null)
+        if (selectedSupplierId == null)
           const Expanded(
             child: EmptyState(
               icon: Icons.analytics_outlined,
@@ -108,7 +100,7 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
           )
         else
           Expanded(
-            child: _buildSupplierData(context, ref, _selectedSupplierId!),
+            child: _buildSupplierData(context, ref, selectedSupplierId),
           ),
       ],
     );
@@ -188,9 +180,10 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                     columns: const [
                       DataColumn(label: Text('DATA')),
                       DataColumn(label: Text('NF')),
-                      DataColumn(label: Text('PRODUTOS'), numeric: true),
+                      DataColumn(label: Text('VALOR PRODUTOS'), numeric: true),
                       DataColumn(label: Text('VALOR TOTAL'), numeric: true),
                       DataColumn(label: Text('STATUS')),
+                      DataColumn(label: Text('AÇÕES')),
                     ],
                     rows: purchases.map((c) => DataRow(
                       cells: [
@@ -202,6 +195,23 @@ class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         )),
                         DataCell(StatusChip.fromStatus(c.status)),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.visibility_outlined, size: 18),
+                                tooltip: 'Ver Detalhes',
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => PurchaseDetailDialog(compraId: c.idCompra),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     )).toList(),
                   ),

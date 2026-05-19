@@ -87,3 +87,11 @@ class SupplierInactives extends _$SupplierInactives {
   void toggle() => state = !state;
   void set(bool value) => state = value;
 }
+
+@riverpod
+class SelectedSupplierAnalytics extends _$SelectedSupplierAnalytics {
+  @override
+  int? build() => null;
+
+  void select(int? id) => state = id;
+}
