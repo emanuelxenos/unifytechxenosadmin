@@ -73,12 +73,12 @@ final supplierInactivesProvider =
 
 typedef _$SupplierInactives = AutoDisposeNotifier<bool>;
 String _$selectedSupplierAnalyticsHash() =>
-    r'20837d653bc2bf377ea1c069db92260e08f28ad9';
+    r'cc22479e72e8e966bf3996058a8c87361391303d';
 
 /// See also [SelectedSupplierAnalytics].
 @ProviderFor(SelectedSupplierAnalytics)
 final selectedSupplierAnalyticsProvider =
-    AutoDisposeNotifierProvider<SelectedSupplierAnalytics, int?>.internal(
+    NotifierProvider<SelectedSupplierAnalytics, int?>.internal(
       SelectedSupplierAnalytics.new,
       name: r'selectedSupplierAnalyticsProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -88,6 +88,6 @@ final selectedSupplierAnalyticsProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$SelectedSupplierAnalytics = AutoDisposeNotifier<int?>;
+typedef _$SelectedSupplierAnalytics = Notifier<int?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
