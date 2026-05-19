@@ -32,51 +32,79 @@ class PurchasesHelpDialog extends StatefulWidget {
 class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
   int _selectedCategoryIndex = 0;
   String _searchQuery = "";
-  final TextEditingController _searchController = TextEditingController();  final List<_HelpCategory> _categories = const [
+  final TextEditingController _searchController = TextEditingController();
+
+  final List<_HelpCategory> _categories = const [
     _HelpCategory(
-      title: 'Lançamento de Compras',
-      icon: Icons.add_shopping_cart_rounded,
+      title: 'Aba: Histórico de Compras',
+      icon: Icons.history_rounded,
       items: [
         _HelpItem(
-          title: 'Registrar Nova Compra',
-          categoryName: 'Lançamento de Compras',
-          finalidade: 'Registrar a entrada manual de novos suprimentos e notas fiscais de compras no ERP.',
-          utilidade: 'Permite selecionar o fornecedor parceiro, inserir o número da nota fiscal e adicionar produtos de forma dinâmica — especificando a quantidade, preço de custo bruto unitário, lote, validade e local de estocagem.',
+          title: 'Histórico de Lançamentos',
+          categoryName: 'Aba: Histórico de Compras',
+          finalidade: 'Consultar, conferir e auditar todas as compras de produtos registradas na empresa.',
+          utilidade: 'Exibe a listagem completa com colunas de Fornecedor, Nº Nota Fiscal, Data de Emissão, Valor Total e ações. Possui barra de pesquisa por fornecedor/nota e paginação para navegação rápida.',
           indicadores: [
-            'Seleção do Fornecedor e inserção do Nº da Nota Fiscal',
-            'Preço de Custo Unitário e Quantidade comprada',
-            'Cadastro de Lote, Validade e Localização de armazenamento',
-            'Soma e atualização automática do valor total dos itens no carrinho'
+            'Coluna de Fornecedor da compra',
+            'Coluna do Nº da Nota Fiscal informada',
+            'Coluna com a Data de Emissão do documento',
+            'Coluna com o Valor Total bruto da compra',
+            'Filtro de busca por termo e controle de paginação'
           ],
         ),
       ],
     ),
     _HelpCategory(
-      title: 'Fornecedores',
+      title: 'Aba: Fornecedores',
       icon: Icons.business_rounded,
       items: [
         _HelpItem(
-          title: 'Cadastro de Fornecedores',
-          categoryName: 'Fornecedores',
-          finalidade: 'Manter a ficha cadastral completa, canais de contato e termos financeiros dos fornecedores.',
-          utilidade: 'Organiza em abas interativas todos os dados cadastrais (Razão Social, CNPJ mascarado), contatos rápidos de entrega, prazos acordados de pagamento (ex: 30 dias) e limite de crédito comercial.',
+          title: 'Gestão de Fornecedores',
+          categoryName: 'Aba: Fornecedores',
+          finalidade: 'Visualizar, cadastrar, editar e remover parceiros comerciais cadastrados.',
+          utilidade: 'Tabela principal com colunas de Razão Social, Nome Fantasia, CNPJ e Telefone. Inclui botão de cadastro e ações por linha: Visualizar Detalhes (diálogo Teal de 3 abas sem risco de edição), Editar dados e Excluir.',
           indicadores: [
-            'Dados cadastrais com máscaras automáticas (CNPJ, Telefones, CEP)',
-            'Limite de Crédito comercial (usando máscara monetária pt_BR)',
-            'Prazos acordados de entrega e de pagamento com validação de número',
-            'Visualização rápida em abas de leitura pelo ícone Teal de olho'
+            'Coluna com a Razão Social e Nome Fantasia',
+            'Coluna com o CNPJ do fornecedor',
+            'Coluna com o Telefone principal do contato',
+            'Botão para Visualizar Detalhes em modo leitura rápida',
+            'Botão de Edição e remoção segura do registro'
           ],
         ),
+      ],
+    ),
+    _HelpCategory(
+      title: 'Aba: Consultas por Fornecedor',
+      icon: Icons.analytics_rounded,
+      items: [
         _HelpItem(
-          title: 'Histórico de Compras',
-          categoryName: 'Fornecedores',
-          finalidade: 'Consultar todas as compras anteriores registradas no sistema.',
-          utilidade: 'Permite rastrear pedidos passados, datas de lançamento, notas fiscais vinculadas, valores totais e aplicar filtros de período ou busca textual por fornecedor.',
+          title: 'Estatísticas & Gráficos',
+          categoryName: 'Aba: Consultas por Fornecedor',
+          finalidade: 'Análise gerencial do volume de compras acumulado por fornecedor.',
+          utilidade: 'Painel com gráficos analíticos e tabelas que somam e consolidam as compras por parceiro, ajudando a identificar quais fornecedores concentram a maior fatia das reposições do seu estoque.',
           indicadores: [
-            'Volume financeiro total das compras registradas',
-            'Data de lançamento e número do documento fiscal',
-            'Status de entrega e identificação do fornecedor parceiro',
-            'Consultas consolidadas com gráficos na aba de Estatísticas'
+            'Gráfico de distribuição e representação financeira',
+            'Tabela com totais acumulados por fornecedor',
+            'Controle de volume comprado por parceiro comercial'
+          ],
+        ),
+      ],
+    ),
+    _HelpCategory(
+      title: 'Botão: Nova Compra',
+      icon: Icons.add_shopping_cart_rounded,
+      items: [
+        _HelpItem(
+          title: 'Formulário de Entrada',
+          categoryName: 'Botão: Nova Compra',
+          finalidade: 'Lançar novas entradas de mercadorias e atualizar o estoque físico.',
+          utilidade: 'Abre a janela flutuante para preenchimento dos dados. Permite selecionar o fornecedor, inserir o Nº da Nota Fiscal, buscar produtos para adicionar ao carrinho e editar os campos de item (Qtd, Preço de Custo, Localização, Validade e Lote).',
+          indicadores: [
+            'Seleção do Fornecedor e Nº da Nota Fiscal',
+            'Carrinho dinâmico de produtos selecionados',
+            'Edição por item: Qtd, Custo, Lote, Validade e Localização',
+            'Soma automática do TOTAL DA COMPRA no rodapé',
+            'Botões de Ação: Cancelar ou Finalizar Compra'
           ],
         ),
       ],
@@ -85,11 +113,14 @@ class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
 
   Color _getCategoryColor(String cat) {
     switch (cat.toLowerCase()) {
-      case 'lançamento de compras': return Colors.teal;
-      case 'fornecedores': return Colors.amber;
+      case 'aba: histórico de compras': return Colors.teal;
+      case 'aba: fornecedores': return Colors.amber;
+      case 'aba: consultas por fornecedor': return Colors.blue;
+      case 'botão: nova compra': return Colors.green;
       default: return Colors.grey;
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -161,7 +192,7 @@ class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Saiba como gerenciar pedidos, XML de Notas Fiscais e fornecedores',
+                              'Guia explicativo sobre a finalidade, utilidade e funcionamento das telas e recursos de compras',
                               style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
                             ),
                           ],
@@ -185,9 +216,9 @@ class _PurchasesHelpDialogState extends State<PurchasesHelpDialog> {
                   controller: _searchController,
                   onChanged: (val) => setState(() => _searchQuery = val),
                   decoration: InputDecoration(
-                    hintText: 'Pesquise por termos, processos ou indicadores (ex: xml, fornecedor, impostos)...',
+                    hintText: 'Pesquise por abas, botões ou termos (ex: histórico, fornecedor, nova compra)...',
                     prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
-                    suffixIcon: _searchQuery.isNotEmpty 
+                    suffixIcon: _searchQuery.isNotEmpty  
                       ? IconButton(
                           icon: const Icon(Icons.clear_rounded, color: Colors.grey),
                           onPressed: () {
