@@ -5,6 +5,8 @@ import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 import 'package:unifytechxenosadmin/presentation/providers/product_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/stock_provider.dart';
 
+import 'package:unifytechxenosadmin/domain/models/pagination.dart';
+
 part 'purchase_provider.g.dart';
 
 class PurchaseFilters {
@@ -12,20 +14,33 @@ class PurchaseFilters {
   final String? notaFiscal;
   final DateTime? dataInicio;
   final DateTime? dataFim;
+  final int page;
+  final int limit;
 
-  const PurchaseFilters({this.status, this.notaFiscal, this.dataInicio, this.dataFim});
+  const PurchaseFilters({
+    this.status,
+    this.notaFiscal,
+    this.dataInicio,
+    this.dataFim,
+    this.page = 1,
+    this.limit = 20,
+  });
 
   PurchaseFilters copyWith({
     String? status,
     String? notaFiscal,
     DateTime? dataInicio,
     DateTime? dataFim,
+    int? page,
+    int? limit,
   }) {
     return PurchaseFilters(
       status: status ?? this.status,
       notaFiscal: notaFiscal ?? this.notaFiscal,
       dataInicio: dataInicio ?? this.dataInicio,
       dataFim: dataFim ?? this.dataFim,
+      page: page ?? this.page,
+      limit: limit ?? this.limit,
     );
   }
 }
@@ -33,17 +48,19 @@ class PurchaseFilters {
 @riverpod
 class Purchases extends _$Purchases {
   @override
-  FutureOr<List<Compra>> build() async {
+  FutureOr<PaginatedResponse<Compra>> build() async {
     final filters = ref.watch(purchaseFilterStateProvider);
     return _fetch(filters);
   }
 
-  Future<List<Compra>> _fetch(PurchaseFilters filters) async {
+  Future<PaginatedResponse<Compra>> _fetch(PurchaseFilters filters) async {
     return ref.read(purchaseRepositoryProvider).listar(
       status: filters.status,
       notaFiscal: filters.notaFiscal,
       dataInicio: filters.dataInicio,
       dataFim: filters.dataFim,
+      page: filters.page,
+      limit: filters.limit,
     );
   }
 
@@ -75,7 +92,7 @@ class PurchaseActions extends _$PurchaseActions {
       ref.invalidate(purchasesProvider);
       ref.invalidate(productsProvider); 
       ref.invalidate(lowStockProvider);
-      return (true, 'Compra marcada como recebida');
+      return (true, 'Compra marked as received');
     } catch (e) {
       return (false, 'Erro ao receber compra: $e');
     }
@@ -83,9 +100,13 @@ class PurchaseActions extends _$PurchaseActions {
 }
 
 @riverpod
-Future<List<Compra>> supplierHistory(SupplierHistoryRef ref, int supplierId) {
-  if (supplierId == 0) return Future.value([]);
-  return ref.read(purchaseRepositoryProvider).listar(fornecedorId: supplierId);
+Future<List<Compra>> supplierHistory(SupplierHistoryRef ref, int supplierId) async {
+  if (supplierId == 0) return [];
+  final paginated = await ref.read(purchaseRepositoryProvider).listar(
+        fornecedorId: supplierId,
+        limit: 1000,
+      );
+  return paginated.data;
 }
 
 @riverpod
@@ -93,12 +114,15 @@ class PurchaseFilterState extends _$PurchaseFilterState {
   @override
   PurchaseFilters build() => const PurchaseFilters();
 
-  void setStatus(String? status) => state = state.copyWith(status: status);
-  void setNotaFiscal(String? nf) => state = state.copyWith(notaFiscal: nf);
+  void setStatus(String? status) => state = state.copyWith(status: status, page: 1);
+  void setNotaFiscal(String? nf) => state = state.copyWith(notaFiscal: nf, page: 1);
   void setRange(DateTimeRange? range) => state = state.copyWith(
     dataInicio: range?.start,
     dataFim: range?.end,
+    page: 1,
   );
+  void setPage(int page) => state = state.copyWith(page: page);
+  void setLimit(int limit) => state = state.copyWith(limit: limit, page: 1);
   void clear() => state = const PurchaseFilters();
 }
 

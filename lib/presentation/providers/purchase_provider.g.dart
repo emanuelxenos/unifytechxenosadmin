@@ -6,7 +6,7 @@ part of 'purchase_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$supplierHistoryHash() => r'00181bbd90049f2827345bcef3c7e534161fde9b';
+String _$supplierHistoryHash() => r'3507e3038184f86903ce0e9728b7b5f1627b9c6b';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -267,12 +267,15 @@ class _PurchaseDetailProviderElement
   int get id => (origin as PurchaseDetailProvider).id;
 }
 
-String _$purchasesHash() => r'993c95ba8c177d4d5824fc5af81649d8975f7919';
+String _$purchasesHash() => r'05c8dccff9e4aebc7b13f5d5be8678da62e0df73';
 
 /// See also [Purchases].
 @ProviderFor(Purchases)
 final purchasesProvider =
-    AutoDisposeAsyncNotifierProvider<Purchases, List<Compra>>.internal(
+    AutoDisposeAsyncNotifierProvider<
+      Purchases,
+      PaginatedResponse<Compra>
+    >.internal(
       Purchases.new,
       name: r'purchasesProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -282,8 +285,8 @@ final purchasesProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$Purchases = AutoDisposeAsyncNotifier<List<Compra>>;
-String _$purchaseActionsHash() => r'7bef7094363f051a8740a357d6ba34298f1940ad';
+typedef _$Purchases = AutoDisposeAsyncNotifier<PaginatedResponse<Compra>>;
+String _$purchaseActionsHash() => r'db91c91e6e282b238723e6b41954edd37ad32906';
 
 /// See also [PurchaseActions].
 @ProviderFor(PurchaseActions)
@@ -300,7 +303,7 @@ final purchaseActionsProvider =
 
 typedef _$PurchaseActions = AutoDisposeNotifier<bool>;
 String _$purchaseFilterStateHash() =>
-    r'515c192d7108e8360cd6e042875921285937d4b9';
+    r'c8efdbab71eab4d62959fee2a8a1d43dfba76a0a';
 
 /// See also [PurchaseFilterState].
 @ProviderFor(PurchaseFilterState)

@@ -108,7 +108,8 @@ class HistoryTab extends ConsumerWidget {
                   child: const Text('Tentar novamente'),
                 ),
               ),
-              data: (purchases) {
+              data: (paginated) {
+                final purchases = paginated.data;
                 if (purchases.isEmpty) {
                   return const EmptyState(
                     icon: Icons.inventory_2_outlined,
@@ -160,6 +161,65 @@ class HistoryTab extends ConsumerWidget {
             ),
           ),
         ),
+        // Pagination Bar
+        if (purchasesAsync.valueOrNull != null) ...[
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text('Itens por página:', style: theme.textTheme.bodyMedium),
+                    const SizedBox(width: 8),
+                    DropdownButton<int>(
+                      value: filters.limit,
+                      underline: const SizedBox(),
+                      items: [10, 20, 50, 100].map((limit) => DropdownMenuItem(
+                        value: limit,
+                        child: Text('$limit'),
+                      )).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          ref.read(purchaseFilterStateProvider.notifier).setLimit(val);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  'Mostrando ${purchasesAsync.value!.data.isEmpty ? 0 : (filters.page - 1) * filters.limit + 1} - '
+                  '${(filters.page - 1) * filters.limit + purchasesAsync.value!.data.length} de '
+                  '${purchasesAsync.value!.total}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left_rounded),
+                      onPressed: purchasesAsync.value!.hasPreviousPage
+                          ? () => ref.read(purchaseFilterStateProvider.notifier).setPage(filters.page - 1)
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Pág. ${filters.page}',
+                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      onPressed: purchasesAsync.value!.hasNextPage
+                          ? () => ref.read(purchaseFilterStateProvider.notifier).setPage(filters.page + 1)
+                          : null,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
+import 'package:unifytechxenosadmin/domain/models/pagination.dart';
 import 'package:unifytechxenosadmin/services/api_service.dart';
 
 part 'purchase_repository.g.dart';
@@ -25,14 +26,19 @@ class PurchaseRepository {
     await _api.post(ApiEndpoints.compras, data: request.toJson());
   }
 
-  Future<List<Compra>> listar({
+  Future<PaginatedResponse<Compra>> listar({
     int? fornecedorId,
     String? status,
     String? notaFiscal,
     DateTime? dataInicio,
     DateTime? dataFim,
+    int page = 1,
+    int limit = 20,
   }) async {
-    final Map<String, dynamic> queryParams = {};
+    final Map<String, dynamic> queryParams = {
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
     
     if (fornecedorId != null && fornecedorId > 0) {
       queryParams['fornecedor_id'] = fornecedorId.toString();
@@ -54,11 +60,21 @@ class PurchaseRepository {
       ApiEndpoints.compras,
       queryParameters: queryParams,
     );
-    final data = _extractData(response.data);
-    if (data is List) {
-      return data.map((e) => Compra.fromJson(e as Map<String, dynamic>)).toList();
+    
+    if (response.data is Map<String, dynamic>) {
+      return PaginatedResponse.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => Compra.fromJson(json as Map<String, dynamic>),
+      );
     }
-    return [];
+    
+    return PaginatedResponse(
+      success: false,
+      data: [],
+      total: 0,
+      page: page,
+      limit: limit,
+    );
   }
 
   Future<Compra> buscarPorID(int id) async {
