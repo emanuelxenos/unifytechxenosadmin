@@ -8,6 +8,7 @@ import 'package:unifytechxenosadmin/presentation/views/purchases/suppliers_tab.d
 import 'package:unifytechxenosadmin/presentation/views/purchases/history_tab.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/supplier_analytics_tab.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_form_dialog.dart';
+import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchases_help_dialog.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 
 class PurchasesScreen extends ConsumerWidget {
@@ -43,6 +44,22 @@ class PurchasesScreen extends ConsumerWidget {
                     onPressed: () => _showNewPurchaseForm(context),
                     icon: const Icon(Icons.add_rounded, size: 18),
                     label: const Text('Nova Compra'),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const PurchasesHelpDialog(),
+                      );
+                    },
+                    icon: const Icon(Icons.help_outline_rounded, color: Colors.teal),
+                    tooltip: 'Manual de Compras',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.teal.withOpacity(0.1),
+                      hoverColor: Colors.teal.withOpacity(0.2),
+                      padding: const EdgeInsets.all(12),
+                    ),
                   ),
                 ],
               ),
