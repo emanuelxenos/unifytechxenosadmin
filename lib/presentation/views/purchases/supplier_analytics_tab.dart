@@ -9,14 +9,48 @@ import 'package:unifytechxenosadmin/domain/models/supplier.dart';
 import 'package:unifytechxenosadmin/domain/models/purchase.dart';
 import 'package:unifytechxenosadmin/presentation/views/purchases/widgets/purchase_detail_dialog.dart';
 
-class SupplierAnalyticsTab extends ConsumerWidget {
+class SupplierAnalyticsTab extends ConsumerStatefulWidget {
   const SupplierAnalyticsTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SupplierAnalyticsTab> createState() => _SupplierAnalyticsTabState();
+}
+
+class _SupplierAnalyticsTabState extends ConsumerState<SupplierAnalyticsTab> {
+  late final SearchController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = SearchController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final suppliersAsync = ref.watch(suppliersProvider);
     final selectedSupplierId = ref.watch(selectedSupplierAnalyticsProvider);
+
+    // Keep SearchController text synchronized with the Riverpod provider state
+    if (selectedSupplierId == null) {
+      if (_searchController.text.isNotEmpty) {
+        _searchController.text = '';
+      }
+    } else {
+      final suppliers = suppliersAsync.valueOrNull ?? [];
+      final supplier = suppliers.any((s) => s.idFornecedor == selectedSupplierId)
+          ? suppliers.firstWhere((s) => s.idFornecedor == selectedSupplierId)
+          : null;
+      if (supplier != null && _searchController.text != supplier.razaoSocial) {
+        _searchController.text = supplier.razaoSocial;
+      }
+    }
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,6 +74,7 @@ class SupplierAnalyticsTab extends ConsumerWidget {
                       const SizedBox(height: 8),
                       suppliersAsync.when(
                         data: (suppliers) => SearchAnchor(
+                          searchController: _searchController,
                           builder: (context, controller) {
                             final selectedSupplier = suppliers.any((s) => s.idFornecedor == selectedSupplierId)
                                 ? suppliers.firstWhere((s) => s.idFornecedor == selectedSupplierId)
