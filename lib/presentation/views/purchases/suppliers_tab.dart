@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:intl/intl.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
 import 'package:unifytechxenosadmin/presentation/providers/supplier_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
@@ -116,6 +118,11 @@ class SuppliersTab extends ConsumerWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
+                                      icon: const Icon(Icons.visibility_outlined, size: 18, color: Colors.teal),
+                                      tooltip: 'Visualizar Detalhes',
+                                      onPressed: () => _showSupplierDetails(context, s),
+                                    ),
+                                    IconButton(
                                       icon: const Icon(Icons.analytics_outlined, size: 18, color: AppTheme.accentBlue),
                                       tooltip: 'Análises e Histórico',
                                       onPressed: () {
@@ -135,8 +142,7 @@ class SuppliersTab extends ConsumerWidget {
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                              ),                            ],
                           )).toList(),
                         ),
                       ),
@@ -214,6 +220,13 @@ class SuppliersTab extends ConsumerWidget {
     );
   }
 
+  void _showSupplierDetails(BuildContext context, Fornecedor supplier) {
+    showDialog(
+      context: context,
+      builder: (context) => _SupplierDetailsDialog(supplier: supplier),
+    );
+  }
+
   Future<void> _confirmInactivate(BuildContext context, WidgetRef ref, Fornecedor supplier) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -252,31 +265,81 @@ class _SupplierFormDialog extends ConsumerStatefulWidget {
 
 class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
   final _formKey = GlobalKey<FormState>();
+  
   final _razaoSocialCtrl = TextEditingController();
+  final _nomeFantasiaCtrl = TextEditingController();
   final _cnpjCtrl = TextEditingController();
+  final _ieCtrl = TextEditingController();
   final _telefoneCtrl = TextEditingController();
+  final _telefone2Ctrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _cepCtrl = TextEditingController();
+  final _logradouroCtrl = TextEditingController();
+  final _numeroCtrl = TextEditingController();
+  final _bairroCtrl = TextEditingController();
+  final _cidadeCtrl = TextEditingController();
+  final _estadoCtrl = TextEditingController();
+  final _nomeContatoCtrl = TextEditingController();
+  final _telefoneContatoCtrl = TextEditingController();
+  final _prazoEntregaCtrl = TextEditingController(text: '7');
+  final _prazoPagamentoCtrl = TextEditingController(text: '30');
+  final _limiteCreditoCtrl = TextEditingController(text: '0,00');
+  final _observacoesCtrl = TextEditingController();
   final _cnpjFormatter = MaskTextInputFormatter(mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9A-Za-z]')});
-  final _phoneFormatter = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
+  final _phoneFormatter1 = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
+  final _phoneFormatter2 = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
+  final _phoneFormatterContato = MaskTextInputFormatter(mask: '(##) #####-####', filter: {"#": RegExp(r'[0-9]')});
+  final _cepFormatter = MaskTextInputFormatter(mask: '#####-###', filter: {"#": RegExp(r'[0-9]')});
+  
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.supplier != null) {
-      _razaoSocialCtrl.text = widget.supplier!.razaoSocial;
-      _cnpjCtrl.text = _cnpjFormatter.maskText(widget.supplier!.cnpj?.replaceAll(RegExp(r'[^0-9A-Za-z]'), '') ?? '');
-      _telefoneCtrl.text = _phoneFormatter.maskText(widget.supplier!.telefone?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
-      _emailCtrl.text = widget.supplier!.email ?? '';
+      final s = widget.supplier!;
+      _razaoSocialCtrl.text = s.razaoSocial;
+      _nomeFantasiaCtrl.text = s.nomeFantasia ?? '';
+      _cnpjCtrl.text = _cnpjFormatter.maskText(s.cnpj?.replaceAll(RegExp(r'[^0-9A-Za-z]'), '') ?? '');
+      _ieCtrl.text = s.inscricaoEstadual ?? '';
+      _telefoneCtrl.text = _phoneFormatter1.maskText(s.telefone?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+      _telefone2Ctrl.text = _phoneFormatter2.maskText(s.telefone2?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+      _emailCtrl.text = s.email ?? '';
+      _cepCtrl.text = _cepFormatter.maskText(s.cep?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+      _logradouroCtrl.text = s.logradouro ?? '';
+      _numeroCtrl.text = s.numero ?? '';
+      _bairroCtrl.text = s.bairro ?? '';
+      _cidadeCtrl.text = s.cidade ?? '';
+      _estadoCtrl.text = s.estado ?? '';
+      _nomeContatoCtrl.text = s.nomeContato ?? '';
+      _telefoneContatoCtrl.text = _phoneFormatterContato.maskText(s.telefoneContato?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+      _prazoEntregaCtrl.text = s.prazoEntrega.toString();
+      _prazoPagamentoCtrl.text = s.prazoPagamento.toString();
+      _limiteCreditoCtrl.text = NumberFormat.simpleCurrency(locale: 'pt_BR', name: '').format(s.limiteCredito).trim();
+      _observacoesCtrl.text = s.observacoes ?? '';
     }
   }
-
   @override
   void dispose() {
     _razaoSocialCtrl.dispose();
+    _nomeFantasiaCtrl.dispose();
     _cnpjCtrl.dispose();
+    _ieCtrl.dispose();
     _telefoneCtrl.dispose();
+    _telefone2Ctrl.dispose();
     _emailCtrl.dispose();
+    _cepCtrl.dispose();
+    _logradouroCtrl.dispose();
+    _numeroCtrl.dispose();
+    _bairroCtrl.dispose();
+    _cidadeCtrl.dispose();
+    _estadoCtrl.dispose();
+    _nomeContatoCtrl.dispose();
+    _telefoneContatoCtrl.dispose();
+    _prazoEntregaCtrl.dispose();
+    _prazoPagamentoCtrl.dispose();
+    _limiteCreditoCtrl.dispose();
+    _observacoesCtrl.dispose();
     super.dispose();
   }
 
@@ -284,130 +347,403 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEditing = widget.supplier != null;
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Row(
-        children: [
-          Icon(
-            isEditing ? Icons.edit_outlined : Icons.add_business_rounded,
-            color: AppTheme.primaryColor,
-            size: 26,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor',
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-      content: SizedBox(
-        width: 480,
-        child: Form(
-          key: _formKey,
+    return DefaultTabController(
+      length: 3,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isEditing ? Icons.edit_outlined : Icons.add_business_rounded,
+              color: AppTheme.primaryColor,
+              size: 26,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor',
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 650,
+          height: 480,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
-                controller: _razaoSocialCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Razão Social *',
-                  prefixIcon: Icon(Icons.business_rounded, size: 20),
-                  hintText: 'Ex: UnifyTech Distribuidores Ltda',
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'A Razão Social é obrigatória';
-                  if (v.trim().length < 3) return 'Deve ter pelo menos 3 caracteres';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _cnpjCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'CNPJ',
-                  prefixIcon: Icon(Icons.badge_rounded, size: 20),
-                  hintText: '00.000.000/0000-00',
-                ),
-                inputFormatters: [_cnpjFormatter],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return null;
-                  final clean = _cnpjFormatter.getUnmaskedText();
-                  if (clean.length != 14) return 'CNPJ incompleto (deve conter 14 dígitos)';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _telefoneCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Telefone',
-                        prefixIcon: Icon(Icons.phone_rounded, size: 20),
-                        hintText: '(00) 00000-0000',
-                      ),
-                      inputFormatters: [_phoneFormatter],
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return null;
-                        final clean = _phoneFormatter.getUnmaskedText();
-                        if (clean.length < 10) return 'Telefone incompleto';
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _emailCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_rounded, size: 20),
-                        hintText: 'contato@fornecedor.com',
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return null;
-                        final email = v.trim();
-                        if (!email.contains('@') || !email.contains('.')) return 'Email inválido';
-                        return null;
-                      },
-                    ),
-                  ),
+              TabBar(
+                labelColor: AppTheme.primaryColor,
+                unselectedLabelColor: theme.hintColor,
+                indicatorColor: AppTheme.primaryColor,
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(text: 'Dados Básicos'),
+                  Tab(text: 'Contato & Endereço'),
+                  Tab(text: 'Financeiro & Outros'),
                 ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: TabBarView(
+                    children: [
+                      // Tab 1: Dados Básicos
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _razaoSocialCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Razão Social *',
+                                prefixIcon: Icon(Icons.business_rounded, size: 20),
+                                hintText: 'Ex: UnifyTech Distribuidores Ltda',
+                              ),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return 'A Razão Social é obrigatória';
+                                if (v.trim().length < 3) return 'Deve ter pelo menos 3 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _nomeFantasiaCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Nome Fantasia',
+                                prefixIcon: Icon(Icons.store_rounded, size: 20),
+                                hintText: 'Ex: UnifyTech',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _cnpjCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'CNPJ',
+                                      prefixIcon: Icon(Icons.badge_rounded, size: 20),
+                                      hintText: '00.000.000/0000-00',
+                                    ),
+                                    inputFormatters: [_cnpjFormatter],
+                                    validator: (v) {
+                                      if (v == null || v.trim().isEmpty) return null;
+                                      final clean = _cnpjFormatter.getUnmaskedText();
+                                      if (clean.length != 14) return 'CNPJ incompleto';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _ieCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Inscrição Estadual',
+                                      prefixIcon: Icon(Icons.description_rounded, size: 20),
+                                      hintText: 'Ex: Isento ou número',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Tab 2: Contato & Endereço
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _telefoneCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Telefone Principal',
+                                      prefixIcon: Icon(Icons.phone_rounded, size: 20),
+                                      hintText: '(00) 00000-0000',
+                                    ),
+                                    inputFormatters: [_phoneFormatter1],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _telefone2Ctrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Telefone Secundário',
+                                      prefixIcon: Icon(Icons.phone_rounded, size: 20),
+                                      hintText: '(00) 00000-0000',
+                                    ),
+                                    inputFormatters: [_phoneFormatter2],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                prefixIcon: Icon(Icons.email_rounded, size: 20),
+                                hintText: 'contato@fornecedor.com',
+                              ),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) return null;
+                                final email = v.trim();
+                                if (!email.contains('@') || !email.contains('.')) return 'Email inválido';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: TextFormField(
+                                    controller: _cepCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'CEP',
+                                      prefixIcon: Icon(Icons.map_rounded, size: 20),
+                                      hintText: '00000-000',
+                                    ),
+                                    inputFormatters: [_cepFormatter],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 3,
+                                  child: TextFormField(
+                                    controller: _logradouroCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Logradouro',
+                                      prefixIcon: Icon(Icons.home_rounded, size: 20),
+                                      hintText: 'Ex: Rua das Flores',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 2,
+                                  child: TextFormField(
+                                    controller: _numeroCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Número',
+                                      hintText: 'Ex: 123',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _bairroCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Bairro',
+                                      hintText: 'Ex: Centro',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _cidadeCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Cidade',
+                                      hintText: 'Ex: São Paulo',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _estadoCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Estado (UF)',
+                                      hintText: 'Ex: SP',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Tab 3: Financeiro & Outros
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _nomeContatoCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nome do Contato',
+                                      prefixIcon: Icon(Icons.person_rounded, size: 20),
+                                      hintText: 'Ex: João da Silva',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _telefoneContatoCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Telefone Contato',
+                                      prefixIcon: Icon(Icons.contact_phone_rounded, size: 20),
+                                      hintText: '(00) 00000-0000',
+                                    ),
+                                    inputFormatters: [_phoneFormatterContato],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _prazoEntregaCtrl,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Prazo Entrega (dias)',
+                                      prefixIcon: Icon(Icons.local_shipping_rounded, size: 20),
+                                    ),
+                                    validator: (v) {
+                                      if (v == null || v.trim().isEmpty) return 'Obrigatório';
+                                      if (int.tryParse(v) == null) return 'Apenas números';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _prazoPagamentoCtrl,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Prazo Pagam. (dias)',
+                                      prefixIcon: Icon(Icons.payment_rounded, size: 20),
+                                    ),
+                                    validator: (v) {
+                                      if (v == null || v.trim().isEmpty) return 'Obrigatório';
+                                      if (int.tryParse(v) == null) return 'Apenas números';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _limiteCreditoCtrl,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [CurrencyInputFormatter()],
+                                    decoration: const InputDecoration(
+                                      labelText: r'Lim. Crédito (R$)',
+                                      prefixIcon: Icon(Icons.monetization_on_rounded, size: 20),
+                                    ),
+                                    validator: (v) {
+                                      if (v == null || v.trim().isEmpty) return 'Obrigatório';
+                                      final clean = v.trim().replaceAll('.', '').replaceAll(',', '.');
+                                      if (double.tryParse(clean) == null) return 'Formato inválido';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _observacoesCtrl,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                labelText: 'Observações Gerais',
+                                prefixIcon: Icon(Icons.notes_rounded, size: 20),
+                                hintText: 'Insira observações, termos, detalhes...',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: _saving ? null : _save,
+            child: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(isEditing ? 'Salvar' : 'Cadastrar'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _saving ? null : _save,
-          child: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Text(isEditing ? 'Salvar' : 'Cadastrar'),
-        ),
-      ],
     );
   }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    String? _unmask(String text, {bool keepAlpha = false}) {
+      final clean = text.replaceAll(RegExp(keepAlpha ? r'[^0-9A-Za-z]' : r'[^0-9]'), '');
+      return clean.isEmpty ? null : clean;
+    }
+
+    double? _parseBrazilianDouble(String v) {
+      var clean = v.trim();
+      if (clean.isEmpty) return null;
+      if (clean.contains(',') && clean.contains('.')) {
+        clean = clean.replaceAll('.', '').replaceAll(',', '.');
+      } else if (clean.contains(',')) {
+        clean = clean.replaceAll(',', '.');
+      }
+      return double.tryParse(clean);
+    }
+
     final req = CriarFornecedorRequest(
       razaoSocial: _razaoSocialCtrl.text.trim(),
-      cnpj: _cnpjFormatter.getUnmaskedText(),
-      telefone: _phoneFormatter.getUnmaskedText(),
-      email: _emailCtrl.text.trim(),
+      nomeFantasia: _nomeFantasiaCtrl.text.trim().isEmpty ? null : _nomeFantasiaCtrl.text.trim(),
+      cnpj: _unmask(_cnpjCtrl.text, keepAlpha: true),
+      inscricaoEstadual: _ieCtrl.text.trim().isEmpty ? null : _ieCtrl.text.trim(),
+      telefone: _unmask(_telefoneCtrl.text),
+      telefone2: _unmask(_telefone2Ctrl.text),
+      email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+      cep: _unmask(_cepCtrl.text),
+      logradouro: _logradouroCtrl.text.trim().isEmpty ? null : _logradouroCtrl.text.trim(),
+      numero: _numeroCtrl.text.trim().isEmpty ? null : _numeroCtrl.text.trim(),
+      bairro: _bairroCtrl.text.trim().isEmpty ? null : _bairroCtrl.text.trim(),
+      cidade: _cidadeCtrl.text.trim().isEmpty ? null : _cidadeCtrl.text.trim(),
+      estado: _estadoCtrl.text.trim().isEmpty ? null : _estadoCtrl.text.trim(),
+      nomeContato: _nomeContatoCtrl.text.trim().isEmpty ? null : _nomeContatoCtrl.text.trim(),
+      telefoneContato: _unmask(_telefoneContatoCtrl.text),
+      prazoEntrega: int.tryParse(_prazoEntregaCtrl.text),
+      prazoPagamento: int.tryParse(_prazoPagamentoCtrl.text),
+      limiteCredito: _parseBrazilianDouble(_limiteCreditoCtrl.text),
+      observacoes: _observacoesCtrl.text.trim().isEmpty ? null : _observacoesCtrl.text.trim(),
     );
 
     final bool success;
@@ -446,5 +782,219 @@ class _SupplierFormDialogState extends ConsumerState<_SupplierFormDialog> {
         );
       }
     }
+  }
+}
+
+class _SupplierDetailsDialog extends StatelessWidget {
+  final Fornecedor supplier;
+  const _SupplierDetailsDialog({required this.supplier});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    Widget _buildDetailRow(IconData icon, String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 20, color: AppTheme.primaryColor.withOpacity(0.8)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.hintColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value.isNotEmpty ? value : 'Não informado',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return DefaultTabController(
+      length: 3,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.local_shipping_rounded,
+              color: AppTheme.primaryColor,
+              size: 26,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    supplier.razaoSocial,
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (supplier.nomeFantasia != null && supplier.nomeFantasia!.isNotEmpty)
+                    Text(
+                      supplier.nomeFantasia!,
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            StatusChip.fromStatus(supplier.ativo ? 'ativo' : 'inativo'),
+          ],
+        ),
+        content: SizedBox(
+          width: 650,
+          height: 480,
+          child: Column(
+            children: [
+              TabBar(
+                labelColor: AppTheme.primaryColor,
+                unselectedLabelColor: theme.hintColor,
+                indicatorColor: AppTheme.primaryColor,
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(text: 'Dados Básicos'),
+                  Tab(text: 'Contato & Endereço'),
+                  Tab(text: 'Financeiro & Outros'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    // Tab 1: Dados Básicos
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Column(
+                        children: [
+                          _buildDetailRow(Icons.business_rounded, 'Razão Social', supplier.razaoSocial),
+                          _buildDetailRow(Icons.store_rounded, 'Nome Fantasia', supplier.nomeFantasia ?? ''),
+                          _buildDetailRow(Icons.badge_rounded, 'CNPJ', supplier.cnpj ?? ''),
+                          _buildDetailRow(Icons.description_rounded, 'Inscrição Estadual', supplier.inscricaoEstadual ?? ''),
+                        ],
+                      ),
+                    ),
+                    // Tab 2: Contato & Endereço
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildDetailRow(Icons.phone_rounded, 'Telefone Principal', supplier.telefone ?? '')),
+                              Expanded(child: _buildDetailRow(Icons.phone_rounded, 'Telefone Secundário', supplier.telefone2 ?? '')),
+                            ],
+                          ),
+                          _buildDetailRow(Icons.email_rounded, 'E-mail', supplier.email ?? ''),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 2, child: _buildDetailRow(Icons.map_rounded, 'CEP', supplier.cep ?? '')),
+                              Expanded(flex: 3, child: _buildDetailRow(Icons.home_rounded, 'Logradouro', supplier.logradouro ?? '')),
+                              Expanded(flex: 2, child: _buildDetailRow(Icons.pin_drop_rounded, 'Número', supplier.numero ?? '')),
+                            ],
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildDetailRow(Icons.location_city_rounded, 'Bairro', supplier.bairro ?? '')),
+                              Expanded(child: _buildDetailRow(Icons.location_city_rounded, 'Cidade', supplier.cidade ?? '')),
+                              Expanded(child: _buildDetailRow(Icons.flag_rounded, 'Estado (UF)', supplier.estado ?? '')),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Tab 3: Financeiro & Outros
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildDetailRow(Icons.person_rounded, 'Nome do Contato', supplier.nomeContato ?? '')),
+                              Expanded(child: _buildDetailRow(Icons.contact_phone_rounded, 'Telefone do Contato', supplier.telefoneContato ?? '')),
+                            ],
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildDetailRow(Icons.local_shipping_rounded, 'Prazo de Entrega', '${supplier.prazoEntrega} dias')),
+                              Expanded(child: _buildDetailRow(Icons.payment_rounded, 'Prazo de Pagamento', '${supplier.prazoPagamento} dias')),
+                            ],
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildDetailRow(Icons.monetization_on_rounded, 'Limite de Crédito', supplier.limiteCredito > 0 ? 'R\$ ${supplier.limiteCredito.toStringAsFixed(2)}' : 'Não definido')),
+                              Expanded(child: _buildDetailRow(Icons.shopping_bag_rounded, 'Total em Compras', 'R\$ ${supplier.totalCompras.toStringAsFixed(2)}')),
+                            ],
+                          ),
+                          _buildDetailRow(Icons.notes_rounded, 'Observações', supplier.observacoes ?? ''),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat.simpleCurrency(locale: 'pt_BR', name: '');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+
+    String cleanText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanText.isEmpty) {
+      return newValue.copyWith(text: '0,00', selection: const TextSelection.collapsed(offset: 4));
+    }
+
+    double value = double.parse(cleanText) / 100;
+    String newText = _formatter.format(value).trim();
+
+    return newValue.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
   }
 }
