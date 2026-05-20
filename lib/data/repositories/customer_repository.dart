@@ -36,6 +36,34 @@ class CustomerRepository {
     return [];
   }
 
+  Future<(List<Cliente>, int)> listarPaginado({
+    bool incluirInativos = false,
+    required int page,
+    required int limit,
+    String? search,
+  }) async {
+    final response = await _api.get(
+      ApiEndpoints.clientes,
+      queryParameters: {
+        'incluir_inativos': incluirInativos,
+        'page': page,
+        'limit': limit,
+        if (search != null && search.isNotEmpty) 'q': search,
+      },
+    );
+    final dynamic body = response.data;
+    final dynamic data = body is Map ? body['data'] : null;
+    final int total = body is Map && body.containsKey('total') ? (body['total'] as num).toInt() : 0;
+    
+    if (data is List) {
+      final list = data
+          .map((e) => Cliente.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return (list, total);
+    }
+    return (<Cliente>[], 0);
+  }
+
   Future<Cliente> criar(CriarClienteRequest request) async {
     final response =
         await _api.post(ApiEndpoints.clientes, data: request.toJson());

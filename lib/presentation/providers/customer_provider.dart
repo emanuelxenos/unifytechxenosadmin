@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/data/repositories/customer_repository.dart';
 import 'package:unifytechxenosadmin/domain/models/customer.dart';
@@ -6,24 +7,47 @@ import 'package:unifytechxenosadmin/services/api_service.dart';
 
 part 'customer_provider.g.dart';
 
+final customerPageProvider = StateProvider<int>((ref) => 0);
+final customerItemsPerPageProvider = StateProvider<int>((ref) => 10);
+
+class PaginatedCustomersResult {
+  final List<Cliente> clientes;
+  final int total;
+
+  PaginatedCustomersResult({required this.clientes, required this.total});
+}
+
 @riverpod
 class Customers extends _$Customers {
   @override
-  FutureOr<List<Cliente>> build() async {
+  FutureOr<PaginatedCustomersResult> build() async {
     final incluirInativos = ref.watch(customerInactivesProvider);
-    return _fetch(incluirInativos);
+    final page = ref.watch(customerPageProvider);
+    final limit = ref.watch(customerItemsPerPageProvider);
+    final search = ref.watch(customerSearchProvider);
+    return _fetch(incluirInativos, page + 1, limit, search);
   }
 
-  Future<List<Cliente>> _fetch(bool incluirInativos) async {
-    return ref
+  Future<PaginatedCustomersResult> _fetch(
+      bool incluirInativos, int page, int limit, String search) async {
+    final (list, total) = await ref
         .read(customerRepositoryProvider)
-        .listar(incluirInativos: incluirInativos);
+        .listarPaginado(
+            incluirInativos: incluirInativos,
+            page: page,
+            limit: limit,
+            search: search);
+    return PaginatedCustomersResult(clientes: list, total: total);
   }
 
   Future<void> refresh() async {
     final incluirInativos = ref.read(customerInactivesProvider);
+    final page = ref.read(customerPageProvider);
+    final limit = ref.read(customerItemsPerPageProvider);
+    final search = ref.read(customerSearchProvider);
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetch(incluirInativos));
+    state = await AsyncValue.guard(
+        () => _fetch(incluirInativos, page + 1, limit, search));
   }
 
   Future<(bool, String)> criar(CriarClienteRequest request) async {
@@ -69,18 +93,9 @@ class Customers extends _$Customers {
 @riverpod
 List<Cliente> filteredCustomers(FilteredCustomersRef ref) {
   final customersAsync = ref.watch(customersProvider);
-  final query = ref.watch(customerSearchProvider).toLowerCase();
 
   return customersAsync.maybeWhen(
-    data: (list) {
-      if (query.isEmpty) return list;
-      return list
-          .where((c) =>
-              c.nome.toLowerCase().contains(query) ||
-              (c.cpfCnpj?.contains(query) ?? false) ||
-              (c.email?.toLowerCase().contains(query) ?? false))
-          .toList();
-    },
+    data: (res) => res.clientes,
     orElse: () => [],
   );
 }

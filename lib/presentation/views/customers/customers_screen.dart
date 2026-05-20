@@ -1,21 +1,50 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:unifytechxenosadmin/core/theme/app_theme.dart';
+import 'package:unifytechxenosadmin/core/utils/debouncer.dart';
 import 'package:unifytechxenosadmin/domain/models/customer.dart';
 import 'package:unifytechxenosadmin/domain/models/sale.dart';
 import 'package:unifytechxenosadmin/presentation/providers/auth_provider.dart';
 import 'package:unifytechxenosadmin/presentation/providers/customer_provider.dart';
 import 'package:unifytechxenosadmin/presentation/widgets/shared_widgets.dart';
 
-class CustomersScreen extends ConsumerWidget {
+class CustomersScreen extends ConsumerStatefulWidget {
   const CustomersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomersScreen> createState() => _CustomersScreenState();
+}
+
+class _CustomersScreenState extends ConsumerState<CustomersScreen> {
+  final _debouncer = Debouncer(milliseconds: 300);
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _searchController.text = ref.read(customerSearchProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debouncer.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final customersAsync = ref.watch(customersProvider);
     final filtered = ref.watch(filteredCustomersProvider);
+    final page = ref.watch(customerPageProvider);
+    final itemsPerPage = ref.watch(customerItemsPerPageProvider);
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -50,8 +79,15 @@ class CustomersScreen extends ConsumerWidget {
                   decoration: AppTheme.glassCard(),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TextField(
-                    onChanged: (v) =>
-                        ref.read(customerSearchProvider.notifier).setQuery(v),
+                    controller: _searchController,
+                    onChanged: (v) {
+                      _debouncer.run(() {
+                        if (mounted) {
+                          ref.read(customerSearchProvider.notifier).setQuery(v);
+                          ref.read(customerPageProvider.notifier).state = 0;
+                        }
+                      });
+                    },
                     style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       hintText: 'Buscar cliente por nome, CPF/CNPJ ou email...',
@@ -66,8 +102,10 @@ class CustomersScreen extends ConsumerWidget {
               FilterChip(
                 label: const Text('Mostrar Inativos'),
                 selected: ref.watch(customerInactivesProvider),
-                onSelected: (v) =>
-                    ref.read(customerInactivesProvider.notifier).set(v),
+                onSelected: (v) {
+                  ref.read(customerInactivesProvider.notifier).set(v);
+                  ref.read(customerPageProvider.notifier).state = 0;
+                },
                 selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
                 checkmarkColor: AppTheme.primaryColor,
               ),
@@ -75,59 +113,189 @@ class CustomersScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Table
+          // Table Card
           Expanded(
             child: Container(
               decoration: AppTheme.glassCard(),
               clipBehavior: Clip.antiAlias,
-              child: customersAsync.when(
-                loading: () => const LoadingOverlay(message: 'Carregando clientes...'),
-                error: (e, _) => EmptyState(
-                  icon: Icons.error_outline,
-                  title: 'Erro ao carregar',
-                  subtitle: e.toString(),
-                  action: ElevatedButton(
-                    onPressed: () =>
-                        ref.read(customersProvider.notifier).refresh(),
-                    child: const Text('Tentar novamente'),
-                  ),
-                ),
-                data: (_) {
-                  if (filtered.isEmpty) {
-                    return const EmptyState(
-                      icon: Icons.people_alt_outlined,
-                      title: 'Nenhum cliente encontrado',
-                      subtitle: 'Cadastre clientes para utilizá-los nas vendas e no crediário.',
-                    );
-                  }
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      child: DataTable(
-                        showCheckboxColumn: false,
-                        headingTextStyle: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: customersAsync.when(
+                      loading: () => const LoadingOverlay(message: 'Carregando clientes...'),
+                      error: (e, _) => EmptyState(
+                        icon: Icons.error_outline,
+                        title: 'Erro ao carregar',
+                        subtitle: e.toString(),
+                        action: ElevatedButton(
+                          onPressed: () =>
+                              ref.read(customersProvider.notifier).refresh(),
+                          child: const Text('Tentar novamente'),
                         ),
-                        columns: const [
-                          DataColumn(label: Text('NOME')),
-                          DataColumn(label: Text('TIPO')),
-                          DataColumn(label: Text('CPF / CNPJ')),
-                          DataColumn(label: Text('TELEFONE')),
-                          DataColumn(label: Text('LIMITE CRÉDITO')),
-                          DataColumn(label: Text('SALDO DEVEDOR')),
-                          DataColumn(label: Text('STATUS')),
-                          DataColumn(label: Text('AÇÕES')),
-                        ],
-                        rows: filtered
-                            .map((c) => _buildRow(context, ref, c))
-                            .toList(),
                       ),
+                      data: (res) {
+                        // Dynamically adjust page index if it goes out of bounds
+                        final totalPages = (res.total / itemsPerPage).ceil();
+                        if (page >= totalPages && totalPages > 0) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              ref.read(customerPageProvider.notifier).state = totalPages - 1;
+                            }
+                          });
+                        }
+
+                        if (filtered.isEmpty) {
+                          return const EmptyState(
+                            icon: Icons.people_alt_outlined,
+                            title: 'Nenhum cliente encontrado',
+                            subtitle: 'Cadastre clientes para utilizá-los nas vendas e no crediário.',
+                          );
+                        }
+                        return SizedBox.expand(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              child: DataTable(
+                                showCheckboxColumn: false,
+                                headingTextStyle: const TextStyle(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                columns: const [
+                                  DataColumn(label: Text('NOME')),
+                                  DataColumn(label: Text('TIPO')),
+                                  DataColumn(label: Text('CPF / CNPJ')),
+                                  DataColumn(label: Text('TELEFONE')),
+                                  DataColumn(label: Text('LIMITE CRÉDITO')),
+                                  DataColumn(label: Text('SALDO DEVEDOR')),
+                                  DataColumn(label: Text('STATUS')),
+                                  DataColumn(label: Text('AÇÕES')),
+                                ],
+                                rows: filtered
+                                    .map((c) => _buildRow(context, ref, c))
+                                    .toList(),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                  // Pagination Footer
+                  customersAsync.maybeWhen(
+                    data: (res) {
+                      if (res.total > 0) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Divider(color: Colors.white10, height: 1),
+                            _buildPaginationFooter(context, res.total),
+                          ],
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
+                ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaginationFooter(BuildContext context, int totalItems) {
+    final page = ref.watch(customerPageProvider);
+    final itemsPerPage = ref.watch(customerItemsPerPageProvider);
+    final totalPages = (totalItems / itemsPerPage).ceil();
+
+    final startItem = page * itemsPerPage + 1;
+    final endItem = math.min((page + 1) * itemsPerPage, totalItems);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Items Per Page Selector
+          Row(
+            children: [
+              const Text(
+                'Itens por página:',
+                style: TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+              const SizedBox(width: 8),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  canvasColor: const Color(0xFF1C2039),
+                ),
+                child: DropdownButton<int>(
+                  value: itemsPerPage,
+                  dropdownColor: const Color(0xFF1C2039),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  underline: const SizedBox(),
+                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                  items: [5, 10, 15, 25, 50].map((int value) {
+                    return DropdownMenuItem<int>(
+                      value: value,
+                      child: Text('$value'),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      ref.read(customerItemsPerPageProvider.notifier).state = newValue;
+                      ref.read(customerPageProvider.notifier).state = 0; // reset to first page
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          // Page indicators and controls
+          Row(
+            children: [
+              Text(
+                'Exibindo $startItem-$endItem de $totalItems',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(width: 24),
+              // Navigation Buttons
+              IconButton(
+                icon: const Icon(Icons.first_page_rounded, color: Colors.white70),
+                tooltip: 'Primeira Página',
+                onPressed: page > 0
+                    ? () => ref.read(customerPageProvider.notifier).state = 0
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_left_rounded, color: Colors.white70),
+                tooltip: 'Página Anterior',
+                onPressed: page > 0
+                    ? () => ref.read(customerPageProvider.notifier).state = page - 1
+                    : null,
+              ),
+              Text(
+                '${page + 1} / $totalPages',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+                tooltip: 'Próxima Página',
+                onPressed: page < totalPages - 1
+                    ? () => ref.read(customerPageProvider.notifier).state = page + 1
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.last_page_rounded, color: Colors.white70),
+                tooltip: 'Última Página',
+                onPressed: page < totalPages - 1
+                    ? () => ref.read(customerPageProvider.notifier).state = totalPages - 1
+                    : null,
+              ),
+            ],
           ),
         ],
       ),

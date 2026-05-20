@@ -6,7 +6,7 @@ part of 'customer_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$filteredCustomersHash() => r'0dc37e3b7d5405262dfddf1344f8900569b2678c';
+String _$filteredCustomersHash() => r'24b3cefdb1f2828d7828caa7d52adaca389cb26d';
 
 /// See also [filteredCustomers].
 @ProviderFor(filteredCustomers)
@@ -293,12 +293,15 @@ class _CustomerAmortizationsProviderElement
   int get clienteId => (origin as CustomerAmortizationsProvider).clienteId;
 }
 
-String _$customersHash() => r'01b2e8addeea19a444af3c87a90839d0f77f6cdb';
+String _$customersHash() => r'3cde6be882429e5b181b121624b623265834fb79';
 
 /// See also [Customers].
 @ProviderFor(Customers)
 final customersProvider =
-    AutoDisposeAsyncNotifierProvider<Customers, List<Cliente>>.internal(
+    AutoDisposeAsyncNotifierProvider<
+      Customers,
+      PaginatedCustomersResult
+    >.internal(
       Customers.new,
       name: r'customersProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -308,7 +311,7 @@ final customersProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$Customers = AutoDisposeAsyncNotifier<List<Cliente>>;
+typedef _$Customers = AutoDisposeAsyncNotifier<PaginatedCustomersResult>;
 String _$customerSearchHash() => r'098e982ba279d5aff51ff80efeabce66b09dfa10';
 
 /// See also [CustomerSearch].
