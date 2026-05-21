@@ -9,12 +9,27 @@ part 'customer_provider.g.dart';
 
 final customerPageProvider = StateProvider<int>((ref) => 0);
 final customerItemsPerPageProvider = StateProvider<int>((ref) => 10);
+final customerSortFieldProvider = StateProvider<String?>((ref) => null);
+final customerSortAscendingProvider = StateProvider<bool>((ref) => true);
 
 class PaginatedCustomersResult {
   final List<Cliente> clientes;
   final int total;
 
   PaginatedCustomersResult({required this.clientes, required this.total});
+}
+
+@riverpod
+class CustomerStatsNotifier extends _$CustomerStatsNotifier {
+  @override
+  FutureOr<ClienteStats> build() async {
+    return ref.read(customerRepositoryProvider).obterEstatisticas();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => ref.read(customerRepositoryProvider).obterEstatisticas());
+  }
 }
 
 @riverpod
@@ -25,18 +40,23 @@ class Customers extends _$Customers {
     final page = ref.watch(customerPageProvider);
     final limit = ref.watch(customerItemsPerPageProvider);
     final search = ref.watch(customerSearchProvider);
-    return _fetch(incluirInativos, page + 1, limit, search);
+    final sortBy = ref.watch(customerSortFieldProvider);
+    final ascending = ref.watch(customerSortAscendingProvider);
+    final sortOrder = ascending ? 'asc' : 'desc';
+    return _fetch(incluirInativos, page + 1, limit, search, sortBy, sortOrder);
   }
 
   Future<PaginatedCustomersResult> _fetch(
-      bool incluirInativos, int page, int limit, String search) async {
+      bool incluirInativos, int page, int limit, String search, String? sortBy, String? sortOrder) async {
     final (list, total) = await ref
         .read(customerRepositoryProvider)
         .listarPaginado(
             incluirInativos: incluirInativos,
             page: page,
             limit: limit,
-            search: search);
+            search: search,
+            sortBy: sortBy,
+            sortOrder: sortOrder);
     return PaginatedCustomersResult(clientes: list, total: total);
   }
 
@@ -45,15 +65,19 @@ class Customers extends _$Customers {
     final page = ref.read(customerPageProvider);
     final limit = ref.read(customerItemsPerPageProvider);
     final search = ref.read(customerSearchProvider);
+    final sortBy = ref.read(customerSortFieldProvider);
+    final ascending = ref.read(customerSortAscendingProvider);
+    final sortOrder = ascending ? 'asc' : 'desc';
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-        () => _fetch(incluirInativos, page + 1, limit, search));
+        () => _fetch(incluirInativos, page + 1, limit, search, sortBy, sortOrder));
   }
 
   Future<(bool, String)> criar(CriarClienteRequest request) async {
     try {
       await ref.read(customerRepositoryProvider).criar(request);
       await refresh();
+      ref.read(customerStatsNotifierProvider.notifier).refresh();
       return (true, 'Cliente cadastrado com sucesso');
     } catch (e) {
       return (false, ApiService.extractError(e));
@@ -64,6 +88,7 @@ class Customers extends _$Customers {
     try {
       await ref.read(customerRepositoryProvider).atualizar(id, request);
       await refresh();
+      ref.read(customerStatsNotifierProvider.notifier).refresh();
       return (true, 'Cliente atualizado com sucesso');
     } catch (e) {
       return (false, ApiService.extractError(e));
@@ -74,15 +99,40 @@ class Customers extends _$Customers {
     try {
       await ref.read(customerRepositoryProvider).inativar(id);
       await refresh();
+      ref.read(customerStatsNotifierProvider.notifier).refresh();
       return (true, 'Cliente inativado com sucesso');
     } catch (e) {
       return (false, ApiService.extractError(e));
     }
   }
+
+  Future<(bool, String)> inativarEmLote(List<int> ids) async {
+    try {
+      await ref.read(customerRepositoryProvider).inativarEmLote(ids);
+      await refresh();
+      ref.read(customerStatsNotifierProvider.notifier).refresh();
+      return (true, 'Clientes inativados com sucesso');
+    } catch (e) {
+      return (false, ApiService.extractError(e));
+    }
+  }
+
+  Future<(bool, String)> ajustarLimitesEmLote(List<int> ids, String tipo, double valor) async {
+    try {
+      await ref.read(customerRepositoryProvider).ajustarLimitesEmLote(ids, tipo, valor);
+      await refresh();
+      ref.read(customerStatsNotifierProvider.notifier).refresh();
+      return (true, 'Limites ajustados com sucesso');
+    } catch (e) {
+      return (false, ApiService.extractError(e));
+    }
+  }
+
   Future<(bool, String)> amortizarDivida(int id, int vendaId, double valor) async {
     try {
       await ref.read(customerRepositoryProvider).amortizar(id, vendaId, valor);
       await refresh();
+      ref.read(customerStatsNotifierProvider.notifier).refresh();
       return (true, 'Dívida amortizada com sucesso');
     } catch (e) {
       return (false, ApiService.extractError(e));

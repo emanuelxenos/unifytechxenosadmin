@@ -41,6 +41,8 @@ class CustomerRepository {
     required int page,
     required int limit,
     String? search,
+    String? sortBy,
+    String? sortOrder,
   }) async {
     final response = await _api.get(
       ApiEndpoints.clientes,
@@ -49,6 +51,8 @@ class CustomerRepository {
         'page': page,
         'limit': limit,
         if (search != null && search.isNotEmpty) 'q': search,
+        if (sortBy != null && sortBy.isNotEmpty) 'sort': sortBy,
+        if (sortOrder != null && sortOrder.isNotEmpty) 'order': sortOrder,
       },
     );
     final dynamic body = response.data;
@@ -62,6 +66,27 @@ class CustomerRepository {
       return (list, total);
     }
     return (<Cliente>[], 0);
+  }
+
+  Future<ClienteStats> obterEstatisticas() async {
+    final response = await _api.get('${ApiEndpoints.clientes}/stats');
+    final data = _extractData(response.data);
+    return ClienteStats.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<void> inativarEmLote(List<int> ids) async {
+    await _api.post('${ApiEndpoints.clientes}/bulk/inativar', data: {'ids': ids});
+  }
+
+  Future<void> ajustarLimitesEmLote(List<int> ids, String tipo, double valor) async {
+    await _api.post(
+      '${ApiEndpoints.clientes}/bulk/limite',
+      data: {
+        'ids': ids,
+        'tipo': tipo,
+        'valor': valor,
+      },
+    );
   }
 
   Future<Cliente> criar(CriarClienteRequest request) async {

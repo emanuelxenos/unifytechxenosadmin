@@ -293,7 +293,27 @@ class _CustomerAmortizationsProviderElement
   int get clienteId => (origin as CustomerAmortizationsProvider).clienteId;
 }
 
-String _$customersHash() => r'3cde6be882429e5b181b121624b623265834fb79';
+String _$customerStatsNotifierHash() =>
+    r'd6346f05b26fe58001d63a50f1f5fd424f3fe8ba';
+
+/// See also [CustomerStatsNotifier].
+@ProviderFor(CustomerStatsNotifier)
+final customerStatsNotifierProvider =
+    AutoDisposeAsyncNotifierProvider<
+      CustomerStatsNotifier,
+      ClienteStats
+    >.internal(
+      CustomerStatsNotifier.new,
+      name: r'customerStatsNotifierProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$customerStatsNotifierHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$CustomerStatsNotifier = AutoDisposeAsyncNotifier<ClienteStats>;
+String _$customersHash() => r'87109c9dfd05dd5b31c89e5da5035ad7c74fb7aa';
 
 /// See also [Customers].
 @ProviderFor(Customers)

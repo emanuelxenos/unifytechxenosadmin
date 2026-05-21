@@ -8,6 +8,7 @@ class Cliente {
   final double limiteCredito;
   final double saldoDevedor;
   final bool ativo;
+  final DateTime? dataCadastro;
 
   Cliente({
     required this.idCliente,
@@ -19,6 +20,7 @@ class Cliente {
     required this.limiteCredito,
     required this.saldoDevedor,
     this.ativo = true,
+    this.dataCadastro,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> json) => Cliente(
@@ -31,6 +33,28 @@ class Cliente {
         limiteCredito: (json['limite_credito'] as num).toDouble(),
         saldoDevedor: (json['saldo_devedor'] as num).toDouble(),
         ativo: json['ativo'] as bool? ?? true,
+        dataCadastro: json['data_cadastro'] != null ? DateTime.tryParse(json['data_cadastro'] as String) : null,
+      );
+}
+
+class ClienteStats {
+  final int totalClientes;
+  final double saldoDevedorTotal;
+  final double limiteCreditoTotal;
+  final int totalInadimplentes;
+
+  ClienteStats({
+    required this.totalClientes,
+    required this.saldoDevedorTotal,
+    required this.limiteCreditoTotal,
+    required this.totalInadimplentes,
+  });
+
+  factory ClienteStats.fromJson(Map<String, dynamic> json) => ClienteStats(
+        totalClientes: json['total_clientes'] as int,
+        saldoDevedorTotal: (json['saldo_devedor_total'] as num).toDouble(),
+        limiteCreditoTotal: (json['limite_credito_total'] as num).toDouble(),
+        totalInadimplentes: json['total_inadimplentes'] as int,
       );
 }
 

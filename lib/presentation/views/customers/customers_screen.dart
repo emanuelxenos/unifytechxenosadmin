@@ -20,6 +20,31 @@ class CustomersScreen extends ConsumerStatefulWidget {
 class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   final _debouncer = Debouncer(milliseconds: 300);
   final _searchController = TextEditingController();
+  bool _showKPIs = true;
+  final Set<int> _selectedIds = {};
+
+  void _onSort(String field) {
+    final currentField = ref.read(customerSortFieldProvider);
+    final currentAsc = ref.read(customerSortAscendingProvider);
+    if (currentField == field) {
+      ref.read(customerSortAscendingProvider.notifier).state = !currentAsc;
+    } else {
+      ref.read(customerSortFieldProvider.notifier).state = field;
+      ref.read(customerSortAscendingProvider.notifier).state = true;
+    }
+    ref.read(customerPageProvider.notifier).state = 0; // reset to page 0
+  }
+
+  int? _getSortColumnIndex(String? field) {
+    switch (field) {
+      case 'nome': return 0;
+      case 'tipo_pessoa': return 1;
+      case 'limite_credito': return 4;
+      case 'saldo_devedor': return 5;
+      case 'data_cadastro': return 6;
+      default: return null;
+    }
+  }
 
   @override
   void initState() {
@@ -38,6 +63,238 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     super.dispose();
   }
 
+  Widget _buildKPIRow(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(customerStatsNotifierProvider);
+
+    return statsAsync.when(
+      loading: () => const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => const SizedBox.shrink(),
+      data: (stats) {
+        return Row(
+          children: [
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: 'Clientes Ativos',
+                value: '${stats.totalClientes}',
+                icon: Icons.people_rounded,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: 'Saldo Devedor Total',
+                value: 'R\$ ${stats.saldoDevedorTotal.toStringAsFixed(2)}',
+                icon: Icons.money_off_rounded,
+                color: AppTheme.accentRed,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: 'Limite de Crédito Total',
+                value: 'R\$ ${stats.limiteCreditoTotal.toStringAsFixed(2)}',
+                icon: Icons.credit_card_rounded,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: 'Clientes Inadimplentes',
+                value: '${stats.totalInadimplentes}',
+                icon: Icons.warning_amber_rounded,
+                color: Colors.orange,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildKPICard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: AppTheme.glassCard().copyWith(
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withValues(alpha: 0.1),
+            radius: 18,
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulkActionsBar(BuildContext context) {
+    return Container(
+      decoration: AppTheme.glassCard().copyWith(
+        color: const Color(0xFF1F2244).withValues(alpha: 0.95),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.5), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_box_outlined, color: AppTheme.primaryColor, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${_selectedIds.length} selecionado(s)',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              TextButton.icon(
+                icon: const Icon(Icons.edit_outlined, size: 14, color: Colors.blueAccent),
+                label: const Text('Reajustar Limite', style: TextStyle(color: Colors.blueAccent, fontSize: 13)),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => _BulkLimitAdjustmentDialog(
+                      ids: _selectedIds.toList(),
+                      onSuccess: () {
+                        setState(() {
+                          _selectedIds.clear();
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              TextButton.icon(
+                icon: const Icon(Icons.person_off_outlined, size: 14, color: AppTheme.accentRed),
+                label: const Text('Inativar Selecionados', style: TextStyle(color: AppTheme.accentRed, fontSize: 13)),
+                onPressed: () => _confirmBulkInactivate(context),
+              ),
+              const SizedBox(width: 16),
+              const SizedBox(
+                height: 24,
+                child: VerticalDivider(color: Colors.white24, width: 1, thickness: 1),
+              ),
+              const SizedBox(width: 16),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white54, size: 18),
+                tooltip: 'Limpar seleção',
+                onPressed: () {
+                  setState(() {
+                    _selectedIds.clear();
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmBulkInactivate(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1C2039),
+        title: const Text('Inativar Clientes em Lote', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Deseja inativar os ${_selectedIds.length} clientes selecionados?\nEles não aparecerão mais nas novas vendas.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentRed),
+            child: const Text('Inativar Todos', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final (success, message) = await ref
+          .read(customersProvider.notifier)
+          .inativarEmLote(_selectedIds.toList());
+      if (context.mounted) {
+        if (success) {
+          AppNotifications.showSuccess(context, message);
+          setState(() {
+            _selectedIds.clear();
+          });
+        } else {
+          AppNotifications.showError(context, message);
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -46,163 +303,229 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     final page = ref.watch(customerPageProvider);
     final itemsPerPage = ref.watch(customerItemsPerPageProvider);
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Clientes',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showCustomerForm(context),
-                icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: const Text('Novo Cliente'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Toolbar: Search + Inactive toggle
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: AppTheme.glassCard(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (v) {
-                      _debouncer.run(() {
-                        if (mounted) {
-                          ref.read(customerSearchProvider.notifier).setQuery(v);
-                          ref.read(customerPageProvider.notifier).state = 0;
-                        }
-                      });
-                    },
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Buscar cliente por nome, CPF/CNPJ ou email...',
-                      hintStyle: TextStyle(color: Colors.white54),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.white54),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              FilterChip(
-                label: const Text('Mostrar Inativos'),
-                selected: ref.watch(customerInactivesProvider),
-                onSelected: (v) {
-                  ref.read(customerInactivesProvider.notifier).set(v);
-                  ref.read(customerPageProvider.notifier).state = 0;
-                },
-                selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                checkmarkColor: AppTheme.primaryColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Table Card
-          Expanded(
-            child: Container(
-              decoration: AppTheme.glassCard(),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: customersAsync.when(
-                      loading: () => const LoadingOverlay(message: 'Carregando clientes...'),
-                      error: (e, _) => EmptyState(
-                        icon: Icons.error_outline,
-                        title: 'Erro ao carregar',
-                        subtitle: e.toString(),
-                        action: ElevatedButton(
-                          onPressed: () =>
-                              ref.read(customersProvider.notifier).refresh(),
-                          child: const Text('Tentar novamente'),
+                  Row(
+                    children: [
+                      Text(
+                        'Clientes',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      data: (res) {
-                        // Dynamically adjust page index if it goes out of bounds
-                        final totalPages = (res.total / itemsPerPage).ceil();
-                        if (page >= totalPages && totalPages > 0) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) {
-                              ref.read(customerPageProvider.notifier).state = totalPages - 1;
-                            }
-                          });
-                        }
-
-                        if (filtered.isEmpty) {
-                          return const EmptyState(
-                            icon: Icons.people_alt_outlined,
-                            title: 'Nenhum cliente encontrado',
-                            subtitle: 'Cadastre clientes para utilizá-los nas vendas e no crediário.',
-                          );
-                        }
-                        return SizedBox.expand(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              child: DataTable(
-                                showCheckboxColumn: false,
-                                headingTextStyle: const TextStyle(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                columns: const [
-                                  DataColumn(label: Text('NOME')),
-                                  DataColumn(label: Text('TIPO')),
-                                  DataColumn(label: Text('CPF / CNPJ')),
-                                  DataColumn(label: Text('TELEFONE')),
-                                  DataColumn(label: Text('LIMITE CRÉDITO')),
-                                  DataColumn(label: Text('SALDO DEVEDOR')),
-                                  DataColumn(label: Text('STATUS')),
-                                  DataColumn(label: Text('AÇÕES')),
-                                ],
-                                rows: filtered
-                                    .map((c) => _buildRow(context, ref, c))
-                                    .toList(),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                      const SizedBox(width: 12),
+                      IconButton(
+                        icon: Icon(
+                          _showKPIs ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                          color: Colors.white70,
+                        ),
+                        onPressed: () => setState(() => _showKPIs = !_showKPIs),
+                        tooltip: _showKPIs ? 'Ocultar Indicadores' : 'Mostrar Indicadores',
+                      ),
+                    ],
                   ),
-                  // Pagination Footer
-                  customersAsync.maybeWhen(
-                    data: (res) {
-                      if (res.total > 0) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Divider(color: Colors.white10, height: 1),
-                            _buildPaginationFooter(context, res.total),
-                          ],
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                    orElse: () => const SizedBox.shrink(),
+                  ElevatedButton.icon(
+                    onPressed: () => _showCustomerForm(context),
+                    icon: const Icon(Icons.person_add_alt_1_rounded),
+                    label: const Text('Novo Cliente'),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 16),
+
+              // KPI indicators with animation
+              AnimatedCrossFade(
+                firstChild: Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildKPIRow(context, ref),
+                ),
+                secondChild: const SizedBox.shrink(),
+                crossFadeState: _showKPIs ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                duration: const Duration(milliseconds: 300),
+              ),
+
+              // Toolbar: Search + Inactive toggle
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: AppTheme.glassCard(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (v) {
+                          _debouncer.run(() {
+                            if (mounted) {
+                              ref.read(customerSearchProvider.notifier).setQuery(v);
+                              ref.read(customerPageProvider.notifier).state = 0;
+                            }
+                          });
+                        },
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          hintText: 'Buscar cliente por nome, CPF/CNPJ ou email...',
+                          hintStyle: TextStyle(color: Colors.white54),
+                          prefixIcon: Icon(Icons.search_rounded, color: Colors.white54),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  FilterChip(
+                    label: const Text('Mostrar Inativos'),
+                    selected: ref.watch(customerInactivesProvider),
+                    onSelected: (v) {
+                      ref.read(customerInactivesProvider.notifier).set(v);
+                      ref.read(customerPageProvider.notifier).state = 0;
+                    },
+                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    checkmarkColor: AppTheme.primaryColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Table Card
+              Expanded(
+                child: Container(
+                  decoration: AppTheme.glassCard(),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: customersAsync.when(
+                          loading: () => const LoadingOverlay(message: 'Carregando clientes...'),
+                          error: (e, _) => EmptyState(
+                            icon: Icons.error_outline,
+                            title: 'Erro ao carregar',
+                            subtitle: e.toString(),
+                            action: ElevatedButton(
+                              onPressed: () =>
+                                  ref.read(customersProvider.notifier).refresh(),
+                              child: const Text('Tentar novamente'),
+                            ),
+                          ),
+                          data: (res) {
+                            // Dynamically adjust page index if it goes out of bounds
+                            final totalPages = (res.total / itemsPerPage).ceil();
+                            if (page >= totalPages && totalPages > 0) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  ref.read(customerPageProvider.notifier).state = totalPages - 1;
+                                }
+                              });
+                            }
+
+                            if (filtered.isEmpty) {
+                              return const EmptyState(
+                                icon: Icons.people_alt_outlined,
+                                title: 'Nenhum cliente encontrado',
+                                subtitle: 'Cadastre clientes para utilizá-los nas vendas e no crediário.',
+                              );
+                            }
+                            return SizedBox.expand(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: SingleChildScrollView(
+                                  child: DataTable(
+                                    showCheckboxColumn: true,
+                                    headingTextStyle: const TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    sortColumnIndex: _getSortColumnIndex(ref.watch(customerSortFieldProvider)),
+                                    sortAscending: ref.watch(customerSortAscendingProvider),
+                                    onSelectAll: (isSelected) {
+                                      setState(() {
+                                        if (isSelected == true) {
+                                          for (final c in filtered) {
+                                            _selectedIds.add(c.idCliente);
+                                          }
+                                        } else {
+                                          for (final c in filtered) {
+                                            _selectedIds.remove(c.idCliente);
+                                          }
+                                        }
+                                      });
+                                    },
+                                    columns: [
+                                      DataColumn(
+                                        label: const Text('NOME'),
+                                        onSort: (_, __) => _onSort('nome'),
+                                      ),
+                                      DataColumn(
+                                        label: const Text('TIPO'),
+                                        onSort: (_, __) => _onSort('tipo_pessoa'),
+                                      ),
+                                      const DataColumn(label: Text('CPF / CNPJ')),
+                                      const DataColumn(label: Text('TELEFONE')),
+                                      DataColumn(
+                                        label: const Text('LIMITE CRÉDITO'),
+                                        onSort: (_, __) => _onSort('limite_credito'),
+                                      ),
+                                      DataColumn(
+                                        label: const Text('SALDO DEVEDOR'),
+                                        onSort: (_, __) => _onSort('saldo_devedor'),
+                                      ),
+                                      DataColumn(
+                                        label: const Text('CADASTRO'),
+                                        onSort: (_, __) => _onSort('data_cadastro'),
+                                      ),
+                                      const DataColumn(label: Text('STATUS')),
+                                      const DataColumn(label: Text('AÇÕES')),
+                                    ],
+                                    rows: filtered
+                                        .map((c) => _buildRow(context, ref, c))
+                                        .toList(),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      // Pagination Footer
+                      customersAsync.maybeWhen(
+                        data: (res) {
+                          if (res.total > 0) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Divider(color: Colors.white10, height: 1),
+                                _buildPaginationFooter(context, res.total),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (_selectedIds.isNotEmpty)
+          Positioned(
+            bottom: 24,
+            left: 24,
+            right: 24,
+            child: _buildBulkActionsBar(context),
+          ),
+      ],
     );
   }
 
@@ -309,6 +632,16 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         perfil == 'admin' || perfil == 'gerente';
 
     return DataRow(
+      selected: _selectedIds.contains(c.idCliente),
+      onSelectChanged: (selected) {
+        setState(() {
+          if (selected == true) {
+            _selectedIds.add(c.idCliente);
+          } else {
+            _selectedIds.remove(c.idCliente);
+          }
+        });
+      },
       cells: [
         DataCell(Text(c.nome, style: const TextStyle(color: Colors.white))),
         DataCell(Text(
@@ -325,6 +658,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
           canEdit: podeEditarLimite,
         )),
         DataCell(_SaldoDevedorBadge(valor: c.saldoDevedor)),
+        DataCell(Text(
+          c.dataCadastro != null
+              ? '${c.dataCadastro!.day.toString().padLeft(2, '0')}/${c.dataCadastro!.month.toString().padLeft(2, '0')}/${c.dataCadastro!.year}'
+              : '-',
+          style: const TextStyle(color: Colors.white70),
+        )),
         DataCell(StatusChip.fromStatus(c.ativo ? 'ativo' : 'inativo')),
         DataCell(Row(
           mainAxisSize: MainAxisSize.min,
@@ -1046,6 +1385,169 @@ class _CustomerHistoryDialog extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+class _BulkLimitAdjustmentDialog extends StatefulWidget {
+  final List<int> ids;
+  final VoidCallback onSuccess;
+
+  const _BulkLimitAdjustmentDialog({
+    super.key,
+    required this.ids,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_BulkLimitAdjustmentDialog> createState() => _BulkLimitAdjustmentDialogState();
+}
+
+class _BulkLimitAdjustmentDialogState extends State<_BulkLimitAdjustmentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _porcentagemCtrl = TextEditingController();
+  final _valorCtrl = TextEditingController();
+  bool _saving = false;
+  String _tipoReajuste = 'porcentagem'; // 'porcentagem' or 'valor'
+
+  @override
+  void dispose() {
+    _porcentagemCtrl.dispose();
+    _valorCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1C2039),
+          title: Text(
+            'Ajustar Limites (${widget.ids.length} selecionados)',
+            style: const TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          content: SizedBox(
+            width: 400,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selecione a forma de reajuste:',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  RadioListTile<String>(
+                    title: const Text('Percentual (%)', style: TextStyle(color: Colors.white, fontSize: 14)),
+                    subtitle: const Text('Ex: 10 para aumentar 10%, -5 para diminuir 5%', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    value: 'porcentagem',
+                    groupValue: _tipoReajuste,
+                    activeColor: AppTheme.primaryColor,
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _tipoReajuste = val;
+                          _valorCtrl.clear();
+                        });
+                      }
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Valor em Reais (R\$)', style: TextStyle(color: Colors.white, fontSize: 14)),
+                    subtitle: const Text('Ex: 100 para aumentar R\$ 100, -50 para diminuir R\$ 50', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    value: 'valor',
+                    groupValue: _tipoReajuste,
+                    activeColor: AppTheme.primaryColor,
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _tipoReajuste = val;
+                          _porcentagemCtrl.clear();
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  if (_tipoReajuste == 'porcentagem')
+                    TextFormField(
+                      controller: _porcentagemCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Ajuste Percentual (%)',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        hintText: 'Ex: 10 ou -5',
+                        hintStyle: TextStyle(color: Colors.white38),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Obrigatório';
+                        final val = double.tryParse(v.replaceAll(',', '.'));
+                        if (val == null) return 'Valor inválido';
+                        return null;
+                      },
+                    ),
+                  if (_tipoReajuste == 'valor')
+                    TextFormField(
+                      controller: _valorCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Ajuste de Valor (R\$)',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        hintText: 'Ex: 150 ou -50',
+                        hintStyle: TextStyle(color: Colors.white38),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Obrigatório';
+                        final val = double.tryParse(v.replaceAll(',', '.'));
+                        if (val == null) return 'Valor inválido';
+                        return null;
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _saving ? null : () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+            ),
+            ElevatedButton(
+              onPressed: _saving ? null : () => _submit(ref),
+              child: _saving
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Aplicar Reajuste'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submit(WidgetRef ref) async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+
+    final String valStr = _tipoReajuste == 'porcentagem' ? _porcentagemCtrl.text : _valorCtrl.text;
+    final double valor = double.tryParse(valStr.trim().replaceAll(',', '.')) ?? 0.0;
+
+    final (success, message) = await ref
+        .read(customersProvider.notifier)
+        .ajustarLimitesEmLote(widget.ids, _tipoReajuste, valor);
+
+    if (mounted) {
+      setState(() => _saving = false);
+      if (success) {
+        AppNotifications.showSuccess(context, message);
+        Navigator.pop(context);
+        widget.onSuccess();
+      } else {
+        AppNotifications.showError(context, message);
+      }
+    }
   }
 }
 
