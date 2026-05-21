@@ -12,6 +12,12 @@ final customerItemsPerPageProvider = StateProvider<int>((ref) => 10);
 final customerSortFieldProvider = StateProvider<String?>((ref) => null);
 final customerSortAscendingProvider = StateProvider<bool>((ref) => true);
 
+// Advanced filter providers
+final customerFilterTipoPessoaProvider = StateProvider<String?>((ref) => null);
+final customerFilterLimiteMinProvider = StateProvider<double?>((ref) => null);
+final customerFilterLimiteMaxProvider = StateProvider<double?>((ref) => null);
+final customerFilterInadimplenteProvider = StateProvider<bool>((ref) => false);
+
 class PaginatedCustomersResult {
   final List<Cliente> clientes;
   final int total;
@@ -43,11 +49,17 @@ class Customers extends _$Customers {
     final sortBy = ref.watch(customerSortFieldProvider);
     final ascending = ref.watch(customerSortAscendingProvider);
     final sortOrder = ascending ? 'asc' : 'desc';
-    return _fetch(incluirInativos, page + 1, limit, search, sortBy, sortOrder);
+    final tipoPessoa = ref.watch(customerFilterTipoPessoaProvider);
+    final limiteMin = ref.watch(customerFilterLimiteMinProvider);
+    final limiteMax = ref.watch(customerFilterLimiteMaxProvider);
+    final inadimplente = ref.watch(customerFilterInadimplenteProvider);
+    return _fetch(incluirInativos, page + 1, limit, search, sortBy, sortOrder,
+        tipoPessoa: tipoPessoa, limiteMin: limiteMin, limiteMax: limiteMax, inadimplente: inadimplente);
   }
 
   Future<PaginatedCustomersResult> _fetch(
-      bool incluirInativos, int page, int limit, String search, String? sortBy, String? sortOrder) async {
+      bool incluirInativos, int page, int limit, String search, String? sortBy, String? sortOrder, {
+      String? tipoPessoa, double? limiteMin, double? limiteMax, bool inadimplente = false}) async {
     final (list, total) = await ref
         .read(customerRepositoryProvider)
         .listarPaginado(
@@ -56,7 +68,11 @@ class Customers extends _$Customers {
             limit: limit,
             search: search,
             sortBy: sortBy,
-            sortOrder: sortOrder);
+            sortOrder: sortOrder,
+            tipoPessoa: tipoPessoa,
+            limiteMin: limiteMin,
+            limiteMax: limiteMax,
+            inadimplente: inadimplente);
     return PaginatedCustomersResult(clientes: list, total: total);
   }
 
@@ -68,9 +84,14 @@ class Customers extends _$Customers {
     final sortBy = ref.read(customerSortFieldProvider);
     final ascending = ref.read(customerSortAscendingProvider);
     final sortOrder = ascending ? 'asc' : 'desc';
+    final tipoPessoa = ref.read(customerFilterTipoPessoaProvider);
+    final limiteMin = ref.read(customerFilterLimiteMinProvider);
+    final limiteMax = ref.read(customerFilterLimiteMaxProvider);
+    final inadimplente = ref.read(customerFilterInadimplenteProvider);
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-        () => _fetch(incluirInativos, page + 1, limit, search, sortBy, sortOrder));
+    state = await AsyncValue.guard(() => _fetch(
+        incluirInativos, page + 1, limit, search, sortBy, sortOrder,
+        tipoPessoa: tipoPessoa, limiteMin: limiteMin, limiteMax: limiteMax, inadimplente: inadimplente));
   }
 
   Future<(bool, String)> criar(CriarClienteRequest request) async {

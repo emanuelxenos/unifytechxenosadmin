@@ -313,7 +313,7 @@ final customerStatsNotifierProvider =
     );
 
 typedef _$CustomerStatsNotifier = AutoDisposeAsyncNotifier<ClienteStats>;
-String _$customersHash() => r'87109c9dfd05dd5b31c89e5da5035ad7c74fb7aa';
+String _$customersHash() => r'becc1a1be132adde76ee135c66b3ef68ce0ed006';
 
 /// See also [Customers].
 @ProviderFor(Customers)

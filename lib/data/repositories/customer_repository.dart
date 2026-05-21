@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:unifytechxenosadmin/core/constants/api_endpoints.dart';
 import 'package:unifytechxenosadmin/domain/models/customer.dart';
@@ -43,6 +44,10 @@ class CustomerRepository {
     String? search,
     String? sortBy,
     String? sortOrder,
+    String? tipoPessoa,
+    double? limiteMin,
+    double? limiteMax,
+    bool inadimplente = false,
   }) async {
     final response = await _api.get(
       ApiEndpoints.clientes,
@@ -53,6 +58,10 @@ class CustomerRepository {
         if (search != null && search.isNotEmpty) 'q': search,
         if (sortBy != null && sortBy.isNotEmpty) 'sort': sortBy,
         if (sortOrder != null && sortOrder.isNotEmpty) 'order': sortOrder,
+        if (tipoPessoa != null && tipoPessoa.isNotEmpty) 'tipo_pessoa': tipoPessoa,
+        if (limiteMin != null) 'limite_min': limiteMin,
+        if (limiteMax != null) 'limite_max': limiteMax,
+        if (inadimplente) 'inadimplente': 'true',
       },
     );
     final dynamic body = response.data;
@@ -125,5 +134,31 @@ class CustomerRepository {
     }
     return [];
   }
-}
 
+  /// Exporta clientes como CSV. Retorna os bytes do arquivo.
+  Future<List<int>> exportarClientes({
+    String format = 'csv',
+    String? search,
+    String? tipoPessoa,
+    double? limiteMin,
+    double? limiteMax,
+    bool inadimplente = false,
+    List<int>? ids,
+  }) async {
+    final response = await _api.get<String>(
+      '${ApiEndpoints.clientes}/export',
+      queryParameters: {
+        'format': format,
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (tipoPessoa != null && tipoPessoa.isNotEmpty) 'tipo_pessoa': tipoPessoa,
+        if (limiteMin != null) 'limite_min': limiteMin,
+        if (limiteMax != null) 'limite_max': limiteMax,
+        if (inadimplente) 'inadimplente': 'true',
+      },
+    );
+    final body = response.data;
+    if (body == null || body.isEmpty) return [];
+    // Encode CSV text as UTF-8 bytes
+    return utf8.encode(body);
+  }
+}
